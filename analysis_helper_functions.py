@@ -102,12 +102,14 @@ l_styles = ['-', '--', '-.', ':']
 # Set random seed
 rand_seq = np.random.RandomState(1234567)
 
+# A list of variables for which the y-axis should be inverted so the surface is up
+y_invert_vars = ['press', 'depth', 'sigma', 'ma_sigma']
 # A list of the variables on the `Layer` dimension
 layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
 pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho', 'p_theta_max', 's_theta_max', 'theta_max']
 # A list of the variables on the `Vertical` dimension
-vertical_vars = ['press', 'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'aT', 'BS', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_SP', 'ma_SA', 'ma_sigma']
+vertical_vars = ['press', 'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_SP', 'ma_SA', 'ma_sigma']
 
 ################################################################################
 # Declare classes for custom objects
@@ -487,27 +489,27 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append(var)
             if var == 'aiT':
                 vars_to_keep.append(var)
-                if 'alpha' not in plt_params.plot_vars:
+                if 'alpha' not in vars_to_keep:
                     vars_to_keep.append('alpha')
-                if 'iT' not in plt_params.plot_vars:
+                if 'iT' not in vars_to_keep:
                     vars_to_keep.append('iT')
             elif var == 'aCT':
                 vars_to_keep.append(var)
-                if 'alpha' not in plt_params.plot_vars:
+                if 'alpha' not in vars_to_keep:
                     vars_to_keep.append('alpha')
-                if 'CT' not in plt_params.plot_vars:
+                if 'CT' not in vars_to_keep:
                     vars_to_keep.append('CT')
             elif var == 'BSP':
                 vars_to_keep.append(var)
-                if 'beta' not in plt_params.plot_vars:
+                if 'beta' not in vars_to_keep:
                     vars_to_keep.append('beta')
-                if 'SP' not in plt_params.plot_vars:
+                if 'SP' not in vars_to_keep:
                     vars_to_keep.append('SP')
             elif var == 'BSA':
                 vars_to_keep.append(var)
-                if 'beta' not in plt_params.plot_vars:
+                if 'beta' not in vars_to_keep:
                     vars_to_keep.append('beta')
-                if 'SA' not in plt_params.plot_vars:
+                if 'SA' not in vars_to_keep:
                     vars_to_keep.append('SA')
             # Check for profile cluster average variables
             if 'pca_' in var:
@@ -1417,10 +1419,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
         elif clr_map == 'clr_all_same':
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
-            if y_key == 'SDA_ml_press':
-                df[y_key] = df[y_key]*-1
             # Plot every point the same color, size, and marker
             ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+            # Invert y-axis if specified
+            if y_key in y_invert_vars:
+                ax.invert_yaxis()
             # Add a standard legend
             add_std_legend(ax, df, x_key)
             # Add a standard title

@@ -586,6 +586,9 @@ def read_ITP_cormat(file_path, file_name, instrmt, prof_no):
         pf_vert_len = len(press0)
         SA1 = gsw.SA_from_SP(SP0, press0, [lon]*pf_vert_len, [lat]*pf_vert_len)
         CT1 = gsw.CT_from_t(SA1, iT0, press0)
+        # Convert to depth from pressure,
+        #   take the negative so that depth increases downward
+        depth = -gsw.z_from_p(press0, [lat]*pf_vert_len)
         # Down-casts have an issue with the profiler wake, so note whether the
         #   profile was taken going up or down
         if press0[0] < press0[-1]:
@@ -602,7 +605,7 @@ def read_ITP_cormat(file_path, file_name, instrmt, prof_no):
                     'region': reg,
                     'up_cast': up_cast,
                     'press': press0,
-                    'depth': [None]*len(press0),
+                    'depth': depth,
                     'iT': iT0,
                     'CT': CT1,
                     'SP': SP0,

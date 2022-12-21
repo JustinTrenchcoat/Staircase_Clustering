@@ -49,7 +49,7 @@ print('- Creating plotting parameter objects')
 
 ### xy plots
 pp_xy_default = ahf.Plot_Parameters()
-pp_test = ahf.Plot_Parameters(x_vars=['mc_SP','ca_SA'], y_vars=['pca_iT','la_CT'])
+pp_test = ahf.Plot_Parameters(x_vars=['iT'], y_vars=['press'])
 
 ################################################################################
 # Create analysis group objects
@@ -57,7 +57,7 @@ print('- Creating analysis group objects')
 ################################################################################
 
 # Analysis Groups
-my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_xy_default)
+my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_test)
 
 ################################################################################
 # Declare figures or summaries to output
