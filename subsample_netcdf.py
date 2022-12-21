@@ -109,3 +109,5 @@ for my_nc in ncs_to_modify:
 
     for attr in gattrs_to_print:
         print('\t',attr+':',ds2.attrs[attr])
+    print('\t ss_mask:')
+    print('\t',ds2.where(ds2.prof_no==7, drop=True).squeeze().ss_mask.values)

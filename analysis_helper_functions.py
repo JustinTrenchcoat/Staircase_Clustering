@@ -109,7 +109,7 @@ layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
 pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho', 'p_theta_max', 's_theta_max', 'theta_max']
 # A list of the variables on the `Vertical` dimension
-vertical_vars = ['press', 'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_SP', 'ma_SA', 'ma_sigma']
+vertical_vars = ['press', 'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_SP', 'ma_SA', 'ma_sigma', 'la_iT', 'la_CT', 'la_SP', 'la_SA', 'la_sigma']
 
 ################################################################################
 # Declare classes for custom objects
@@ -272,6 +272,7 @@ class Plot_Parameters:
         self.ax_lims = ax_lims
         self.first_dfs = first_dfs
         self.clr_map = clr_map
+        self.clabel = None
         # If trying to plot a map, make sure x and y vars are None
         if plot_type == 'map':
             x_vars = None
@@ -482,7 +483,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 #
             #
         # Add all the plotting variables
-        plot_vars = pp.x_vars+pp.y_vars
+        plot_vars = pp.x_vars+pp.y_vars+[pp.clr_map]
         # print('plot_vars:',plot_vars)
         for var in plot_vars:
             if var not in vars_to_keep and var in vars_available:
@@ -908,6 +909,12 @@ def get_axis_labels(pp, var_attr_dicts):
     else:
         pp.ylabels[0] = None
         pp.ylabels[1] = None
+    # Get colormap label
+    if not isinstance(pp.clr_map, type(None)):
+        try:
+            pp.clabel = var_attr_dicts[0][pp.clr_map]['label']
+        except:
+            pp.clabel = get_axis_label(pp.clr_map, var_attr_dicts)
 
     # Check for first differences of variables
     if any(pp.first_dfs):
@@ -971,8 +978,8 @@ def get_axis_label(var_key, var_attr_dicts):
                  'hist':r'Occurrences',
                  'aiT':r'$\alpha T$',
                  'aCT':r'$\alpha \theta$',
-                 'BSP':r'$\beta S_p$',
-                 'BSA':r'$\beta S_a$',
+                 'BSP':r'$\beta S_P$',
+                 'BSA':r'$\beta S_A$',
                  'p_theta_max':r'$p(\theta_{max})$ (dbar)',
                  's_theta_max':r'$S(\theta_{max})$ (g/kg)',
                  'theta_max':r'$\theta_{max}$ ($^\circ$C)',
@@ -1352,12 +1359,16 @@ def get_color_map(cmap_var):
              }
     if cmap_var in ['press', 'depth', 'p_theta_max']:
         return 'cividis'
-    elif cmap_var in ['iT', 'CT', 'theta_max', 'alpha', 'aiT', 'aCT', 'ma_iT', 'ma_CT']:
+    elif cmap_var in ['iT', 'CT', 'theta_max', 'alpha', 'aiT', 'aCT', 'ma_iT', 'ma_CT', 'la_iT', 'la_CT']:
         return 'Reds'
-    elif cmap_var in ['SP', 'SA', 's_theta_max', 'beta', 'BSP', 'BSA', 'ma_SP', 'ma_SA']:
+    elif cmap_var in ['SP', 'SA', 's_theta_max', 'beta', 'BSP', 'BSA', 'ma_SP', 'ma_SA', 'la_SP', 'la_SA']:
         return 'Blues'
-    elif cmap_var in ['sigma', 'ma_sigma']:
+    elif cmap_var in ['sigma', 'ma_sigma', 'la_sigma']:
         return 'Purples'
+    elif cmap_var in ['BL_yn', 'up_cast', 'ss_mask']:
+        cmap = mpl.colors.ListedColormap(['green'])
+        cmap.set_bad(color='red')
+        return cmap
     if cmap_var in cmaps.keys():
         return cmaps[cmap_var]
     else:
@@ -1410,7 +1421,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 loc = mpl.dates.AutoDateLocator()
                 cbar.ax.yaxis.set_major_locator(loc)
                 cbar.ax.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
-            cbar.set_label(a_group.data_set.var_attr_dicts[0][clr_map]['label'])
+            cbar.set_label(pp.clabel)
             # Add a standard legend
             add_std_legend(ax, df, x_key)
             # Add a standard title

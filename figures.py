@@ -39,6 +39,7 @@ ds_ITP2_all = ahf.Data_Set(ITP2_all, dfs0)
 print('- Creating profile filtering objects')
 ################################################################################
 
+pfs_f0 = ahf.Profile_Filters()
 pfs_f1 = ahf.Profile_Filters(p_range=staircase_range)
 
 ################################################################################
@@ -49,7 +50,7 @@ print('- Creating plotting parameter objects')
 
 ### xy plots
 pp_xy_default = ahf.Plot_Parameters()
-pp_test = ahf.Plot_Parameters(x_vars=['iT'], y_vars=['press'])
+pp_test = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['iT'], clr_map='lat')
 
 ################################################################################
 # Create analysis group objects
