@@ -1483,7 +1483,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
             if plot_hist:
-                return plot_histogram(x_key, y_key, ax, df, a_group, pp, clr_map=clr_map)
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=df, txk=tw_x_key, tay=tw_ax_y, tyk=tw_y_key, tax=tw_ax_x)
             # Plot every point the same color, size, and marker
             ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
             # Invert y-axis if specified
@@ -1512,6 +1512,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'clr_by_source':
+            if plot_hist:
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map)
             # Find the list of sources
             sources_list = []
             for df in a_group.data_frames:
@@ -1547,6 +1549,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'clr_by_instrmt':
+            if plot_hist:
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map)
             i = 0
             lgnd_hndls = []
             # Loop through each data frame, the same as looping through instrmts
@@ -1716,145 +1720,6 @@ def make_subplot(ax, a_group, fig, ax_pos):
             exit(0)
         #
     #
-    elif plot_type == 'hist':
-        ## Make a histogram of one variable
-        # Set the x and y data keys
-        x_key = pp.plot_vars[0]
-        # This will not work for the following variables
-        if x_key in ['dt_start', 'dt_end']:
-            print('The variable',x_key,'is not valid for plotting a histogram')
-            exit(0)
-        # Get rid of any null values for the variable in question
-
-        # Determine the color mapping to be used
-        if clr_map == 'clr_all_same':
-            # Concatonate all the pandas data frames together
-            df = pd.concat(a_group.data_frames)
-            # Remove
-            # Get histogram parameters
-            x_var, res_bins, median, mean, std_dev = get_hist_params(df, x_key)
-            # Plot the histogram
-            ax.hist(x_var, bins=res_bins, color=std_clr)
-            # Add legend to report overall statistics
-            n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(x_var))+' points')
-            median_patch  = mpl.patches.Patch(color='none', label='Median:  '+'%.4f'%median)
-            mean_patch    = mpl.patches.Patch(color='none', label='Mean:    ' + '%.4f'%mean)
-            std_dev_patch = mpl.patches.Patch(color='none', label='Std dev: '+'%.4f'%std_dev)
-            notes_string = ''.join(df.notes.unique())
-            # Only add the notes_string if it contains something
-            if len(notes_string) > 1:
-                notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-                ax.legend(handles=[n_pts_patch, median_patch, mean_patch, std_dev_patch, notes_patch])
-            else:
-                ax.legend(handles=[n_pts_patch, median_patch, mean_patch, std_dev_patch])
-            # Add a standard title
-            plt_title = add_std_title(a_group)
-            return pp.xlabel, 'Number of points', plt_title, ax
-        elif clr_map == 'clr_by_source':
-            # Find the list of sources
-            sources_list = []
-            for df in a_group.data_frames:
-                # Get unique sources
-                these_sources = np.unique(df['source'])
-                for s in these_sources:
-                    sources_list.append(s)
-            # The pandas version of 'unique()' preserves the original order
-            sources_list = pd.unique(pd.Series(sources_list))
-            i = 0
-            lgnd_hndls = []
-            for source in sources_list:
-                # Decide on the color, don't go off the end of the array
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
-                these_dfs = []
-                for df in a_group.data_frames:
-                    these_dfs.append(df[df['source'] == source])
-                this_df = pd.concat(these_dfs)
-                # Get histogram parameters
-                x_var, res_bins, median, mean, std_dev = get_hist_params(this_df, x_key)
-                # Plot the histogram
-                ax.hist(x_var, bins=res_bins, color=my_clr, alpha=mrk_alpha)
-                i += 1
-                # Add legend handle to report the total number of points for this source
-                lgnd_label = source+': '+str(len(this_df[x_key]))+' points, Median:'+'%.4f'%median
-                lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
-                # Add legend handle to report overall statistics
-                lgnd_label = 'Mean:'+ '%.4f'%mean+', Std dev:'+'%.4f'%std_dev
-                lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
-                notes_string = ''.join(this_df.notes.unique())
-            # Only add the notes_string if it contains something
-            if len(notes_string) > 1:
-                notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-                lgnd_hndls.append(notes_patch)
-            # Add legend with custom handles
-            lgnd = ax.legend(handles=lgnd_hndls)
-            # Add a standard title
-            plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
-        elif clr_map == 'clr_by_instrmt':
-            i = 0
-            lgnd_hndls = []
-            # Loop through each data frame, the same as looping through instrmts
-            for df in a_group.data_frames:
-                df['source-instrmt'] = df['source']+' '+df['instrmt']
-                # Get instrument name
-                s_instrmt = np.unique(df['source-instrmt'])[0]
-                # Decide on the color, don't go off the end of the array
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
-                # Get histogram parameters
-                x_var, res_bins, median, mean, std_dev = get_hist_params(df, x_key)
-                # Plot the histogram
-                ax.hist(x_var, bins=res_bins, color=my_clr, alpha=mrk_alpha)
-                i += 1
-                # Add legend to report the total number of points for this instrmt
-                lgnd_label = s_instrmt+': '+str(len(df[x_key]))+' points'
-                lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label))
-                # Add legend handle to report overall statistics
-                lgnd_label = 'Mean:'+ '%.4f'%mean+', Std dev:'+'%.4f'%std_dev
-                lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
-                notes_string = ''.join(df.notes.unique())
-            # Only add the notes_string if it contains something
-            if len(notes_string) > 1:
-                notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-                lgnd_hndls.append(notes_patch)
-            # Add legend with custom handles
-            lgnd = ax.legend(handles=lgnd_hndls)
-            # Add a standard title
-            plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
-            #
-        elif clr_map == 'clr_by_SDA_ml_vs_gl':
-            # Concatonate all the pandas data frames together
-            df = pd.concat(a_group.data_frames)
-            # Make a sub-dataframe for the points in ML, DC
-            df_ml_dc = df[df['SDA_mask_v_ml_dc'].notnull()]
-            # Make a sub-dataframe for the points in GL, DC
-            df_gl_dc = df[df['SDA_mask_v_gl_dc'].notnull()]
-            # Get histogram parameters
-            # x_var, res_bins, median, mean, std_dev = get_hist_params(df, x_key)
-            x_var_ml, res_bins_ml, median_ml, mean_ml, std_dev_ml = get_hist_params(df_ml_dc, x_key)
-            x_var_gl, res_bins_gl, median_gl, mean_gl, std_dev_gl = get_hist_params(df_gl_dc, x_key)
-            # Plot the histogram
-            # ax.hist(x_var, bins=res_bins, color=std_clr, alpha=noise_alpha, zorder=1)
-            ax.hist(x_var_ml, bins=res_bins_ml, color=clr_ml, zorder=2)
-            ax.hist(x_var_gl, bins=res_bins_gl, color=clr_gl, zorder=3)
-            # Add legend to report overall statistics
-            # all_pts_patch = mpl.patches.Patch(color=std_clr, label=f'All: {len(x_var):.1e} pts, Median:{median:.1e}, Mean:{mean:.1e}, Stdev:{std_dev:.1e}', alpha=noise_alpha, edgecolor=None)
-            ml_pts_patch = mpl.patches.Patch(color=clr_ml, label=f'ML,DC: {len(x_var_ml):.1e} pts, Median:{median_ml:.1e}, Mean:{mean_ml:.1e}, Stdev:{std_dev_ml:.1e}')
-            gl_pts_patch = mpl.patches.Patch(color=clr_gl, label=f'GL,DC: {len(x_var_gl):.1e} pts, Median:{median_gl:.1e}, Mean:{mean_gl:.1e}, Stdev:{std_dev_gl:.1e}')
-            notes_string = ''.join(df.notes.unique())
-            # Only add the notes_string if it contains something
-            if len(notes_string) > 1:
-                notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-                ax.legend(handles=[ml_pts_patch, gl_pts_patch, notes_patch])
-            else:
-                ax.legend(handles=[ml_pts_patch, gl_pts_patch,])
-            # Add a standard title
-            plt_title = add_std_title(a_group)
-            return pp.xlabel, 'Number of points', plt_title, ax
-        else:
-            # Did not provide a valid clr_map
-            print('Colormap',clr_map,'not valid')
-            exit(0)
     elif plot_type == 'map':
         ## Plot profile locations on a map of the Arctic Ocean
         # Get the map plotting parameters from extra args
@@ -2082,12 +1947,13 @@ def make_subplot(ax, a_group, fig, ax_pos):
 # Auxiliary plotting functions #################################################
 ################################################################################
 
-def plot_histogram(x_key, y_key, ax, df, a_group, pp, clr_map=None):
+def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, tay=None, tyk=None, tax=None):
     """
     Takes in an Analysis_Group object which has the data and plotting parameters
     to produce a subplot of individual profiles. Returns the x and y labels and
     the subplot title
 
+    x_key           String
     ax              The axis on which to make the plot
     a_group         A Analysis_Group object containing the info to create this subplot
     pp              The Plot_Parameters object for a_group
@@ -2097,11 +1963,17 @@ def plot_histogram(x_key, y_key, ax, df, a_group, pp, clr_map=None):
         orientation = 'horizontal'
         x_label = 'Number of points'
         y_label = pp.ylabels[0]
+        tw_var_key = tyk
+        tw_ax = tax
+        tw_label = pp.ylabels[1]
     elif y_key == 'hist':
         var_key = x_key
         orientation = 'vertical'
         x_label = pp.xlabels[0]
         y_label = 'Number of points'
+        tw_var_key = txk
+        tw_ax = tay
+        tw_label = pp.xlabels[1]
     # Determine the color mapping to be used
     if clr_map == 'clr_all_same':
         # Get histogram parameters
@@ -2109,42 +1981,147 @@ def plot_histogram(x_key, y_key, ax, df, a_group, pp, clr_map=None):
         # Plot the histogram
         ax.hist(h_var, bins=res_bins, color=std_clr, orientation=orientation)
         # Add legend to report overall statistics
-        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(h_var))+' points')
-        median_patch  = mpl.patches.Patch(color='none', label='Median:  '+'%.4f'%median)
-        mean_patch    = mpl.patches.Patch(color='none', label='Mean:    ' + '%.4f'%mean)
-        std_dev_patch = mpl.patches.Patch(color='none', label='Std dev: '+'%.4f'%std_dev)
+        n_pts_patch   = mpl.patches.Patch(color=std_clr, label=str(len(h_var))+' points')
+        median_patch  = mpl.patches.Patch(color=std_clr, label='Median:  '+'%.4f'%median)
+        mean_patch    = mpl.patches.Patch(color=std_clr, label='Mean:    ' + '%.4f'%mean)
+        std_dev_patch = mpl.patches.Patch(color=std_clr, label='Std dev: '+'%.4f'%std_dev)
+        hndls = [n_pts_patch, median_patch, mean_patch, std_dev_patch]
         notes_string = ''.join(df.notes.unique())
+        # Plot twin axis if specified
+        if not isinstance(tw_var_key, type(None)):
+            tw_clr = get_var_color(tw_var_key)
+            if tw_clr == std_clr:
+                tw_clr = alt_std_clr
+            # Get histogram parameters
+            h_var, res_bins, median, mean, std_dev = get_hist_params(df, tw_var_key)
+            # Plot the histogram
+            tw_ax.hist(h_var, bins=res_bins, color=tw_clr, alpha=mrk_alpha, orientation=orientation)
+            if orientation == 'vertical':
+                tw_ax.set_xlabel(tw_label)
+                tw_ax.tick_params(axis='x', colors=tw_clr)
+            elif orientation == 'horizontal':
+                tw_ax.set_ylabel(tw_label)
+                tw_ax.tick_params(axis='y', colors=tw_clr)
+            # Add legend to report overall statistics
+            n_pts_patch   = mpl.patches.Patch(color=tw_clr, label=str(len(h_var))+' points', alpha=mrk_alpha)
+            median_patch  = mpl.patches.Patch(color=tw_clr, label='Median:  '+'%.4f'%median, alpha=mrk_alpha)
+            mean_patch    = mpl.patches.Patch(color=tw_clr, label='Mean:    ' + '%.4f'%mean, alpha=mrk_alpha)
+            std_dev_patch = mpl.patches.Patch(color=tw_clr, label='Std dev: '+'%.4f'%std_dev, alpha=mrk_alpha)
+            tw_notes_string = ''.join(df.notes.unique())
+            # Only add the notes_string if it contains something
+            if len(tw_notes_string) > 1:
+                tw_notes_patch  = mpl.patches.Patch(color='none', label=notes_string, alpha=mrk_alpha)
+                tw_hndls=[n_pts_patch, median_patch, mean_patch, std_dev_patch, tw_notes_patch]
+            else:
+                tw_hndls=[n_pts_patch, median_patch, mean_patch, std_dev_patch]
+        else:
+            tw_hndls = []
         # Only add the notes_string if it contains something
         if len(notes_string) > 1:
             notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-            ax.legend(handles=[n_pts_patch, median_patch, mean_patch, std_dev_patch, notes_patch])
+            ax.legend(handles=hndls+notes_patch+tw_hndls)
         else:
-            ax.legend(handles=[n_pts_patch, median_patch, mean_patch, std_dev_patch])
+            ax.legend(handles=hndls+tw_hndls)
         # Add a standard title
         plt_title = add_std_title(a_group)
         return x_label, y_label, plt_title, ax
+    elif clr_map == 'clr_by_source':
+        # Find the list of sources
+        sources_list = []
+        for df in a_group.data_frames:
+            # Get unique sources
+            these_sources = np.unique(df['source'])
+            for s in these_sources:
+                sources_list.append(s)
+        # The pandas version of 'unique()' preserves the original order
+        sources_list = pd.unique(pd.Series(sources_list))
+        i = 0
+        lgnd_hndls = []
+        for source in sources_list:
+            # Decide on the color, don't go off the end of the array
+            my_clr = mpl_clrs[i%len(mpl_clrs)]
+            these_dfs = []
+            for df in a_group.data_frames:
+                these_dfs.append(df[df['source'] == source])
+            this_df = pd.concat(these_dfs)
+            # Get histogram parameters
+            h_var, res_bins, median, mean, std_dev = get_hist_params(this_df, var_key)
+            # Plot the histogram
+            ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation)
+            i += 1
+            # Add legend handle to report the total number of points for this source
+            lgnd_label = source+': '+str(len(this_df[var_key]))+' points, Median:'+'%.4f'%median
+            lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
+            # Add legend handle to report overall statistics
+            lgnd_label = 'Mean:'+ '%.4f'%mean+', Std dev:'+'%.4f'%std_dev
+            lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
+            notes_string = ''.join(this_df.notes.unique())
+        # Only add the notes_string if it contains something
+        if len(notes_string) > 1:
+            notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
+            lgnd_hndls.append(notes_patch)
+        # Add legend with custom handles
+        lgnd = ax.legend(handles=lgnd_hndls)
+        # Add a standard title
+        plt_title = add_std_title(a_group)
+        return x_label, y_label, plt_title, ax
+    elif clr_map == 'clr_by_instrmt':
+        i = 0
+        lgnd_hndls = []
+        # Loop through each data frame, the same as looping through instrmts
+        for df in a_group.data_frames:
+            df['source-instrmt'] = df['source']+' '+df['instrmt']
+            # Get instrument name
+            s_instrmt = np.unique(df['source-instrmt'])[0]
+            # Decide on the color, don't go off the end of the array
+            my_clr = mpl_clrs[i%len(mpl_clrs)]
+            # Get histogram parameters
+            h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key)
+            # Plot the histogram
+            ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation)
+            i += 1
+            # Add legend to report the total number of points for this instrmt
+            lgnd_label = s_instrmt+': '+str(len(df[var_key]))+' points'
+            lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
+            # Add legend handle to report overall statistics
+            lgnd_label = 'Mean:'+ '%.4f'%mean+', Std dev:'+'%.4f'%std_dev
+            lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
+            notes_string = ''.join(df.notes.unique())
+        # Only add the notes_string if it contains something
+        if len(notes_string) > 1:
+            notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
+            lgnd_hndls.append(notes_patch)
+        # Add legend with custom handles
+        lgnd = ax.legend(handles=lgnd_hndls)
+        # Add a standard title
+        plt_title = add_std_title(a_group)
+        return x_label, y_label, plt_title, ax
+    else:
+        # Did not provide a valid clr_map
+        print('Colormap',clr_map,'not valid')
+        exit(0)
 
 ################################################################################
 
-def get_hist_params(df, x_key):
+def get_hist_params(df, h_key):
     """
     Returns the needed information to make a histogram
 
     df      A pandas data frame of the data to plot
-    x_key   A string of the column header to plot
+    h_key   A string of the column header to plot
     """
     # Pull out the variable to plot, removing null values
-    x_var = np.array(df[df[x_key].notnull()][x_key])
+    h_var = np.array(df[df[h_key].notnull()][h_key])
     # Find overall statistics
-    median  = np.median(x_var)
-    mean    = np.mean(x_var)
-    std_dev = np.std(x_var)
+    median  = np.median(h_var)
+    mean    = np.mean(h_var)
+    std_dev = np.std(h_var)
     # Define the bins to use in the histogram, np.arange(start, stop, step)
     start = mean - 3*std_dev
     stop  = mean + 3*std_dev
     step  = std_dev / 25
     res_bins = np.arange(start, stop, step)
-    return x_var, res_bins, median, mean, std_dev
+    return h_var, res_bins, median, mean, std_dev
 
 ################################################################################
 
