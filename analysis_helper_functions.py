@@ -60,11 +60,13 @@ dark_mode = True
 if dark_mode:
     plt.style.use('dark_background')
     std_clr = 'w'
+    alt_std_clr = 'yellow'
     clr_ocean = 'k'
     clr_land  = 'grey'
     clr_lines = 'w'
 else:
     std_clr = 'k'
+    alt_std_clr = 'olive'
     clr_ocean = 'w'
     clr_land  = 'grey'
     clr_lines = 'k'
@@ -226,10 +228,13 @@ class Plot_Parameters:
                     Note: 'xy' and 'profiles' expect both x_vars and y_vars and
                       'map' ignores this variable as it always plots lon vs. lat
                     Default plot is 'SP' vs. 'iT'
-                    Accepted 'by_pf' vars: 'entry', 'prof_no', 'dt_start', 'dt_end',
-                      'lon', 'lat', 'R_rho'
-                    Accepted 'by_vert' vars: 'entry', 'prof_no', 'dt_start', 'dt_end',
-                      'lon', 'lat', 'R_rho', 'press', 'depth', 'iT', 'CT', 'SP', 'SA'
+                    Accepted 'by_pf' vars: 'entry', 'prof_no', 'BL_yn', 'dt_start',
+                      'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho'
+                    Accepted 'by_vert' vars: all 'by_pf' vars plus 'press',
+                      'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta',
+                      'aiT', 'aCT', 'BSP', 'BSA', 'ma_iT', 'ma_CT', 'ma_SP',
+                      'ma_SA', 'ma_sigma', 'ss_mask', 'la_iT', 'la_CT', 'la_SA',
+                      'la_sigma'
                     Accepted 'by_layer' vars: ???
     ax_lims         An optional dictionary of the limits on the axes for the final plot
                       Ex: {'x_lims':[x_min,x_max], 'y_lims':[y_min,y_max]}
@@ -1320,7 +1325,7 @@ def get_var_color(var):
             'BSP':'darkturquoise',
             'BSA':'darkturquoise'
             }
-    if var in ['press', 'depth', 'og_press', 'og_depth', 'p_theta_max']:
+    if var in ['entry', 'prof_no', 'dt_start', 'dt_end', 'lon', 'lat', 'press', 'depth', 'og_press', 'og_depth', 'p_theta_max']:
         return std_clr
     elif var in ['iT', 'CT', 'theta_max', 'alpha']:
         return 'lightcoral'
@@ -1395,27 +1400,74 @@ def make_subplot(ax, a_group, fig, ax_pos):
     # Decide on a plot type
     if plot_type == 'xy':
         ## Make a standard x vs. y scatter plot
-        # Set the x and y data keys
+        # Set the main x and y data keys
         x_key = pp.x_vars[0]
         y_key = pp.y_vars[0]
+        # Check for histogram
+        if x_key == 'hist' or y_key == 'hist':
+            plot_hist = True
+        # Check for twin x and y data keys
+        try:
+            tw_x_key = pp.x_vars[1]
+            tw_ax_y  = ax.twiny()
+        except:
+            tw_x_key = None
+            tw_ax_y  = None
+        try:
+            tw_y_key = pp.y_vars[1]
+            tw_ax_x  = ax.twinx()
+        except:
+            tw_y_key = None
+            tw_ax_x  = None
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
             if pp.plot_scale == 'by_pf':
-                print('Cannot use',clr_map,'with plot scale by_pf')
-                exit(0)
+                if clr_map not in pf_vars:
+                    print('Cannot use',clr_map,'with plot scale by_pf')
+                    exit(0)
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
-            if y_key == 'SDA_ml_press':
-                df[y_key] = df[y_key]*-1
             # Format the dates if necessary
             if clr_map == 'dt_start' or clr_map == 'dt_end':
                 cmap_data = mpl.dates.date2num(df[clr_map])
             else:
                 cmap_data = df[clr_map]
             # The color of each point corresponds to the number of the profile it came from
-            heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=get_color_map(clr_map), s=mrk_size, marker=std_marker)
-            # Create the colorbar
-            cbar = plt.colorbar(heatmap, ax=ax)
+            this_cmap = get_color_map(clr_map)
+            if plot_hist:
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map=clr_map)
+            heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
+            # Invert y-axis if specified
+            if y_key in y_invert_vars:
+                ax.invert_yaxis()
+            # Plot on twin axes, if specified
+            if not isinstance(tw_x_key, type(None)):
+                tw_clr = get_var_color(tw_x_key)
+                if tw_clr == std_clr:
+                    tw_clr = alt_std_clr
+                # Add backing x to distinguish from main axis
+                tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=mrk_size*10, marker='x')
+                tw_ax_y.scatter(df[tw_x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
+                tw_ax_y.set_xlabel(pp.xlabels[1])
+                # Change color of the ticks on the twin axis
+                tw_ax_y.tick_params(axis='x', colors=tw_clr)
+                # Create the colorbar
+                cbar = plt.colorbar(heatmap, ax=tw_ax_y)
+            elif not isinstance(tw_y_key, type(None)):
+                tw_clr = get_var_color(tw_y_key)
+                if tw_clr == std_clr:
+                    tw_clr = alt_std_clr
+                # Add backing x to distinguish from main axis
+                tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=mrk_size*10, marker='x')
+                tw_ax_x.scatter(df[x_key], df[tw_y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
+                tw_ax_x.set_ylabel(pp.ylabels[1])
+                # Change color of the ticks on the twin axis
+                tw_ax_x.tick_params(axis='y', colors=tw_clr)
+                # Create the colorbar
+                cbar = plt.colorbar(heatmap, ax=tw_ax_x)
+            else:
+                # Create the colorbar
+                cbar = plt.colorbar(heatmap, ax=ax)
             # Format the colorbar ticks, if necessary
             if clr_map == 'dt_start' or clr_map == 'dt_end':
                 loc = mpl.dates.AutoDateLocator()
@@ -1430,11 +1482,30 @@ def make_subplot(ax, a_group, fig, ax_pos):
         elif clr_map == 'clr_all_same':
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
+            if plot_hist:
+                return plot_histogram(x_key, y_key, ax, df, a_group, pp, clr_map=clr_map)
             # Plot every point the same color, size, and marker
             ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
                 ax.invert_yaxis()
+            # Plot on twin axes, if specified
+            if not isinstance(tw_x_key, type(None)):
+                tw_clr = get_var_color(tw_x_key)
+                if tw_clr == std_clr:
+                    tw_clr = alt_std_clr
+                tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+                tw_ax_y.set_xlabel(pp.xlabels[1])
+                # Change color of the ticks on the twin axis
+                tw_ax_y.tick_params(axis='x', colors=tw_clr)
+            elif not isinstance(tw_y_key, type(None)):
+                tw_clr = get_var_color(tw_y_key)
+                if tw_clr == std_clr:
+                    tw_clr = alt_std_clr
+                tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+                tw_ax_x.set_ylabel(pp.ylabels[1])
+                # Change color of the ticks on the twin axis
+                tw_ax_x.tick_params(axis='y', colors=tw_clr)
             # Add a standard legend
             add_std_legend(ax, df, x_key)
             # Add a standard title
@@ -1474,7 +1545,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'clr_by_instrmt':
             i = 0
             lgnd_hndls = []
@@ -1500,7 +1571,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'density_hist':
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
@@ -1538,7 +1609,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 ax.legend(handles=[n_pts_patch, pixel_patch])
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'clr_by_clusters' or clr_map == 'clr_clstr_vs_SDA':
             # Add a standard title
             plt_title = add_std_title(a_group)
@@ -1639,64 +1710,6 @@ def make_subplot(ax, a_group, fig, ax_pos):
                     xlabel, ylabel = plot_clstr_outputs(ax, new_df, min_cs, rel_val, x_param, y_param, xlabel, ylabel, z_param, z_list, plot_slopes)
                 return xlabel, ylabel, plt_title, ax
             #
-        elif clr_map == 'clr_by_SDA_ml_vs_gl':
-            if pp.plot_scale == 'by_pf':
-                print('Cannot use',clr_map,'with plot scale by_pf')
-                exit(0)
-            # Concatonate all the pandas data frames together
-            df = pd.concat(a_group.data_frames)
-            # Make a sub-dataframe for the points in ML, DC
-            df_ml_dc = df[df['SDA_mask_v_ml_dc'].notnull()]
-            # Make a sub-dataframe for the points in GL, DC
-            df_gl_dc = df[df['SDA_mask_v_gl_dc'].notnull()]
-            # Mark all points in grey
-            ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
-            # Mark all points detected in gradient layers
-            ax.scatter(df_gl_dc[x_key], df_gl_dc[y_key], color=clr_gl, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=6)
-            # Mark all points detected in mixed layers
-            ax.scatter(df_ml_dc[x_key], df_ml_dc[y_key], color=clr_ml, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=7)
-            # Add legend to label which color means what
-            lgnd_hndls = []
-            lgnd_hndls.append(mpl.patches.Patch(color='none', label=str(len(df))+' points'))
-            ml_dc_label = 'ML, DC'
-            lgnd_hndls.append(mpl.patches.Patch(color=clr_ml, label=ml_dc_label+': '+str(len(df_ml_dc))+' points'))
-            gl_dc_label = 'GL, DC'
-            lgnd_hndls.append(mpl.patches.Patch(color=clr_gl, label=gl_dc_label+': '+str(len(df_gl_dc))+' points'))
-            # Add legend with custom handles
-            lgnd = ax.legend(handles=lgnd_hndls)
-            # Add a standard title
-            plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
-        elif clr_map == 'clr_by_SDA_dc_vs_sf':
-            if pp.plot_scale == 'by_pf':
-                print('Cannot use',clr_map,'with plot scale by_pf')
-                exit(0)
-            # Concatonate all the pandas data frames together
-            df = pd.concat(a_group.data_frames)
-            if y_key == 'SDA_ml_press':
-                df[y_key] = df[y_key]*-1
-            # Make a sub-dataframe for the points in ML, DC
-            df_ml_dc = df[df['SDA_mask_l_ml_dc'].notnull()]
-            # Make a sub-dataframe for the points in ML, SF
-            df_ml_sf = df[df['SDA_mask_l_ml_sf'].notnull()]
-            # Mark all points in grey
-            # ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
-            # Mark all points detected in diffusive convective regime
-            ax.scatter(df_ml_dc[x_key], df_ml_dc[y_key], color=get_var_color('SDA_n_ml_dc'), s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=6)
-            # Mark all points detected in mixed layers
-            ax.scatter(df_ml_sf[x_key], df_ml_sf[y_key], color=get_var_color('SDA_n_ml_sf'), s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=7)
-            # Add legend to label which color means what
-            lgnd_hndls = []
-            lgnd_hndls.append(mpl.patches.Patch(color='none', label=str(len(df))+' points'))
-            ml_dc_label = 'ML, DC'
-            lgnd_hndls.append(mpl.patches.Patch(color=get_var_color('SDA_n_ml_dc'), label=ml_dc_label+': '+str(len(df_ml_dc))+' points'))
-            ml_sf_label = 'ML, SF'
-            lgnd_hndls.append(mpl.patches.Patch(color=get_var_color('SDA_n_ml_sf'), label=ml_sf_label+': '+str(len(df_ml_sf))+' points'))
-            # Add legend with custom handles
-            lgnd = ax.legend(handles=lgnd_hndls)
-            # Add a standard title
-            plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
         else:
             # Did not provide a valid clr_map
             print('Colormap',clr_map,'not valid')
@@ -2067,6 +2080,72 @@ def make_subplot(ax, a_group, fig, ax_pos):
 
 ################################################################################
 # Auxiliary plotting functions #################################################
+################################################################################
+
+def plot_histogram(x_key, y_key, ax, df, a_group, pp, clr_map=None):
+    """
+    Takes in an Analysis_Group object which has the data and plotting parameters
+    to produce a subplot of individual profiles. Returns the x and y labels and
+    the subplot title
+
+    ax              The axis on which to make the plot
+    a_group         A Analysis_Group object containing the info to create this subplot
+    pp              The Plot_Parameters object for a_group
+    """
+    if x_key == 'hist':
+        var_key = y_key
+        orientation = 'horizontal'
+        x_label = 'Number of points'
+        y_label = pp.ylabels[0]
+    elif y_key == 'hist':
+        var_key = x_key
+        orientation = 'vertical'
+        x_label = pp.xlabels[0]
+        y_label = 'Number of points'
+    # Determine the color mapping to be used
+    if clr_map == 'clr_all_same':
+        # Get histogram parameters
+        h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key)
+        # Plot the histogram
+        ax.hist(h_var, bins=res_bins, color=std_clr, orientation=orientation)
+        # Add legend to report overall statistics
+        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(h_var))+' points')
+        median_patch  = mpl.patches.Patch(color='none', label='Median:  '+'%.4f'%median)
+        mean_patch    = mpl.patches.Patch(color='none', label='Mean:    ' + '%.4f'%mean)
+        std_dev_patch = mpl.patches.Patch(color='none', label='Std dev: '+'%.4f'%std_dev)
+        notes_string = ''.join(df.notes.unique())
+        # Only add the notes_string if it contains something
+        if len(notes_string) > 1:
+            notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
+            ax.legend(handles=[n_pts_patch, median_patch, mean_patch, std_dev_patch, notes_patch])
+        else:
+            ax.legend(handles=[n_pts_patch, median_patch, mean_patch, std_dev_patch])
+        # Add a standard title
+        plt_title = add_std_title(a_group)
+        return x_label, y_label, plt_title, ax
+
+################################################################################
+
+def get_hist_params(df, x_key):
+    """
+    Returns the needed information to make a histogram
+
+    df      A pandas data frame of the data to plot
+    x_key   A string of the column header to plot
+    """
+    # Pull out the variable to plot, removing null values
+    x_var = np.array(df[df[x_key].notnull()][x_key])
+    # Find overall statistics
+    median  = np.median(x_var)
+    mean    = np.mean(x_var)
+    std_dev = np.std(x_var)
+    # Define the bins to use in the histogram, np.arange(start, stop, step)
+    start = mean - 3*std_dev
+    stop  = mean + 3*std_dev
+    step  = std_dev / 25
+    res_bins = np.arange(start, stop, step)
+    return x_var, res_bins, median, mean, std_dev
+
 ################################################################################
 
 def plot_profiles(ax, a_group, pp, clr_map=None):
@@ -3121,27 +3200,5 @@ def plot_clstr_outputs(ax, df, min_cs, rel_val, x_param, y_param, xlabel=None, y
             # ax1.tick_params(axis='y', colors='b')
     ax.legend()
     return xlabel, ylabel
-
-################################################################################
-
-def get_hist_params(df, x_key):
-    """
-    Returns the needed information to make a histogram
-
-    df      A pandas data frame of the data to plot
-    x_key   A string of the column header to plot
-    """
-    # Pull out the variable to plot, removing null values
-    x_var = np.array(df[df[x_key].notnull()][x_key])
-    # Find overall statistics
-    median  = np.median(x_var)
-    mean    = np.mean(x_var)
-    std_dev = np.std(x_var)
-    # Define the bins to use in the histogram, np.arange(start, stop, step)
-    start = mean - 3*std_dev
-    stop  = mean + 3*std_dev
-    step  = std_dev / 25
-    res_bins = np.arange(start, stop, step)
-    return x_var, res_bins, median, mean, std_dev
 
 ################################################################################
