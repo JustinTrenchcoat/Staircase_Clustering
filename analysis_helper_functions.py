@@ -409,20 +409,6 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
         if pp.plot_type == 'map':
             vars_to_keep.append('lon')
             vars_to_keep.append('lat')
-        elif pp.plot_type == 'profiles':
-            # Check to see if there are extra arguments
-            if not isinstance(plt_params.extra_args, type(None)):
-                extra_args = plt_params.extra_args
-                # Check to see whether there is a twin axis
-                if 'twin_var' in extra_args.keys():
-                    vars_to_keep.append(extra_args['twin_var'])
-                    # Check to see if that twin axis is a local anomaly var
-                    if 'la_' in plt_params.extra_args['twin_var']:
-                        vars_to_keep.append(plt_params.extra_args['twin_var'][3:])
-                        vars_to_keep.append('ma_'+plt_params.extra_args['twin_var'][3:])
-                    # Check to see if that twin axis var should be scaled
-                    if 'sc_' in plt_params.extra_args['twin_var']:
-                        vars_to_keep.append(plt_params.extra_args['twin_var'][3:])
         # Check for extra arguments
         if not isinstance(pp.extra_args, type(None)):
             extra_args = plt_params.extra_args
@@ -561,7 +547,8 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
             if pp.clr_map in ['clusters']:
                 cluster_this = True
         # Add vars for the profile filters, if applicable
-        if pp.plot_scale == 'by_vert' or pp.plot_scale == 'by_layer':
+        scale = pp.plot_scale
+        if scale == 'by_vert' or scale == 'by_layer':
             if not isinstance(profile_filters.p_range, type(None)) and 'press' not in vars_to_keep:
                 vars_to_keep.append('press')
             if not isinstance(profile_filters.d_range, type(None)) and 'depth' not in vars_to_keep:
@@ -1406,6 +1393,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
         # Check for histogram
         if x_key == 'hist' or y_key == 'hist':
             plot_hist = True
+        else:
+            plot_hist = False
         # Check for twin x and y data keys
         try:
             tw_x_key = pp.x_vars[1]
@@ -1432,7 +1421,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 cmap_data = mpl.dates.date2num(df[clr_map])
             else:
                 cmap_data = df[clr_map]
-            # The color of each point corresponds to the number of the profile it came from
+            # Get the colormap
             this_cmap = get_color_map(clr_map)
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map=clr_map)
@@ -1974,6 +1963,10 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
         tw_var_key = txk
         tw_ax = tay
         tw_label = pp.xlabels[1]
+    # Histograms don't work with datetime data
+    if var_key in ['dt_start', 'dt_end']:
+        print('Cannot make histogram with',var_key,'data')
+        exit(0)
     # Determine the color mapping to be used
     if clr_map == 'clr_all_same':
         # Get histogram parameters
@@ -2135,126 +2128,44 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     a_group         A Analysis_Group object containing the info to create this subplot
     pp              The Plot_Parameters object for a_group
     """
-    if pp.plot_scale == 'by_pf':
+    scale = pp.plot_scale
+    if scale == 'by_pf':
         print('Cannot use',pp.plot_type,'with plot scale by_pf')
         exit(0)
-    # Am I plotting a recreation of van der Boog et al. 2021a Figure A1?
-    if not isinstance(pp.extra_args, type(None)):
-        if 'vdB21aFigA1' in pp.extra_args.keys():
-            return plot_vdB21aFigA1(ax, a_group, pp, temp_or_salt=pp.extra_args['vdB21aFigA1'])
-        #
-    #
     # Declare variables related to plotting detected layers
-    d_layers = False
-    ml_x_key = False
-    ml_y_key = False
-    ml_h_key = False
-    gl_x_key = False
-    gl_y_key = False
-    gl_h_key = False
-    SDA_ol   = False
-    # Check whether to add SDA detected layers
-    if not isinstance(pp.extra_args, type(None)):
-        if 'SDA_overlay' in pp.extra_args.keys():
-            SDA_ol = pp.extra_args['SDA_overlay']
-            if SDA_ol[0] == 'ml' or SDA_ol[0] == 'all':
-                ml_x_key = 'SDA_ml_temp'
-                ml_y_key = 'SDA_ml_press'
-                ml_h_key = 'SDA_ml_h'
-            if SDA_ol[0] == 'gl' or SDA_ol[0] == 'all':
-                gl_x_key = 'SDA_gl_temp'
-                gl_y_key = 'SDA_gl_press'
-                gl_h_key = 'SDA_gl_h'
-            #
-        #
+    clr_map = pp.clr_map
     ## Make a plot of the given profiles vs. the vertical
-    # Set the x and y data keys
-    x_key = pp.plot_vars[0]
-    y_key = pp.plot_vars[1]
-    if pp.plot_scale == 'by_vert':
-        if y_key != 'press' and y_key != 'depth' and y_key != 'og_press' and y_key != 'og_depth':
-            print('Expecting y_key=`press` or `depth` but got y_key=',y_key)
-            print('Using y_key=`press` instead')
-            y_key = 'press'
-        scale = 'vert'
-    elif pp.plot_scale == 'by_layer':
-        if y_key != 'SDA_ml_press' and y_key != 'SDA_ml_depth':
-            print('Expecting y_key=`SDA_ml_press` or `SDA_ml_depth` but got y_key=',y_key)
-            print('Using y_key=`SDA_ml_press` instead')
-            y_key = 'SDA_ml_press'
-        scale = 'layer'
-    else:
-        scale = None
-    # Check for a colormap
-    if isinstance(clr_map, type(None)):
-        clr_map = pp.clr_map
-    print('clr_map:',clr_map)
-    cluster_nos = None
-    clst_probs = None
-    pf_SDA_mask_v_ml_dc = None
-    # Check whether to make a twin y axis
-    twin_var = False
-    ml_twin_key = False
-    gl_twin_key = False
-    if not isinstance(pp.extra_args, type(None)):
-        # See whether a twin variable was given
-        if 'twin_var' in pp.extra_args.keys():
-            # Find twin variable
-            twin_var = pp.extra_args['twin_var']
-            # Check whether to get twin variables for ml or gl
-            if SDA_ol:
-                if SDA_ol[0] == 'ml' or SDA_ol[0] == 'all':
-                    if 'CT' in twin_var:
-                        ml_twin_key = 'SDA_ml_temp'
-                    elif 'SA' in twin_var:
-                        ml_twin_key = 'SDA_ml_salt'
-                if SDA_ol[0] == 'gl' or SDA_ol[0] == 'all':
-                    if 'CT' in twin_var:
-                        gl_twin_key = 'SDA_gl_temp'
-                    elif 'SA' in twin_var:
-                        gl_twin_key = 'SDA_gl_salt'
-                    #
-                #
-            # Create the twin axis
-            ax1 = ax.twiny()
-            # Get twin axis label
-            if 'la_' in twin_var:
-                twin_x_label = 'Local anomaly of '+ a_group.data_set.var_attr_dicts[0][twin_var[3:]]['label']
-            else:
-                twin_x_label = a_group.data_set.var_attr_dicts[0][twin_var]['label']
-            ax1.set_xlabel(twin_x_label)
-            # Change color of the ticks on the twin axis
-            ax1.tick_params(axis='x', colors=get_var_color(twin_var))
-    # Change color of the ticks on both axes
-    ax.tick_params(axis='x', colors=get_var_color(x_key))
-    # Make a list of the data sources for the legend
-    instrmt_list = list(a_group.data_set.sources_dict.keys())
-    i = 0 # instrument index
-    # Make a blank list for dictionaries of each profile
-    profile_dictionaries = []
-    # Declare variables related to plotting detected layers
-    ml_x_var = None
-    ml_y_var = None
-    ml_h_var = None
-    ml_y_var_pts = None
-    ml_y_pts_key = None
-    ml_x_var_pts = None
-    ml_x_pts_key = None
-    ml_twin_var = None
-    ml_twin_pts_key = None
-    ml_twin_var_pts = None
-    gl_x_var = None
-    gl_y_var = None
-    gl_h_var = None
-    gl_y_var_pts = None
-    gl_y_pts_key = None
-    gl_x_var_pts = None
-    gl_x_pts_key = None
-    gl_twin_var = None
-    gl_twin_pts_key = None
-    gl_twin_var_pts = None
-    pf_clr_var = None
-    # Loop through each data frame, the same as looping through instrmts
+    # Set the main x and y data keys
+    x_key = pp.x_vars[0]
+    y_key = pp.y_vars[0]
+    var_clr = get_var_color(x_key)
+    # Check for histogram
+    if x_key == 'hist' or y_key == 'hist':
+        print('Cannot plot histograms with profiles plot type')
+    # Check for twin x and y data keys
+    try:
+        tw_x_key = pp.x_vars[1]
+        tw_ax_y  = ax.twiny()
+        tw_clr = get_var_color(tw_x_key)
+        if tw_clr == std_clr:
+            tw_clr = alt_std_clr
+    except:
+        tw_x_key = None
+        tw_ax_y  = None
+    try:
+        tw_y_key = pp.y_vars[1]
+        tw_ax_x  = ax.twinx()
+        tw_clr = get_var_color(tw_y_key)
+        if tw_clr == std_clr:
+            tw_clr = alt_std_clr
+    except:
+        tw_y_key = None
+        tw_ax_x  = None
+    #
+    # Make a blank list for dataframes of each profile
+    profile_dfs = []
+    # Loop through each data frame, the same as looping through instrmts,
+    #   to build a list of dataframes for each profile to plot
     for df in a_group.data_frames:
         # Filter to specified range if applicable
         if not isinstance(a_group.plt_params.ax_lims, type(None)):
@@ -2271,12 +2182,12 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             #
         # Clean out the null values
         df = df[df[x_key].notnull() & df[y_key].notnull()]
-        if twin_var:
-            df = df[df[twin_var].notnull()]
+        if tw_x_key:
+            df = df[df[tw_x_key].notnull()]
+        if tw_y_key:
+            df = df[df[tw_y_key].notnull()]
         # Get notes
         notes_string = ''.join(df.notes.unique())
-        # Get the instrument name
-        this_instrmt = instrmt_list[i]
         # Find the unique profiles for this instrmt
         pfs_in_this_df = np.unique(np.array(df['prof_no']))
         print('pfs_in_this_df:',pfs_in_this_df)
@@ -2293,286 +2204,96 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # print('profile:',pf_no)
             # Get just the part of the dataframe for this profile
             pf_df = df[df['prof_no']==pf_no]
-            if scale == 'vert':
+            if scale == 'by_vert':
                 # Drop `Layer` dimension to reduce size of data arrays
                 #   (need to make the index `Vertical` a column first)
                 pf_df_v = pf_df.reset_index(level=['Vertical'])
                 pf_df_v.drop_duplicates(inplace=True, subset=['Vertical'])
-            elif scale == 'layer':
+            elif scale == 'by_layer':
                 # Drop `Vertical` dimension to reduce size of data arrays
                 #   (need to make the index `Layer` a column first)
                 pf_df_v = pf_df.reset_index(level=['Layer'])
                 pf_df_v.drop_duplicates(inplace=True, subset=['Layer'])
                 # Technically, this profile dataframe isn't `Vertical` but
                 #   it works as is, so I'll keep the variable name
-            # Get the relevant data into arrays
-            pf_x_var = np.array(pf_df_v[x_key].values)
-            pf_y_var = np.array(pf_df_v[y_key].values)
-            # Check for a colormap
-            if clr_map:
-                if clr_map == 'cluster':
-                    pf_clr_var = np.array(pf_df_v[clr_map])
-                    clst_probs = np.array(pf_df_v['clst_prob'])
-                elif clr_map == 'clstr_vs_SDA':
-                    cluster_nos = np.array(pf_df_v['cluster'])
-                    clst_probs = np.array(pf_df_v['clst_prob'])
-                    pf_SDA_mask_v_ml_dc = np.array(pf_df_v['SDA_mask_v_ml_dc'])
-                elif clr_map != 'clr_mkrs':
-                    try:
-                        pf_clr_var = np.array(pf_df_v[clr_map])
-                    except:
-                        pf_clr_var = None
-                        clr_map = None
-            if twin_var:
-                pf_twin_var = np.array(pf_df_v[twin_var].values)
-            else:
-                pf_twin_var = None
-            if SDA_ol:
-                # Drop `Vertical` dimension to reduce size of data arrays
-                #   (need to make the index `Layer` a column first)
-                pf_df_l = pf_df.reset_index(level=['Layer'])
-                pf_df_l.drop_duplicates(inplace=True, subset=['Layer'])
-                if SDA_ol[0] == 'ml' or SDA_ol[0] == 'all':
-                    ml_x_var = np.array(pf_df_l[ml_x_key].values, dtype=type(1.0))
-                    ml_y_var = np.array(pf_df_l[ml_y_key].values, dtype=type(1.0))
-                    ml_h_var = np.array(pf_df_l[ml_h_key].values, dtype=type(1.0))
-                    # Find filtered points
-                    if scale == 'vert':
-                        ml_y_pts_key = ml_y_key+'_pts'
-                        ml_x_pts_key = ml_x_key+'_pts'
-                        ml_y_var_pts = np.array(pf_df_v[ml_y_pts_key].values, dtype=type(1.0))
-                        ml_x_var_pts = np.array(pf_df_v[ml_x_pts_key].values, dtype=type(1.0))
-                if SDA_ol[0] == 'gl' or SDA_ol[0] == 'all':
-                    gl_x_var = np.array(pf_df_l[gl_x_key].values, dtype=type(1.0))
-                    gl_y_var = np.array(pf_df_l[gl_y_key].values, dtype=type(1.0))
-                    gl_h_var = np.array(pf_df_l[gl_h_key].values, dtype=type(1.0))
-                    # Find filtered points
-                    if scale == 'vert':
-                        gl_y_pts_key = gl_y_key+'_pts'
-                        gl_x_pts_key = gl_x_key+'_pts'
-                        gl_y_var_pts = np.array(pf_df_v[gl_y_pts_key].values, dtype=type(1.0))
-                        gl_x_var_pts = np.array(pf_df_v[gl_x_pts_key].values, dtype=type(1.0))
-                if twin_var:
-                    if (SDA_ol[0] == 'ml' or SDA_ol[0] == 'all') and ml_twin_key:
-                        ml_twin_var = np.array(pf_df_l[ml_twin_key].values, dtype=type(1.0))
-                        if scale == 'vert':
-                            ml_twin_pts_key = ml_twin_key+'_pts'
-                            ml_twin_var_pts = np.array(pf_df_v[ml_twin_pts_key].values, dtype=type(1.0))
-                    if (SDA_ol[0] == 'gl' or SDA_ol[0] == 'all') and gl_twin_key:
-                        gl_twin_var = np.array(pf_df_l[gl_twin_key].values, dtype=type(1.0))
-                        if scale == 'vert':
-                            gl_twin_pts_key = gl_twin_key+'_pts'
-                            gl_twin_var_pts = np.array(pf_df_v[gl_twin_pts_key].values, dtype=type(1.0))
-                        #
-                    #
-                #
-            # Create dictionary for this profile
-            pf_dict = {'instrmt': this_instrmt,
-                       'prof_no': pf_no,
-                       x_key: pf_x_var,
-                       y_key: pf_y_var,
-                       clr_map: pf_clr_var,
-                       'cluster_no': cluster_nos,
-                       'clst_prob': clst_probs,
-                       'SDA_mask_v_ml_dc': pf_SDA_mask_v_ml_dc,
-                       ml_x_key: ml_x_var,
-                       ml_y_key: ml_y_var,
-                       ml_h_key: ml_h_var,
-                       ml_x_pts_key: ml_x_var_pts,
-                       ml_y_pts_key: ml_y_var_pts,
-                       gl_x_key: gl_x_var,
-                       gl_y_key: gl_y_var,
-                       gl_h_key: gl_h_var,
-                       gl_x_pts_key: gl_x_var_pts,
-                       gl_y_pts_key: gl_y_var_pts,
-                       twin_var: pf_twin_var,
-                       ml_twin_key: ml_twin_var,
-                       ml_twin_pts_key: ml_twin_var_pts,
-                       gl_twin_key: gl_twin_var,
-                       gl_twin_pts_key: gl_twin_var_pts
-                       }
-            #
-            # print(pf_dict)
-            profile_dictionaries.append(pf_dict)
-        i += 1
-    if len(profile_dictionaries) < 1:
+            profile_dfs.append(pf_df_v)
+        #
+    # Check to see whether any profiles were actually loaded
+    if len(profile_dfs) < 1:
         print('No profiles loaded')
         # Add a standard title
         plt_title = add_std_title(a_group)
-        return pp.xlabel, pp.ylabel, plt_title, ax
+        return pp.xlabels[0], pp.ylabels[0], plt_title, ax
     # Plot each profile
-    for i in range(len(profile_dictionaries)):
-        data = profile_dictionaries[i]
+    for i in range(len(profile_dfs)):
+        # Pull the dataframe for this profile
+        pf_df = profile_dfs[i]
+        # Make a label for this profile
+        pf_label = pf_df['source'][0]+pf_df['instrmt'][0]+'-'+str(int(pf_df['prof_no'][0]))
         # Decide on marker and line styles, don't go off the end of the array
         mkr     = mpl_mrks[i%len(mpl_mrks)]
         l_style = l_styles[i%len(l_styles)]
-        # Adjust the starting points of each subsequent profile
+        # Get array to plot and find bounds
         if i == 0:
-            # Find upper and lower bounds, for reference points
-            xvar_low  = min(data[x_key])
-            xvar_high = max(data[x_key])
+            # Pull data to plot
+            xvar = pf_df[x_key]
+            # Find upper and lower bounds of first profile, for reference points
+            xvar_low  = min(xvar)
+            xvar_high = max(xvar)
             # Define shift for the profile
             xv_shift = (xvar_high - xvar_low)/5
-            # Define array to plot
-            xvar = data[x_key]
-            # Adjust upper bound
-            xvar_high = max(xvar)
-            # Get detected layers data
-            if SDA_ol:
-                if SDA_ol[0] == 'ml' or SDA_ol[0] == 'all':
-                    ml_x = data[ml_x_key]
-                    if scale == 'vert':
-                        ml_x_pts = data[ml_x_pts_key]
-                if SDA_ol[0] == 'gl' or SDA_ol[0] == 'all':
-                    gl_x = data[gl_x_key]
-                    if scale == 'vert':
-                        gl_x_pts = data[gl_x_pts_key]
-            # Make adjustments to twin axis
-            if twin_var:
-                twin_low  = min(data[twin_var])
-                twin_high = max(data[twin_var])
+            # Find upper and lower bounds of first profile for twin axis
+            if tw_x_key:
+                tvar = pf_df[tw_x_key]
+                twin_low  = min(tvar)
+                twin_high = max(tvar)
                 tw_shift  = (twin_high - twin_low)/5
-                twin = data[twin_var]
-                twin_high = max(twin)
-                if SDA_ol:
-                    if (SDA_ol[0] == 'ml' or SDA_ol[0] == 'all') and ml_twin_key:
-                        ml_twin = data[ml_twin_key]
-                        if scale == 'vert':
-                            ml_twin_pts = data[ml_twin_pts_key]
-                    if (SDA_ol[0] == 'gl' or SDA_ol[0] == 'all') and gl_twin_key:
-                        gl_twin = data[gl_twin_key]
-                        if scale == 'vert':
-                            gl_twin_pts = data[gl_twin_pts_key]
-            j = 1
-        else:
-            # Define array to plot
-            xvar = data[x_key] - min(data[x_key]) + xvar_high
-            # Get detected layers data
-            if SDA_ol:
-                if SDA_ol[0] == 'ml' or SDA_ol[0] == 'all':
-                    ml_x = data[ml_x_key] - min(data[x_key]) + xvar_high
-                    if scale == 'vert':
-                        ml_x_pts = data[ml_x_pts_key] - min(data[x_key]) + xvar_high
-                if SDA_ol[0] == 'gl' or SDA_ol[0] == 'all':
-                    gl_x = data[gl_x_key] - min(data[x_key]) + xvar_high
-                    if scale == 'vert':
-                        gl_x_pts = data[gl_x_pts_key] - min(data[x_key]) + xvar_high
+            #
+        # Adjust the starting points of each subsequent profile
+        elif i > 0:
+            # Find array of data
+            xvar = pf_df[x_key] - min(pf_df[x_key]) + xvar_high
             # Adjust upper bound
             xvar_high = max(xvar)
-            if twin_var:
-                twin = data[twin_var] - min(data[twin_var]) + twin_high
-                if SDA_ol:
-                    if (SDA_ol[0] == 'ml' or SDA_ol[0] == 'all') and ml_twin_key:
-                        ml_twin = data[ml_twin_key] - min(data[twin_var]) + twin_high
-                        if scale == 'vert':
-                            ml_twin_pts = data[ml_twin_pts_key] - min(data[twin_var]) + twin_high
-                    if (SDA_ol[0] == 'gl' or SDA_ol[0] == 'all') and gl_twin_key:
-                        gl_twin = data[gl_twin_key] - min(data[twin_var]) + twin_high
-                        if scale == 'vert':
-                            gl_twin_pts = data[gl_twin_pts_key] - min(data[twin_var]) + twin_high
-                twin_high = max(twin)
+            if tw_x_key:
+                tvar = pf_df[tw_x_key] - min(pf_df[tw_x_key]) + twin_high
+                twin_high = max(tvar)
             #
-        #
-        # Plot every point the same color, size, and marker
-        pf_label = data['instrmt']+'-'+str(data['prof_no'])
-        ax.plot(xvar, -data[y_key], color=get_var_color(x_key), linestyle=l_style, label=pf_label, zorder=1)
-        if twin_var:
-            # Plot every point the same color, size, and marker
-            ax1.plot(twin, -data[y_key], color=get_var_color(twin_var), linestyle=l_style, zorder=1)
-        # Apply any colormapping, if appropriate
-        if clr_map == 'clr_mkrs':
-            # Plot every point the same color, size, and marker
-            ax.scatter(xvar, -data[y_key], color=get_var_color(x_key), s=pf_mrk_size, marker=mkr, alpha=pf_alpha, zorder=3)
-            if twin_var:
-                # Plot every point the same color, size, and marker
-                ax1.scatter(twin, -data[y_key], color=get_var_color(twin_var), s=pf_mrk_size, marker=mkr, alpha=pf_alpha, zorder=3)
+        # Determine the color mapping to be used
+        if clr_map in a_group.vars_to_keep:
+            # Format the dates if necessary
+            if clr_map == 'dt_start' or clr_map == 'dt_end':
+                cmap_data = mpl.dates.date2num(pf_df[clr_map])
+            else:
+                cmap_data = pf_df[clr_map]
+            # Plot the line of the profile
+            ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, label=pf_label, zorder=1)
+            # Get the colormap
+            this_cmap = get_color_map(clr_map)
+            # Plot the points as a heatmap
+            heatmap = ax.scatter(xvar, pf_df[y_key], c=cmap_data, cmap=this_cmap, s=pf_mrk_size, marker=mkr)
+            # Plot on twin axes, if specified
+            if not isinstance(tw_x_key, type(None)):
+                tw_ax_y.plot(tvar, pf_df[y_key], color=tw_clr, linestyle=l_style, zorder=1)
+                tw_ax_y.scatter(tvar, pf_df[y_key], c=cmap_data, cmap=this_cmap, s=pf_mrk_size, marker=mkr)
             #
-        elif clr_map == 'cluster':
-            # Make a dataframe
-            df_clstrs = pd.DataFrame({x_key:xvar, y_key:data[y_key], 'cluster':data['cluster'], 'clst_prob':data['clst_prob']})
-            # print(df_clstrs)
-            # Get a list of unique cluster numbers, but delete the noise point label "-1"
-            cluster_numbers = np.unique(np.array(df['cluster'].values))
-            cluster_numbers = np.delete(cluster_numbers, np.where(cluster_numbers == -1))
-            # Plot noise points first
-            ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], -df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
-            # Loop through each cluster
-            for i in cluster_numbers:
-                # Decide on the color and symbol, don't go off the end of the arrays
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
-                my_mkr = mpl_mrks[i%len(mpl_mrks)]
-                # Get relevant data
-                x_data = df_clstrs[df_clstrs.cluster == i][x_key]
-                y_data = df_clstrs[df_clstrs.cluster == i][y_key]
-                alphas = df_clstrs[df_clstrs.cluster == i]['clst_prob']
-                # Plot the points for this cluster with the specified color, marker, and alpha value
-                # ax.scatter(x_data, -y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=alphas, zorder=5)
-                ax.scatter(x_data, -y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=pf_alpha, zorder=5)
-        elif clr_map == 'clstr_vs_SDA':
-            print('plotting clstr_vs_SDA profiles')
-            # Make a dataframe
-            df_clstrs = pd.DataFrame({x_key:xvar, y_key:data[y_key], 'cluster':data['cluster_no'], 'clst_prob':data['clst_prob'], 'SDA_mask_v_ml_dc':data['SDA_mask_v_ml_dc']})
-            # Plot noise points first
-            ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], -df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
-            # Get points in both clusters and mixed layers
-            df_clst_and_SDA = df_clstrs[(df_clstrs['cluster'] >= 0) & (df_clstrs['SDA_mask_v_ml_dc'].notnull())]
-            ax.scatter(df_clst_and_SDA[x_key], -df_clst_and_SDA[y_key], color='m', s=mrk_size, marker=mpl_mrks[1], alpha=pf_alpha, zorder=5)
-            # Get points in clusters but not mixed layers
-            df_clst_no_SDA = df_clstrs[(df_clstrs['cluster'] >= 0) & ~(df_clstrs['SDA_mask_v_ml_dc'].notnull())]
-            ax.scatter(df_clst_no_SDA[x_key], -df_clst_no_SDA[y_key], color='c', s=mrk_size, marker=mpl_mrks[2], alpha=pf_alpha, zorder=4)
-            # Get points in both clusters and mixed layers
-            df_SDA_no_clst = df_clstrs[~(df_clstrs['cluster'] >= 0) & (df_clstrs['SDA_mask_v_ml_dc'].notnull())]
-            ax.scatter(df_SDA_no_clst[x_key], -df_SDA_no_clst[y_key], color='y', s=mrk_size, marker=mpl_mrks[3], alpha=pf_alpha, zorder=3)
-        elif not isinstance(clr_map, type(None)):
+            # Create the colorbar, but only on the first profile
+            if i == 0:
+                cbar = plt.colorbar(heatmap, ax=ax)
+                # Format the colorbar ticks, if necessary
+                if clr_map == 'dt_start' or clr_map == 'dt_end':
+                    loc = mpl.dates.AutoDateLocator()
+                    cbar.ax.yaxis.set_major_locator(loc)
+                    cbar.ax.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+                cbar.set_label(pp.clabel)
+        if clr_map == 'clr_all_same':
             # Plot every point the same color, size, and marker
-            heatmap = ax.scatter(xvar, -data[y_key], c=data[clr_map], cmap=get_color_map(clr_map), s=pf_mrk_size, marker=mkr, alpha=pf_alpha, zorder=3)
-            # Create colorbar
-            cbar = plt.colorbar(heatmap, ax=ax)
-            cbar.set_label(a_group.data_set.var_attr_dicts[0][clr_map]['label'])
-            if twin_var:
-                # Plot every point the same color, size, and marker
-                ax1.scatter(twin, -data[y_key], c=data[clr_map], cmap=get_color_map(clr_map), marker=mkr, alpha=pf_alpha, zorder=3)
-            #
-        # Plot SDA output, if applicable
-        if SDA_ol:
-            if SDA_ol[0] == 'ml' or SDA_ol[0] == 'all':
-                ax.scatter(ml_x, -data[ml_y_key], color='tab:blue', s=pf_mrk_size, marker=l_marker, zorder=7)
-                # Use error bars to show the height of the layers
-                #   Avoid warnings by skipping errorbar plot if all of ml_x is nan's
-                if not np.isnan(ml_x).all():
-                    ax.errorbar(ml_x, -data[ml_y_key], data[ml_h_key]/2, color='tab:blue', capsize=l_cap_size, linestyle='none', zorder=7)
-                # Mark all points detected in layers
-                if scale == 'vert':
-                    ax.scatter(ml_x_pts, -data[ml_y_pts_key], color=clr_ml, marker=mkr, alpha=pf_alpha, zorder=5)
-                if twin_var and ml_twin_key:
-                    ax1.scatter(ml_twin, -data[ml_y_key], color='tab:blue', s=pf_mrk_size, marker=l_marker, alpha=pf_alpha, zorder=7)
-                    # Use error bars to show the height of the layers
-                    #   Avoid warnings by skipping errorbar plot if all of ml_twin is nan's
-                    if not np.isnan(ml_twin).all():
-                        ax1.errorbar(ml_twin, -data[ml_y_key], data[ml_h_key]/2, color='tab:blue', capsize=l_cap_size, linestyle='none', zorder=5)
-                    # Mark all points detected in layers
-                    if scale == 'vert':
-                        ax1.scatter(ml_twin_pts, -data[ml_y_pts_key], color=clr_ml, marker=mkr, alpha=pf_alpha, zorder=5)
-            if SDA_ol[0] == 'gl' or SDA_ol[0] == 'all':
-                ax.scatter(gl_x, -data[gl_y_key], color='tab:olive', s=pf_mrk_size, marker=l_marker, alpha=pf_alpha, zorder=7)
-                # Use error bars to show the height of the layers
-                #   Avoid warnings by skipping errorbar plot if all of gl_x is nan's
-                if not np.isnan(gl_x).all():
-                    ax.errorbar(gl_x, -data[gl_y_key], data[gl_h_key]/2, color='tab:olive', capsize=l_cap_size, linestyle='none', zorder=7)
-                # Mark all points detected in layers
-                if scale == 'vert':
-                    ax.scatter(gl_x_pts, -data[gl_y_pts_key], color=clr_gl, marker=mkr, alpha=pf_alpha, zorder=5)
-                if twin_var and gl_twin_key:
-                    ax1.scatter(gl_twin, -data[gl_y_key], color='tab:olive', s=pf_mrk_size, marker=l_marker, alpha=pf_alpha, zorder=7)
-                    # Use error bars to show the height of the layers
-                    #   Avoid warnings by skipping errorbar plot if all of gl_twin is nan's
-                    if not np.isnan(gl_twin).all():
-                        ax1.errorbar(gl_twin, -data[gl_y_key], data[gl_h_key]/2, color='tab:olive', capsize=l_cap_size, linestyle='none', alpha=pf_alpha, zorder=7)
-                    # Mark all points detected in layers
-                    if scale == 'vert':
-                        ax1.scatter(gl_twin_pts, -data[gl_y_pts_key], color=clr_gl, marker=mkr, alpha=pf_alpha, zorder=5)
-                    #
-                #
+            ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, label=pf_label, zorder=1)
+            ax.scatter(xvar, pf_df[y_key], color=var_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
+            # Plot on twin axes, if specified
+            if not isinstance(tw_x_key, type(None)):
+                tw_ax_y.plot(tvar, pf_df[y_key], color=tw_clr, linestyle=l_style, zorder=1)
+                tw_ax_y.scatter(tvar, pf_df[y_key], color=tw_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
             #
         #
     #
@@ -2580,8 +2301,16 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     xvar_high = xvar_high + xv_shift
     # Adjust bounds on axes
     ax.set_xlim([xvar_low-0.5*xv_shift, xvar_high+xv_shift])
-    if twin_var:
-        ax1.set_xlim([twin_low-tw_shift, twin_high+0.5*tw_shift])
+    # Invert y-axis if specified
+    if y_key in y_invert_vars or tw_x_key in y_invert_vars:
+        ax.invert_yaxis()
+    if tw_x_key:
+        tw_ax_y.set_xlim([twin_low-tw_shift, twin_high+0.5*tw_shift])
+    # Plot on twin axes, if specified
+    if not isinstance(tw_x_key, type(None)):
+        tw_ax_y.set_xlabel(pp.xlabels[1])
+        # Change color of the ticks on the twin axis
+        tw_ax_y.tick_params(axis='x', colors=tw_clr)
     # Add legend
     lgnd = ax.legend()
     # Only add the notes_string if it contains something
@@ -2596,7 +2325,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     #
     # Add a standard title
     plt_title = add_std_title(a_group)
-    return pp.xlabel, pp.ylabel, plt_title, ax
+    return pp.xlabels[0], pp.ylabels[0], plt_title, ax
 
 ################################################################################
 
