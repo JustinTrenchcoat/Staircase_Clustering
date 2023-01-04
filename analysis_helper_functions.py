@@ -112,6 +112,16 @@ layer_vars = []
 pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho', 'p_theta_max', 's_theta_max', 'theta_max']
 # A list of the variables on the `Vertical` dimension
 vertical_vars = ['press', 'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_SP', 'ma_SA', 'ma_sigma', 'la_iT', 'la_CT', 'la_SP', 'la_SA', 'la_sigma']
+# Make lists of clustering variables
+pca_prefix = 'pca_'
+pca_vars   = [ f'{pca_prefix}{var}' for var in vertical_vars]
+cmc_prefix = 'cmc_'
+cmc_vars   = [ f'{cmc_prefix}{var}' for var in vertical_vars]
+ca_prefix  = 'ca_'
+ca_vars    = [ f'{ca_prefix}{var}' for var in vertical_vars]
+clstr_vars = ['cluster'] + pca_vars + cmc_vars + ca_vars
+mc_prefix = 'mc_'
+mc_vars   = [ f'{mc_prefix}{var}' for var in vertical_vars]
 
 ################################################################################
 # Declare classes for custom objects
@@ -244,11 +254,10 @@ class Plot_Parameters:
                     'map' and 'profiles' ignore this parameter
     clr_map         A string to determine what color map to use in the plot
                     'xy' can use 'clr_all_same', 'clr_by_source',
-                      'clr_by_instrmt', 'prof_no', 'press', 'depth',
-                      'dt_start', 'density_hist', or 'clr_by_clusters'
+                      'clr_by_instrmt', 'density_hist', or any regular variable
                     'map' can use 'clr_all_same', 'clr_by_source',
-                      'clr_by_instrmt', 'clr_by_pf_no', or 'clr_by_date'
-                    'profiles' can use 'clr_mkrs'
+                      'clr_by_instrmt', or any 'by_pf' regular variable
+                    'profiles' can use 'clr_all_same' or any regular variable
     extra_args      A general use argument for passing extra info for the plot
                     'map' expects a dictionary following this format:
                         {'map_extent':'Canada_Basin'}
@@ -403,14 +412,16 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
     else:
         # Always include the entry and profile numbers
         vars_to_keep = ['entry', 'prof_no']
-        # Keep track of whether to cluster this data
-        cluster_this = False
         # Add vars based on plot type
         if pp.plot_type == 'map':
             vars_to_keep.append('lon')
             vars_to_keep.append('lat')
         # Add all the plotting variables
         plot_vars = pp.x_vars+pp.y_vars+[pp.clr_map]
+        if not isinstance(pp.extra_args, type(None)):
+            for key in pp.extra_args.keys():
+                if key in ['cl_x_var', 'cl_y_var']:
+                    plot_vars.append(pp.extra_args[key])
         # print('plot_vars:',plot_vars)
         for var in plot_vars:
             if var not in vars_to_keep and var in vars_available:
@@ -444,14 +455,12 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 # Take out the first 4 characters of the string to leave the original variable name
                 var_str = var[4:]
                 vars_to_keep.append(var_str)
-                cluster_this = True
                 # Don't add cluster variables to vars_to_keep
             # Check for cluster mean-centered variables
             elif 'cmc_' in var:
                 # Take out the first 4 characters of the string to leave the original variable name
                 var_str = var[4:]
                 vars_to_keep.append(var_str)
-                cluster_this = True
                 # Don't add cluster variables to vars_to_keep
             # Check for local anomaly variables
             elif 'la_' in var:
@@ -465,23 +474,18 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 # Take out the first 3 characters of the string to leave the original variable name
                 var_str = var[3:]
                 vars_to_keep.append(var_str)
-                cluster_this = True
                 # Don't add cluster variables to vars_to_keep
             # Check for mean-centered variables
             elif 'mc_' in var:
                 # Take out the first 3 characters of the string to leave the original variable name
                 var_str = var[3:]
                 vars_to_keep.append(var_str)
-                cluster_this = True
                 # Don't add cluster variables to vars_to_keep
                 #
             #
         # Add vars for the colormap, if applicable
         if pp.clr_map in vars_available and pp.clr_map not in vars_to_keep:
             vars_to_keep.append(pp.clr_map)
-        else:
-            if pp.clr_map in ['clusters']:
-                cluster_this = True
         # Add vars for the profile filters, if applicable
         scale = pp.plot_scale
         if scale == 'by_vert' or scale == 'by_layer':
@@ -503,7 +507,6 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
         #
         # print('vars_to_keep:')
         # print(vars_to_keep)
-        # print('cluster this?',cluster_this)
         # exit(0)
         return vars_to_keep
 
@@ -1344,6 +1347,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
         except:
             tw_y_key = None
             tw_ax_x  = None
+        # Check whether to cluster this data
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
             if pp.plot_scale == 'by_pf':
@@ -1359,6 +1363,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 cmap_data = df[clr_map]
             # Get the colormap
             this_cmap = get_color_map(clr_map)
+
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map=clr_map)
             heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
@@ -1502,6 +1507,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'density_hist':
+            if plot_hist:
+                print('Cannot use density_hist colormap with the `hist` variable')
+                exit(0)
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
             # Plot a density histogram where each grid box is colored to show how
@@ -1539,7 +1547,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
-        elif clr_map == 'clr_by_clusters' or clr_map == 'clr_clstr_vs_SDA':
+        elif clr_map in ['cluster']:
             # Add a standard title
             plt_title = add_std_title(a_group)
             # Legend is handled inside plot_clusters() or plot_n_clusters_per_n_prof()
@@ -1560,84 +1568,23 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 min_s = None
             # Get x and y parameters, if given
             try:
-                x_param = cluster_plt_dict['x_param']
-                y_param = cluster_plt_dict['y_param']
+                cl_x_var = cluster_plt_dict['cl_x_var']
+                cl_y_var = cluster_plt_dict['cl_y_var']
             except:
-                x_param = None
-                y_param = None
-            # Get x tuple, if given
-            try:
-                x_tuple = cluster_plt_dict['x_tuple']
-            except:
-                x_tuple = None
-            # Get x and y param labels, if available
-            try:
-                xlabel = a_group.data_set.var_attr_dicts[0][x_param]['label']
-            except:
-                xlabel = get_axis_label(x_param)
-            try:
-                ylabel = a_group.data_set.var_attr_dicts[0][y_param]['label']
-            except:
-                ylabel = get_axis_label(y_param)
+                cl_x_var = None
+                cl_y_var = None
             # Get the boolean for whether to plot trendline slopes or not
             try:
                 plot_slopes = cluster_plt_dict['plot_slopes']
             except:
                 plot_slopes = False
-            # If given only one `min_cs` value, plot the clusters
-            # if not isinstance(cluster_plt_dict['min_cs'], list):
-            # If an x_param was not given, plot the clusters
-            if isinstance(x_param, type(None)):
-                # If passed a list of profiles to plot, call plot profiles instead
-                if 'pfs_to_plot' in cluster_plt_dict.keys():
-                    # Run the HDBSCAN algorithm on the provided dataframe
-                    df, rel_val = HDBSCAN_(df, x_key, y_key, cluster_plt_dict['min_cs'], min_samp=min_s)
-                    # Make a list of dataframes that will get filtered to the selected profiles
-                    tmp_df_list = []
-                    print("Including profile numbers:")
-                    for pf_no in cluster_plt_dict['pfs_to_plot']:
-                        print("\t",pf_no)
-                        tmp_df_list.append(df[df['prof_no'] == pf_no])
-                    this_df = pd.concat(tmp_df_list)
-                    # Was an alternative color map provided?
-                    # alt_clr_map = cluster_plt_dict['alt_clr_map']
-                    try:
-                        alt_clr_map = a_group.plt_params.extra_args['alt_clr_map']
-                    except:
-                        alt_clr_map = a_group.plt_params.clr_map
-                    # Prepare the parameters for a profile plot
-                    a_group.data_frames = [this_df]
-                    a_group.plt_params = get_axis_labels(Plot_Parameters(plot_type='profiles', plot_vars=['CT','press'], ax_lims=pp.ax_lims, clr_map=alt_clr_map), a_group.data_set.var_attr_dicts)
-                    pp = a_group.plt_params
-                    return plot_profiles(ax, a_group, pp, clr_map=alt_clr_map)
-                # Check whether or not the box and whisker plots were called for
-                try:
-                    b_a_w_plt = cluster_plt_dict['b_a_w_plt']
-                except:
-                    b_a_w_plt = True
-                plot_clusters(ax, df, x_key, y_key, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt)
-                return pp.xlabel, pp.ylabel, plt_title, ax
-            else:
-                # # If given a list of `min_cs` values, plot number of clusters
-                # #   per number of profiles included
-                # plot_n_clusters_per_n_prof(ax, df, x_key, y_key, cluster_plt_dict['n_pf_step'], cluster_plt_dict['min_cs'])
-                # return 'Number of profiles included', 'Number of clusters found', plt_title, ax
-                #
-                # But first, see if the z param was specified
-                try:
-                    z_param = cluster_plt_dict['z_param']
-                    z_list  = cluster_plt_dict['z_list']
-                except:
-                    z_param = None
-                    z_list  = [None]
-                # If given x_tuple, plot a parameter sweep
-                if not isinstance(x_tuple, type(None)):
-                    xlabel, ylabel = plot_clstr_param_sweep(ax, df, x_key, y_key, x_param, y_param, xlabel, ylabel, x_tuple, z_param, z_list)
-                # If not, plot some outputs
-                else:
-                    new_df, rel_val = HDBSCAN_(df, x_key, y_key, min_cs, min_s)
-                    xlabel, ylabel = plot_clstr_outputs(ax, new_df, min_cs, rel_val, x_param, y_param, xlabel, ylabel, z_param, z_list, plot_slopes)
-                return xlabel, ylabel, plt_title, ax
+            # Check whether or not the box and whisker plots were called for
+            try:
+                b_a_w_plt = cluster_plt_dict['b_a_w_plt']
+            except:
+                b_a_w_plt = True
+            plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt)
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
             #
         else:
             # Did not provide a valid clr_map
@@ -2248,7 +2195,7 @@ def HDBSCAN_(df, x_key, y_key, min_cs, min_samp=None):
 
 ################################################################################
 
-def plot_clusters(ax, df, x_key, y_key, clr_map, min_cs, min_samp=None, box_and_whisker=True):
+def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=None, box_and_whisker=True):
     """
     Plots the clusters found by HDBSCAN on the x-y plane
 
@@ -2256,13 +2203,13 @@ def plot_clusters(ax, df, x_key, y_key, clr_map, min_cs, min_samp=None, box_and_
     df              A pandas data frame output from HDBSCAN_
     x_key           String of the name of the column to use on the x-axis
     y_key           String of the name of the column to use on the y-axis
-    clr_map         String of the name of the colormap to use (ex: 'clr_by_clusters')
+    clr_map         String of the name of the colormap to use (ex: 'clusters')
     min_cs          An integer, the minimum number of points for a cluster
     min_samp        An integer, number of points in neighborhood for a core point
     box_and_whisker True/False whether to include the box and whisker plot
     """
     # Run the HDBSCAN algorithm on the provided dataframe
-    df, rel_val = HDBSCAN_(df, x_key, y_key, min_cs, min_samp=min_samp)
+    df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_samp)
     # Clusters are labeled starting from 0, so total number of clusters is
     #   the largest label plus 1
     n_clusters  = df['cluster'].max()+1
@@ -2272,7 +2219,7 @@ def plot_clusters(ax, df, x_key, y_key, clr_map, min_cs, min_samp=None, box_and_
     ax.scatter(df_noise[x_key], df_noise[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
     n_noise_pts = len(df_noise)
     # Which colormap?
-    if clr_map == 'clr_by_clusters':
+    if clr_map == 'cluster':
         # Loop through each cluster
         pts_per_cluster = []
         for i in range(n_clusters):
@@ -2314,39 +2261,7 @@ def plot_clusters(ax, df, x_key, y_key, clr_map, min_cs, min_samp=None, box_and_
             inset_ax.xaxis.set_label_position('top')
         #
     #
-    elif clr_map == 'clr_clstr_vs_SDA':
-        # Get points in both clusters and mixed layers
-        df_clst_and_SDA = df[(df['cluster'] >= 0) & (df['SDA_mask_v_ml_dc'].notnull())]
-        ax.scatter(df_clst_and_SDA[x_key], df_clst_and_SDA[y_key], color='m', s=mrk_size, marker=mpl_mrks[1], alpha=df_clst_and_SDA['clst_prob'], zorder=5)
-        # Get points in clusters but not mixed layers
-        df_clst_no_SDA = df[(df['cluster'] >= 0) & ~(df['SDA_mask_v_ml_dc'].notnull())]
-        ax.scatter(df_clst_no_SDA[x_key], df_clst_no_SDA[y_key], color='c', s=mrk_size, marker=mpl_mrks[2], alpha=df_clst_no_SDA['clst_prob'], zorder=4)
-        # Get points in mixed layers but not clusters
-        df_SDA_no_clst = df[~(df['cluster'] >= 0) & (df['SDA_mask_v_ml_dc'].notnull())]
-        ax.scatter(df_SDA_no_clst[x_key], df_SDA_no_clst[y_key], color='y', s=mrk_size, marker=mpl_mrks[3], alpha=noise_alpha, zorder=3)
-        # Computing the Adjusted Rand Index
-        #   Format the label array for the SDA "ground truth"
-        #       Take values from mask, convert nan->0 and non-zero integers->1
-        labels_true = np.nan_to_num(np.array(df['SDA_mask_v_ml_dc'].values))
-        labels_true[np.nonzero(labels_true)] = 1
-        print('labels_true:',labels_true)
-        #   Format the label array for the clustering prediction
-        #       Map cluster labels (0,1,2,etc)->1 and noise points (-1)->0
-        #       By adding 1 to all elements then mapping non-zero->1
-        temp_arr = np.array(df['cluster'].values)
-        add_one = np.ones(len(temp_arr))
-        labels_pred = temp_arr + add_one
-        labels_pred[np.nonzero(labels_pred)] = 1
-        print('labels_pred:',labels_pred)
-        #   Compute Adjusted Rand Index using sklearn
-        ari = metrics.adjusted_rand_score(labels_true, labels_pred)
-        # Add legend to report the total number of points and notes on the data
-        n_pts_clst_and_SDA_patch = mpl.patches.Patch(color='m', label='In cluster and ML: '+str(len(df_clst_and_SDA[x_key]))+' points')
-        n_pts_clst_no_SDA_patch = mpl.patches.Patch(color='c', label='In cluster, but not ML: '+str(len(df_clst_no_SDA[x_key]))+' points')
-        n_pts_SDA_no_clst_patch = mpl.patches.Patch(color='y', label='Not in cluster, but in ML: '+str(len(df_SDA_no_clst[x_key]))+' points')
-        n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'Neither in cluster nor ML: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
-        score_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f, ARI: %.4f'%(rel_val, ari))
-        ax.legend(handles=[n_pts_clst_and_SDA_patch, n_pts_clst_no_SDA_patch, n_pts_SDA_no_clst_patch, n_noise_patch, score_patch])
+
 
 ################################################################################
 
