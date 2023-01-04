@@ -1412,6 +1412,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
         elif clr_map == 'clr_all_same':
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
+            # Check for cluster-based variables
+            if x_key in clstr_vars or y_key in clstr_vars:
+                min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
+                df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s, extra_cl_vars=[x_key,y_key])
+            # Check for histogram
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=df, txk=tw_x_key, tay=tw_ax_y, tyk=tw_y_key, tax=tw_ax_x)
             # Plot every point the same color, size, and marker
@@ -1553,36 +1558,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Legend is handled inside plot_clusters() or plot_n_clusters_per_n_prof()
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
-            # Get the dictionary stored in extra_args
-            cluster_plt_dict = pp.extra_args
-            print('cluster_plt_dict:',cluster_plt_dict)
-            # Get minimum cluster size parameter, if it was given
-            try:
-                min_cs = int(cluster_plt_dict['min_cs'])
-            except:
-                min_cs = None
-            # Get minimum samples parameter, if it was given
-            try:
-                min_s = cluster_plt_dict['min_samp']
-            except:
-                min_s = None
-            # Get x and y parameters, if given
-            try:
-                cl_x_var = cluster_plt_dict['cl_x_var']
-                cl_y_var = cluster_plt_dict['cl_y_var']
-            except:
-                cl_x_var = None
-                cl_y_var = None
-            # Get the boolean for whether to plot trendline slopes or not
-            try:
-                plot_slopes = cluster_plt_dict['plot_slopes']
-            except:
-                plot_slopes = False
-            # Check whether or not the box and whisker plots were called for
-            try:
-                b_a_w_plt = cluster_plt_dict['b_a_w_plt']
-            except:
-                b_a_w_plt = True
+            min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
             plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
             #
@@ -2169,7 +2145,42 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
 
 ################################################################################
 
-def HDBSCAN_(df, x_key, y_key, min_cs, min_samp=None):
+def get_cluster_args(pp):
+    # Get the dictionary stored in extra_args
+    cluster_plt_dict = pp.extra_args
+    print('cluster_plt_dict:',cluster_plt_dict)
+    # Get minimum cluster size parameter, if it was given
+    try:
+        min_cs = int(cluster_plt_dict['min_cs'])
+    except:
+        min_cs = None
+    # Get minimum samples parameter, if it was given
+    try:
+        min_s = cluster_plt_dict['min_samp']
+    except:
+        min_s = None
+    # Get x and y parameters, if given
+    try:
+        cl_x_var = cluster_plt_dict['cl_x_var']
+        cl_y_var = cluster_plt_dict['cl_y_var']
+    except:
+        cl_x_var = None
+        cl_y_var = None
+    # Get the boolean for whether to plot trendline slopes or not
+    try:
+        plot_slopes = cluster_plt_dict['plot_slopes']
+    except:
+        plot_slopes = False
+    # Check whether or not the box and whisker plots were called for
+    try:
+        b_a_w_plt = cluster_plt_dict['b_a_w_plt']
+    except:
+        b_a_w_plt = True
+    return min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt
+
+################################################################################
+
+def HDBSCAN_(df, x_key, y_key, min_cs, min_samp=None, extra_cl_vars=None):
     """
     Runs the HDBSCAN algorithm on the set of data specified. Returns a pandas
     dataframe with columns for x_key, y_key, 'cluster', and 'clst_prob' and a
@@ -2180,6 +2191,7 @@ def HDBSCAN_(df, x_key, y_key, min_cs, min_samp=None):
     y_key       String of the name of the column to use on the y-axis
     min_cs      An integer, the minimum number of points for a cluster
     min_samp    An integer, number of points in neighborhood for a core point
+    extra_cl_vars   A list of extra variables to potentially calculate
     """
     # Set the parameters of the HDBSCAN algorithm
     #   Note: must set gen_min_span_tree=True or you can't get `relative_validity_`
@@ -2190,8 +2202,84 @@ def HDBSCAN_(df, x_key, y_key, min_cs, min_samp=None):
     df['cluster']   = hdbscan_1.labels_
     df['clst_prob'] = hdbscan_1.probabilities_
     rel_val = hdbscan_1.relative_validity_
-    # return new_df
+    # Determine whether there are any new variables to calculate
+    new_cl_vars = list(set(extra_cl_vars) & set(clstr_vars))
+    if len(new_cl_vars) > 0:
+        df = calc_extra_cl_vars(df, new_cl_vars)
     return df, rel_val
+
+################################################################################
+
+def calc_extra_cl_vars(df, new_cl_vars):
+    """
+    Takes in an already-clustered pandas data frame and a list of variables and,
+    if there are extra variables to calculate, it will add those to the data frame
+
+    df                  A pandas data frame of the data to plot
+    new_cl_vars         A list of clustering-related variables to calculate
+    """
+    # Find the number of clusters
+    n_clusters = max(df['cluster'])
+    # Check for variables to calculate
+    for this_var in new_cl_vars:
+        # Split the prefix from the original variable (assumes an underscore split)
+        split_var = this_var.split('_', 1)
+        prefix = split_var[0]
+        var = split_var[1]
+        print('prefix:',prefix,'- var:',var)
+        # Make a new blank column in the data frame for this variable
+        df[this_var] = None
+        # Calculate the new values based on the prefix
+        if prefix == 'pca':
+            # Calculate the per profile cluster average version of the variable
+            #   Reduces the number of points to just one per cluster per profile
+            # Loop over each profile
+            n_pfs = int(max(df['entry'].values))
+            for pf in range(n_pfs+1):
+                # Find the data from just this profile
+                df_this_pf = df[df['entry']==pf]
+                # Get a list of clusters in this profile
+                clstr_ids = np.unique(np.array(df_this_pf['cluster'].values))
+                # Remove the noise points
+                clstr_ids = clstr_ids[clstr_ids != -1]
+                # Loop over every cluster in this profile
+                for i in clstr_ids:
+                    # Find the data from this cluster
+                    df_this_pf_this_cluster = df_this_pf[df_this_pf['cluster']==i]
+                    # Find the mean of this var for this cluster for this profile
+                    pf_clstr_mean = np.mean(df_this_pf_this_cluster[var].values)
+                    # Put that value back into the original dataframe
+                    #   Need to make a mask first for some reason
+                    this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
+                    df.loc[this_pf_this_cluster, this_var] = pf_clstr_mean
+        if prefix == 'cmc':
+            # Calculate the cluster mean-centered version of the variable
+            #   Should not change the number of points to display
+            # Loop over each cluster
+            for i in range(n_clusters+1):
+                # Find the data from this cluster
+                df_this_cluster = df[df['cluster']==i].copy()
+                # Find the mean of this var for this cluster
+                clstr_mean = np.mean(df_this_cluster[var].values)
+                # Calculate normalized values
+                df_this_cluster[this_var] = df_this_cluster[var] - clstr_mean
+                # Put those values back into the original dataframe
+                df.loc[df['cluster']==i, this_var] = df_this_cluster[this_var]
+        if prefix == 'ca':
+            # Calculate the cluster average version of the variable
+            #   Reduces the number of points to just one per cluster
+            # Loop over each cluster
+            for i in range(n_clusters+1):
+                # Find the data from this cluster
+                df_this_cluster = df[df['cluster']==i].copy()
+                # Find the mean of this var for this cluster
+                clstr_mean = np.mean(df_this_cluster[var].values)
+                # Put those values back into the original dataframe
+                df.loc[df['cluster']==i, this_var] = clstr_mean
+            #
+        #
+    #
+    return df
 
 ################################################################################
 
@@ -2208,8 +2296,13 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
     min_samp        An integer, number of points in neighborhood for a core point
     box_and_whisker True/False whether to include the box and whisker plot
     """
+    # Decide whether to plot the centroid or not
+    if x_key in pf_vars or y_key in pf_vars:
+        plot_centroid = False
+    else:
+        plot_centroid = True
     # Run the HDBSCAN algorithm on the provided dataframe
-    df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_samp)
+    df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_samp, extra_cl_vars=[x_key,y_key])
     # Clusters are labeled starting from 0, so total number of clusters is
     #   the largest label plus 1
     n_clusters  = df['cluster'].max()+1
@@ -2235,7 +2328,8 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
             # Plot the points for this cluster with the specified color, marker, and alpha value
             ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=alphas, zorder=5)
             # Plot the centroid(?) of this cluster
-            ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=my_mkr, zorder=10)
+            if plot_centroid:
+                ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=my_mkr, zorder=10)
             # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             # Record the number of points in this cluster
             pts_per_cluster.append(len(x_data))
