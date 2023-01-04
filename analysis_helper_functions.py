@@ -409,70 +409,6 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
         if pp.plot_type == 'map':
             vars_to_keep.append('lon')
             vars_to_keep.append('lat')
-        # Check for extra arguments
-        if not isinstance(pp.extra_args, type(None)):
-            extra_args = plt_params.extra_args
-            # Check whether or not an alternative color map was given
-            if 'alt_clr_map' in extra_args.keys():
-                alt_clr_map = extra_args['alt_clr_map']
-                if alt_clr_map in vars_available and alt_clr_map not in vars_to_keep:
-                    vars_to_keep.append(alt_clr_map)
-                #
-            if 'x_param' in extra_args.keys():
-                x_param = extra_args['x_param']
-                if x_param in vars_available and x_param not in vars_to_keep:
-                    vars_to_keep.append(x_param)
-                elif x_param == 'distance':
-                    # Need both longitude and latitude to compute distance between pfs
-                    if 'lon' not in vars_to_keep:
-                        vars_to_keep.append('lon')
-                    if 'lat' not in vars_to_keep:
-                        vars_to_keep.append('lat')
-                    #
-                elif x_param == 'TS_slope':
-                    for var in ['alpha', 'beta']:
-                        if var not in vars_to_keep:
-                            vars_to_keep.append(var)
-                        #
-                    #
-                #
-            xy_params = []
-            if 'x_param' in extra_args.keys():
-                xy_params.append(extra_args['x_param'])
-            if 'y_param' in extra_args.keys():
-                if isinstance(extra_args['y_param'], type([])):
-                    for param in extra_args['y_param']:
-                        xy_params.append(param)
-                else:
-                    xy_params.append(extra_args['y_param'])
-            if 'z_param' in extra_args.keys():
-                xy_params.append(extra_args['z_param'])
-            for var in xy_params:
-                if var in vars_available or var in ['aiT','aCT','BSP','BSA']:
-                    vars_to_keep.append(var)
-                if var == 'aiT':
-                    if 'alpha' not in plt_params.plot_vars:
-                        vars_to_keep.append('alpha')
-                    if 'iT' not in plt_params.plot_vars:
-                        vars_to_keep.append('iT')
-                elif var == 'aCT':
-                    if 'alpha' not in plt_params.plot_vars:
-                        vars_to_keep.append('alpha')
-                    if 'CT' not in plt_params.plot_vars:
-                        vars_to_keep.append('CT')
-                elif var == 'BSP':
-                    if 'beta' not in plt_params.plot_vars:
-                        vars_to_keep.append('beta')
-                    if 'SP' not in plt_params.plot_vars:
-                        vars_to_keep.append('SP')
-                elif var == 'BSA':
-                    if 'beta' not in plt_params.plot_vars:
-                        vars_to_keep.append('beta')
-                    if 'SA' not in plt_params.plot_vars:
-                        vars_to_keep.append('SA')
-                    #
-                #
-            #
         # Add all the plotting variables
         plot_vars = pp.x_vars+pp.y_vars+[pp.clr_map]
         # print('plot_vars:',plot_vars)
@@ -1757,6 +1693,10 @@ def make_subplot(ax, a_group, fig, ax_pos):
         # ax.coastlines()
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
+            # Make sure it isn't a vertical variable
+            if clr_map in vertical_vars:
+                print('Cannot use',clr_map,'as colormap for a map plot')
+                exit(0)
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
             # If not plotting very many points, increase the marker size
@@ -1783,7 +1723,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             add_std_legend(ax, df, 'lon')
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         if clr_map == 'clr_all_same':
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
@@ -1798,7 +1738,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             add_std_legend(ax, df, 'lon')
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'clr_by_source':
             # Find the list of sources
             sources_list = []
@@ -1838,7 +1778,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'clr_by_instrmt':
             i = 0
             lgnd_hndls = []
@@ -1869,54 +1809,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
-        elif clr_map == 'clr_by_pf_no':
-            # Concatonate all the pandas data frames together
-            df = pd.concat(a_group.data_frames)
-            # If not plotting very many points, increase the marker size
-            if len(df) < 10:
-                mrk_s = big_map_mrkr
-            else:
-                mrk_s = map_mrk_size
-            # Get the profile numbers ready for plotting (strips out alphabet characters)
-            try:
-                # This really only applies to SHEBA, fails if df['prof_no'] values aren't strings
-                pf_nos = [re.compile(r'[A-Z,a-z]').sub('', m) for m in df['prof_no'].values]
-            except:
-                pf_nos = df['prof_no'].values
-            # The color of each point corresponds to the number of the profile it came from
-            heatmap = ax.scatter(df['lon'], df['lat'], c=list(map(int, pf_nos)), cmap=cmap_pf_no, s=mrk_s, marker=map_marker, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
-            # Create the colorbar
-            cbar = plt.colorbar(heatmap, ax=ax)
-            cbar.set_label(a_group.data_set.var_attr_dicts[0]['prof_no']['label'])
-            # Add a standard legend
-            add_std_legend(ax, df, 'lon')
-            # Add a standard title
-            plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
-        elif clr_map == 'clr_by_date':
-            # Concatonate all the pandas data frames together
-            df = pd.concat(a_group.data_frames)
-            # If not plotting very many points, increase the marker size
-            if len(df) < 10:
-                mrk_s = big_map_mrkr
-            else:
-                mrk_s = map_mrk_size
-            # The color of each point corresponds to the date that measurement was taken
-            heatmap = ax.scatter(df['lon'], df['lat'], c=mpl.dates.date2num(df['dt_start']), cmap=cmap_date, s=mrk_s, marker=map_marker, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
-            # Create the colorbar
-            cbar = plt.colorbar(heatmap, ax=ax)
-            # Format the numbers on the colorbar
-            loc = mpl.dates.AutoDateLocator()
-            cbar.ax.yaxis.set_major_locator(loc)
-            cbar.ax.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
-            cbar.set_label(a_group.data_set.var_attr_dicts[0]['dt_start']['label'])
-            # Add a standard legend
-            add_std_legend(ax, df, 'lon')
-            # Add a standard title
-            plt_title = add_std_title(a_group)
-            return pp.xlabel, pp.ylabel, plt_title, ax
-        exit(0)
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
     elif plot_type == 'profiles':
         # Call profile plotting function
         return plot_profiles(ax, a_group, pp)
