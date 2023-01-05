@@ -480,8 +480,8 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 # Take out the first 3 characters of the string to leave the original variable name
                 var_str = var[3:]
                 vars_to_keep.append(var_str)
-                # Don't add cluster variables to vars_to_keep
-                #
+                # Calculate it later in calc_extra_vars
+                vars_to_keep.append(var)
             #
         # Add vars for the colormap, if applicable
         if pp.clr_map in vars_available and pp.clr_map not in vars_to_keep:
@@ -778,16 +778,32 @@ def calc_extra_vars(ds, vars_to_keep):
         ds['BSP'] = ds['beta'] * ds['SP']
     if 'BSA' in vars_to_keep:
         ds['BSA'] = ds['beta'] * ds['SA']
-    if 'la_iT' in vars_to_keep:
-        ds['la_iT'] = ds['iT'] - ds['ma_iT']
-    if 'la_CT' in vars_to_keep:
-        ds['la_CT'] = ds['CT'] - ds['ma_CT']
-    if 'la_SP' in vars_to_keep:
-        ds['la_SP'] = ds['SP'] - ds['ma_SP']
-    if 'la_SA' in vars_to_keep:
-        ds['la_SA'] = ds['SA'] - ds['ma_SA']
-    if 'la_sigma' in vars_to_keep:
-        ds['la_sigma'] = ds['sigma'] - ds['ma_sigma']
+    # Check for variables with an underscore
+    for this_var in vars_to_keep:
+        if '_' in this_var and this_var != 'prof_no':
+            # Split the prefix from the original variable (assumes an underscore split)
+            split_var = this_var.split('_', 1)
+            prefix = split_var[0]
+            var = split_var[1]
+            print('prefix:',prefix,'- var:',var)
+            if prefix == 'la':
+                # Calculate the local anomaly of this variable
+                ds[this_var] = ds[var] - ds['ma_'+var]
+            if prefix == 'mc':
+                # Calculate the mean-centered version of this variable
+                mean_ds = ds.mean(dim='Vertical')
+                # The new dataset `mean_ds` has been collapsed along the `Vertical`
+                #   dimension. In order to calculate the mean-centered, first
+                #   stretch it to have the same values along a new `Vertical` dim
+                len_Vertical = ds.sizes['Vertical']
+                mean_ds = mean_ds.expand_dims(dim={'Vertical':len_Vertical}, axis=0)
+                # len_Layer = ds.sizes['Layer']
+                # mean_ds = mean_ds.expand_dims(dim={'Layer':len_Layer}, axis=2)
+                # Both `mean_ds` and `ds` should now have the same dimensions
+                print('mean_ds:',mean_ds.sizes)
+                print('ds[var]:',ds.sizes)
+                # Calculate the mean-centered version of this variable
+                ds[this_var] = ds[var] - mean_ds[var]
     return ds
 
 ################################################################################
