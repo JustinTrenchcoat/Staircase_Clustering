@@ -254,7 +254,8 @@ class Plot_Parameters:
                     'map' and 'profiles' ignore this parameter
     clr_map         A string to determine what color map to use in the plot
                     'xy' can use 'clr_all_same', 'clr_by_source',
-                      'clr_by_instrmt', 'density_hist', or any regular variable
+                      'clr_by_instrmt', 'density_hist', 'cluster', or any
+                      regular variable
                     'map' can use 'clr_all_same', 'clr_by_source',
                       'clr_by_instrmt', or any 'by_pf' regular variable
                     'profiles' can use 'clr_all_same' or any regular variable
@@ -265,6 +266,9 @@ class Plot_Parameters:
                         {'clr_min':0, 'clr_max':20, 'clr_ext':'max', 'xy_bins':250}
                         All 4 of those arguments must be provided for it to work
                         If no extra_args is given, those default values are used
+                    If 'hist' is one of the plot variables, you can add the
+                        number of histogram bins to use:
+                        {'n_h_bins':50}
                     'clr_by_clusters' expects a dictionary following this format:
                         {'min_cs':[45,60,75], 'n_pf_step':5} where if 'min_cs' is
                         not a list, it will plot the clusters, but if it is, it
@@ -1737,6 +1741,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
     elif plot_type == 'profiles':
+        # Check for clustering
         # Call profile plotting function
         return plot_profiles(ax, a_group, pp)
     else:
@@ -1765,7 +1770,17 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
     ax              The axis on which to make the plot
     a_group         A Analysis_Group object containing the info to create this subplot
     pp              The Plot_Parameters object for a_group
+    clr_map
     """
+    # Find the histogram parameters, if given
+    if not isinstance(pp.extra_args, type(None)):
+        try:
+            n_h_bins = pp.extra_args['n_h_bins']
+        except:
+            n_h_bins = None
+    else:
+        n_h_bins = None
+    # Load in variables
     if x_key == 'hist':
         var_key = y_key
         orientation = 'horizontal'
@@ -1789,7 +1804,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
     # Determine the color mapping to be used
     if clr_map == 'clr_all_same':
         # Get histogram parameters
-        h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key)
+        h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
         # Plot the histogram
         ax.hist(h_var, bins=res_bins, color=std_clr, orientation=orientation)
         # Add legend to report overall statistics
@@ -1915,13 +1930,15 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
 
 ################################################################################
 
-def get_hist_params(df, h_key):
+def get_hist_params(df, h_key, n_h_bins=25):
     """
     Returns the needed information to make a histogram
 
     df      A pandas data frame of the data to plot
     h_key   A string of the column header to plot
     """
+    if isinstance(n_h_bins, type(None)):
+        n_h_bins = 25
     # Pull out the variable to plot, removing null values
     h_var = np.array(df[df[h_key].notnull()][h_key])
     # Find overall statistics
@@ -1931,7 +1948,7 @@ def get_hist_params(df, h_key):
     # Define the bins to use in the histogram, np.arange(start, stop, step)
     start = mean - 3*std_dev
     stop  = mean + 3*std_dev
-    step  = std_dev / 25
+    step  = std_dev / n_h_bins
     res_bins = np.arange(start, stop, step)
     return h_var, res_bins, median, mean, std_dev
 
@@ -2114,6 +2131,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
                 tw_ax_y.plot(tvar, pf_df[y_key], color=tw_clr, linestyle=l_style, zorder=1)
                 tw_ax_y.scatter(tvar, pf_df[y_key], color=tw_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
             #
+        if clr_map == 'cluster':
+            foo = 2
         #
     #
     # Compensate for shifting the twin axis by adjusting the max xvar
