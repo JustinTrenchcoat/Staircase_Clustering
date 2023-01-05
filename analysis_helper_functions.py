@@ -120,8 +120,8 @@ cmc_vars   = [ f'{cmc_prefix}{var}' for var in vertical_vars]
 ca_prefix  = 'ca_'
 ca_vars    = [ f'{ca_prefix}{var}' for var in vertical_vars]
 clstr_vars = ['cluster'] + pca_vars + cmc_vars + ca_vars
-mc_prefix = 'mc_'
-mc_vars   = [ f'{mc_prefix}{var}' for var in vertical_vars]
+# mc_prefix = 'mc_'
+# mc_vars   = [ f'{mc_prefix}{var}' for var in vertical_vars]
 
 ################################################################################
 # Declare classes for custom objects
@@ -789,21 +789,8 @@ def calc_extra_vars(ds, vars_to_keep):
             if prefix == 'la':
                 # Calculate the local anomaly of this variable
                 ds[this_var] = ds[var] - ds['ma_'+var]
-            if prefix == 'mc':
-                # Calculate the mean-centered version of this variable
-                mean_ds = ds.mean(dim='Vertical')
-                # The new dataset `mean_ds` has been collapsed along the `Vertical`
-                #   dimension. In order to calculate the mean-centered, first
-                #   stretch it to have the same values along a new `Vertical` dim
-                len_Vertical = ds.sizes['Vertical']
-                mean_ds = mean_ds.expand_dims(dim={'Vertical':len_Vertical}, axis=0)
-                # len_Layer = ds.sizes['Layer']
-                # mean_ds = mean_ds.expand_dims(dim={'Layer':len_Layer}, axis=2)
-                # Both `mean_ds` and `ds` should now have the same dimensions
-                print('mean_ds:',mean_ds.sizes)
-                print('ds[var]:',ds.sizes)
-                # Calculate the mean-centered version of this variable
-                ds[this_var] = ds[var] - mean_ds[var]
+            #
+        #
     return ds
 
 ################################################################################
@@ -916,10 +903,10 @@ def get_axis_label(var_key, var_attr_dicts):
         var_str = var_key[3:]
         return 'Cluster average of '+ var_attr_dicts[0][var_str]['label']
     # Check for mean-centered variables
-    elif 'mc_' in var_key:
-        # Take out the first 3 characters of the string to leave the original variable name
-        var_str = var_key[3:]
-        return 'Mean-centered '+ var_attr_dicts[0][var_str]['label']
+    # elif 'mc_' in var_key:
+    #     # Take out the first 3 characters of the string to leave the original variable name
+    #     var_str = var_key[3:]
+    #     return 'Mean-centered '+ var_attr_dicts[0][var_str]['label']
     # Build dictionary of axis labels
     ax_labels = {
                  'hist':r'Occurrences',
