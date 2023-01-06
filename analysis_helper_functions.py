@@ -78,7 +78,7 @@ clr_gl = 'tab:orange'
 mrk_size      = 0.5
 mrk_alpha     = 0.4 #0.05
 noise_alpha   = 0.1 #0.01
-pf_alpha      = 0.5
+pf_alpha      = 1.0 #0.5
 lgnd_mrk_size = 60
 map_mrk_size  = 7
 big_map_mrkr  = 80
@@ -120,6 +120,12 @@ cmc_vars   = [ f'{cmc_prefix}{var}' for var in vertical_vars]
 ca_prefix  = 'ca_'
 ca_vars    = [ f'{ca_prefix}{var}' for var in vertical_vars]
 clstr_vars = ['cluster'] + pca_vars + cmc_vars + ca_vars
+# For parameter sweeps of clustering
+#   Independent variables
+clstr_ps_ind_vars = ['min_cs', 'n_pfs', 'maw_size']
+#   Dependent variables
+clstr_ps_dep_vars = ['DBCV', 'n_clusters']
+clstr_ps_vars = clstr_ps_ind_vars + clstr_ps_dep_vars
 # mc_prefix = 'mc_'
 # mc_vars   = [ f'{mc_prefix}{var}' for var in vertical_vars]
 
@@ -269,6 +275,11 @@ class Plot_Parameters:
                     If 'hist' is one of the plot variables, you can add the
                         number of histogram bins to use: {'n_h_bins':25}, if not
                         given, it will use that default value
+                    'profiles' plots will accept optional arguments such as:
+                        {'pfs_to_plot':[183,185,187]}
+                        Note: the code narrows to these profiles just before
+                        plotting, so use this argument instead of narrowing earlier
+                        in the Data_Set object if you want to plot by 'cluster'
                     'clr_by_clusters' expects a dictionary following this format:
                         {'min_cs':[45,60,75], 'n_pf_step':5} where if 'min_cs' is
                         not a list, it will plot the clusters, but if it is, it
@@ -784,7 +795,7 @@ def calc_extra_vars(ds, vars_to_keep):
         ds['BSA'] = ds['beta'] * ds['SA']
     # Check for variables with an underscore
     for this_var in vars_to_keep:
-        if '_' in this_var and this_var != 'prof_no':
+        if '_' in this_var and this_var not in ['prof_no','clst_prob']:
             # Split the prefix from the original variable (assumes an underscore split)
             split_var = this_var.split('_', 1)
             prefix = split_var[0]
@@ -922,8 +933,8 @@ def get_axis_label(var_key, var_attr_dicts):
                  's_theta_max':r'$S(\theta_{max})$ (g/kg)',
                  'theta_max':r'$\theta_{max}$ ($^\circ$C)',
                  'distance':r'Along-path distance (km)',
-                 'min_cs':r'Minimum cluster size',
-                 'DBCV':'Relative validity measure',
+                 'min_cs':r'Minimum cluster size $m_{pts}$',
+                 'DBCV':'Relative validity measure (DBCV)',
                  'n_clusters':'Number of clusters'
                 }
     if var_key in ax_labels.keys():
@@ -1354,7 +1365,10 @@ def make_subplot(ax, a_group, fig, ax_pos):
         except:
             tw_y_key = None
             tw_ax_x  = None
-        # Check whether to cluster this data
+        # Check whether plotting a parameter sweep of clustering
+        for var in [x_key, y_key, tw_x_key, tw_y_key]:
+            if var in clstr_ps_vars:
+                plot_clstr_param_sweep(ax, a_group)
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
             if pp.plot_scale == 'by_pf':
@@ -2006,9 +2020,11 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         extra_args = False
     # Make a blank list for dataframes of each profile
     profile_dfs = []
+    # Concatonate all the pandas data frames together
+    df = pd.concat(a_group.data_frames)
     # Loop through each data frame, the same as looping through instrmts,
     #   to build a list of dataframes for each profile to plot
-    for df in a_group.data_frames:
+    if True: #for df in a_group.data_frames:
         # Filter to specified range if applicable
         if not isinstance(a_group.plt_params.ax_lims, type(None)):
             try:
@@ -2028,6 +2044,17 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             df = df[df[tw_x_key].notnull()]
         if tw_y_key:
             df = df[df[tw_y_key].notnull()]
+        # Check whether to run the clustering algorithm
+        cluster_this = False
+        #   Find all the plotting variables
+        plot_vars = [x_key,y_key,tw_x_key,tw_y_key,clr_map]
+        for var in plot_vars:
+            if var in clstr_vars:
+                cluster_this = True
+            #
+        if cluster_this:
+            min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
+            df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s, extra_cl_vars=plot_vars)
         # Get notes
         notes_string = ''.join(df.notes.unique())
         # Check for extra arguments
@@ -2102,6 +2129,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
                 twin_low  = min(tvar)
                 twin_high = max(tvar)
                 tw_shift  = (twin_high - twin_low)/5
+            else:
+                tvar = None
             #
         # Adjust the starting points of each subsequent profile
         elif i > 0:
@@ -2112,6 +2141,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             if tw_x_key:
                 tvar = pf_df[tw_x_key] - min(pf_df[tw_x_key]) + twin_high
                 twin_high = max(tvar)
+            else:
+                tvar = None
             #
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
@@ -2120,7 +2151,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
                 cmap_data = mpl.dates.date2num(pf_df[clr_map])
             else:
                 cmap_data = pf_df[clr_map]
-            # Plot the line of the profile
+            # Plot a background line for each profile
             ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, label=pf_label, zorder=1)
             # Get the colormap
             this_cmap = get_color_map(clr_map)
@@ -2141,8 +2172,9 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
                     cbar.ax.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
                 cbar.set_label(pp.clabel)
         if clr_map == 'clr_all_same':
-            # Plot every point the same color, size, and marker
+            # Plot a background line for each profile
             ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, label=pf_label, zorder=1)
+            # Plot every point the same color, size, and marker
             ax.scatter(xvar, pf_df[y_key], color=var_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
             # Plot on twin axes, if specified
             if not isinstance(tw_x_key, type(None)):
@@ -2150,7 +2182,36 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
                 tw_ax_y.scatter(tvar, pf_df[y_key], color=tw_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
             #
         if clr_map == 'cluster':
-            foo = 2
+            # Plot a background line for each profile
+            ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, label=pf_label, zorder=1)
+            # Make a dataframe with adjusted xvar and tvar
+            # df_clstrs = pd.DataFrame({x_key:xvar, y_key:pf_df[y_key], 'cluster':pf_df['cluster'], 'clst_prob':pf_df['clst_prob']})
+            df_clstrs = pd.DataFrame({x_key:xvar, tw_x_key:tvar, y_key:pf_df[y_key], 'cluster':pf_df['cluster'], 'clst_prob':pf_df['clst_prob']})
+            # Get a list of unique cluster numbers, but delete the noise point label "-1"
+            cluster_numbers = np.unique(np.array(df_clstrs['cluster'].values))
+            cluster_numbers = np.delete(cluster_numbers, np.where(cluster_numbers == -1))
+            # Plot noise points first
+            ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
+            # Plot on twin axes, if specified
+            if not isinstance(tw_x_key, type(None)):
+                tw_ax_y.plot(tvar, pf_df[y_key], color=tw_clr, linestyle=l_style, label=pf_label, zorder=1)
+                tw_ax_y.scatter(df_clstrs[df_clstrs.cluster==-1][tw_x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
+            # Loop through each cluster
+            for i in cluster_numbers:
+                # Decide on the color and symbol, don't go off the end of the arrays
+                my_clr = mpl_clrs[i%len(mpl_clrs)]
+                my_mkr = mpl_mrks[i%len(mpl_mrks)]
+                # Get relevant data
+                x_data = df_clstrs[df_clstrs.cluster == i][x_key]
+                y_data = df_clstrs[df_clstrs.cluster == i][y_key]
+                alphas = df_clstrs[df_clstrs.cluster == i]['clst_prob']
+                # Plot the points for this cluster with the specified color, marker, and alpha value
+                # ax.scatter(x_data, -y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=alphas, zorder=5)
+                ax.scatter(x_data, y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=pf_alpha, zorder=5)
+                # Plot on twin axes, if specified
+                if not isinstance(tw_x_key, type(None)):
+                    t_data = df_clstrs[df_clstrs.cluster == i][tw_x_key]
+                    tw_ax_y.scatter(t_data, y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=pf_alpha, zorder=5)
         #
     #
     # Compensate for shifting the twin axis by adjusting the max xvar
@@ -2244,6 +2305,9 @@ def HDBSCAN_(df, x_key, y_key, min_cs, min_samp=None, extra_cl_vars=None):
     rel_val = hdbscan_1.relative_validity_
     # Determine whether there are any new variables to calculate
     new_cl_vars = list(set(extra_cl_vars) & set(clstr_vars))
+    # Don't need to calculate `cluster` so remove it if its there
+    if 'cluster' in new_cl_vars:
+        new_cl_vars.remove('cluster')
     if len(new_cl_vars) > 0:
         df = calc_extra_cl_vars(df, new_cl_vars)
     return df, rel_val
@@ -2395,7 +2459,6 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
             inset_ax.xaxis.set_label_position('top')
         #
     #
-
 
 ################################################################################
 
