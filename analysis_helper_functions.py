@@ -239,7 +239,7 @@ class Plot_Parameters:
                       'map' ignores this variable as it always plots lon vs. lat
                     Default plot is 'SP' vs. 'iT'
                     Accepted 'by_pf' vars: 'entry', 'prof_no', 'BL_yn', 'dt_start',
-                      'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho'
+                      'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho', 'hist'
                     Accepted 'by_vert' vars: all 'by_pf' vars plus 'press',
                       'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta',
                       'aiT', 'aCT', 'BSP', 'BSA', 'ma_iT', 'ma_CT', 'ma_SP',
@@ -267,8 +267,8 @@ class Plot_Parameters:
                         All 4 of those arguments must be provided for it to work
                         If no extra_args is given, those default values are used
                     If 'hist' is one of the plot variables, you can add the
-                        number of histogram bins to use:
-                        {'n_h_bins':50}
+                        number of histogram bins to use: {'n_h_bins':25}, if not
+                        given, it will use that default value
                     'clr_by_clusters' expects a dictionary following this format:
                         {'min_cs':[45,60,75], 'n_pf_step':5} where if 'min_cs' is
                         not a list, it will plot the clusters, but if it is, it
@@ -1978,6 +1978,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     # Check for histogram
     if x_key == 'hist' or y_key == 'hist':
         print('Cannot plot histograms with profiles plot type')
+        exit(0)
     # Check for twin x and y data keys
     try:
         tw_x_key = pp.x_vars[1]
@@ -1998,6 +1999,11 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         tw_y_key = None
         tw_ax_x  = None
     #
+    # Get extra args dictionary, if it exists
+    try:
+        extra_args = pp.extra_args
+    except:
+        extra_args = False
     # Make a blank list for dataframes of each profile
     profile_dfs = []
     # Loop through each data frame, the same as looping through instrmts,
@@ -2024,6 +2030,18 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             df = df[df[tw_y_key].notnull()]
         # Get notes
         notes_string = ''.join(df.notes.unique())
+        # Check for extra arguments
+        if extra_args:
+            # Check whether to narrow down the profiles to plot
+            try:
+                pfs_to_plot = extra_args['pfs_to_plot']
+                # Make a temporary list of dataframes for the profiles to plot
+                tmp_df_list = []
+                for pf_no in pfs_to_plot:
+                    tmp_df_list.append(df[df['prof_no'] == pf_no])
+                df = pd.concat(tmp_df_list)
+            except:
+                extra_args = None
         # Find the unique profiles for this instrmt
         pfs_in_this_df = np.unique(np.array(df['prof_no']))
         print('pfs_in_this_df:',pfs_in_this_df)
@@ -2034,7 +2052,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             exit(0)
         # else:
         #     print('Plotting',len(pfs_in_this_df),'profiles')
-        # Loop through each profile
+        # Loop through each profile to create a list of dataframes
         for pf_no in pfs_in_this_df:
             # print('')
             # print('profile:',pf_no)
