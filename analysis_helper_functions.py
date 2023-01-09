@@ -280,15 +280,14 @@ class Plot_Parameters:
                         Note: the code narrows to these profiles just before
                         plotting, so use this argument instead of narrowing earlier
                         in the Data_Set object if you want to plot by 'cluster'
-                    'clr_by_clusters' expects a dictionary following this format:
-                        {'min_cs':[45,60,75], 'n_pf_step':5} where if 'min_cs' is
-                        not a list, it will plot the clusters, but if it is, it
-                        will plot number of clusters per number of profiles used, or
-                        {'min_cs':120, 'pfs_to_plot':[1257,1259]} where pfs_to_plot
-                        is a list of profiles to plot as T and S vs pressure and
-                        min_cs must not be a list
-                        {'x_param':'attr', 'y_param':'value', 'x_tuple':[],
-                        'z_param':'attr', 'z_list':[]}
+                    If plotting anything that has to do clustering, need these:
+                        {'cl_x_var':var0, 'cl_y_var':var1} where the two variables
+                        can be any that work for an 'xy' plot
+                    If doing a parameter sweep of clustering, expects the following:
+                        {'cl_x_var':var0, 'cl_y_var':var1, 'cl_ps_tuple':[100,410,50]}
+                        where var0 and var1 are as specified above, 'cl_ps_tuple' is
+                        the [start,stop,step] for the xvar which must be 'min_cs'
+                        or 'n_pfs', and yvar(s) must be 'DBCV' or 'n_clusters'
     """
     def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
         # Add all the input parameters to the object
@@ -439,32 +438,24 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                     plot_vars.append(pp.extra_args[key])
         # print('plot_vars:',plot_vars)
         for var in plot_vars:
-            if var not in vars_to_keep and var in vars_available:
+            if var in vars_available:
                 vars_to_keep.append(var)
             if var == 'aiT':
                 vars_to_keep.append(var)
-                if 'alpha' not in vars_to_keep:
-                    vars_to_keep.append('alpha')
-                if 'iT' not in vars_to_keep:
-                    vars_to_keep.append('iT')
+                vars_to_keep.append('alpha')
+                vars_to_keep.append('iT')
             elif var == 'aCT':
                 vars_to_keep.append(var)
-                if 'alpha' not in vars_to_keep:
-                    vars_to_keep.append('alpha')
-                if 'CT' not in vars_to_keep:
-                    vars_to_keep.append('CT')
+                vars_to_keep.append('alpha')
+                vars_to_keep.append('CT')
             elif var == 'BSP':
                 vars_to_keep.append(var)
-                if 'beta' not in vars_to_keep:
-                    vars_to_keep.append('beta')
-                if 'SP' not in vars_to_keep:
-                    vars_to_keep.append('SP')
+                vars_to_keep.append('beta')
+                vars_to_keep.append('SP')
             elif var == 'BSA':
                 vars_to_keep.append(var)
-                if 'beta' not in vars_to_keep:
-                    vars_to_keep.append('beta')
-                if 'SA' not in vars_to_keep:
-                    vars_to_keep.append('SA')
+                vars_to_keep.append('beta')
+                vars_to_keep.append('SA')
             # Check for profile cluster average variables
             if 'pca_' in var:
                 # Take out the first 4 characters of the string to leave the original variable name
@@ -499,27 +490,29 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append(var)
             #
         # Add vars for the colormap, if applicable
-        if pp.clr_map in vars_available and pp.clr_map not in vars_to_keep:
+        if pp.clr_map in vars_available:
             vars_to_keep.append(pp.clr_map)
         # Add vars for the profile filters, if applicable
         scale = pp.plot_scale
         if scale == 'by_vert' or scale == 'by_layer':
-            if not isinstance(profile_filters.p_range, type(None)) and 'press' not in vars_to_keep:
+            if not isinstance(profile_filters.p_range, type(None)):
                 vars_to_keep.append('press')
-            if not isinstance(profile_filters.d_range, type(None)) and 'depth' not in vars_to_keep:
+            if not isinstance(profile_filters.d_range, type(None)):
                 vars_to_keep.append('depth')
-            if not isinstance(profile_filters.iT_range, type(None)) and 'iT' not in vars_to_keep:
+            if not isinstance(profile_filters.iT_range, type(None)):
                 vars_to_keep.append('iT')
-            if not isinstance(profile_filters.CT_range, type(None)) and 'CT' not in vars_to_keep:
+            if not isinstance(profile_filters.CT_range, type(None)):
                 vars_to_keep.append('CT')
-            if not isinstance(profile_filters.SP_range, type(None)) and 'SP' not in vars_to_keep:
+            if not isinstance(profile_filters.SP_range, type(None)):
                 vars_to_keep.append('SP')
-            if not isinstance(profile_filters.SA_range, type(None)) and 'SA' not in vars_to_keep:
+            if not isinstance(profile_filters.SA_range, type(None)):
                 vars_to_keep.append('SA')
-            if profile_filters.subsample and 'ss_mask' not in vars_to_keep:
+            if profile_filters.subsample:
                 vars_to_keep.append('ss_mask')
             #
         #
+        # Remove duplicates
+        vars_to_keep = list(set(vars_to_keep))
         # print('vars_to_keep:')
         # print(vars_to_keep)
         # exit(0)
@@ -543,6 +536,12 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
     """
     print('- Applying profile filters')
     plot_scale = pp.plot_scale
+    # Add all the plotting variables
+    plot_vars = pp.x_vars+pp.y_vars+[pp.clr_map]
+    if not isinstance(pp.extra_args, type(None)):
+        for key in pp.extra_args.keys():
+            if key in ['cl_x_var', 'cl_y_var']:
+                plot_vars.append(pp.extra_args[key])
     # Make an empty list
     output_dfs = []
     # What's the plot scale?
@@ -561,7 +560,7 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
                 # Set a new column so the ss_scheme can be found later for the title
                 df['ss_scheme'] = ds.attrs['Sub-sample scheme']
             # Remove rows where the plot variables are null
-            for var in pp.x_vars+pp.y_vars:
+            for var in plot_vars:
                 if var in vars_to_keep:
                     df = df[df[var].notnull()]
             # Add expedition and instrument columns
@@ -729,14 +728,11 @@ def filter_profile_ranges(df, profile_filters, p_key, d_key, iT_key=None, CT_key
     """
     #   Filter to a certain pressure range
     if not isinstance(profile_filters.p_range, type(None)):
-        if profile_filters.p_range == "Shibley2017":
-            df = filter_p_range_Shibley2017(df)
-        else:
-            # Get endpoints of pressure range
-            p_max = max(profile_filters.p_range)
-            p_min = min(profile_filters.p_range)
-            # Filter the data frame to the specified pressure range
-            df = df[(df[p_key] < p_max) & (df[p_key] > p_min)]
+        # Get endpoints of pressure range
+        p_max = max(profile_filters.p_range)
+        p_min = min(profile_filters.p_range)
+        # Filter the data frame to the specified pressure range
+        df = df[(df[p_key] < p_max) & (df[p_key] > p_min)]
     #   Filter to a certain depth range
     if not isinstance(profile_filters.d_range, type(None)):
         # Get endpoints of depth range
@@ -800,7 +796,7 @@ def calc_extra_vars(ds, vars_to_keep):
             split_var = this_var.split('_', 1)
             prefix = split_var[0]
             var = split_var[1]
-            print('prefix:',prefix,'- var:',var)
+            # print('prefix:',prefix,'- var:',var)
             if prefix == 'la':
                 # Calculate the local anomaly of this variable
                 ds[this_var] = ds[var] - ds['ma_'+var]
@@ -1341,6 +1337,10 @@ def make_subplot(ax, a_group, fig, ax_pos):
     pp = a_group.plt_params
     plot_type = pp.plot_type
     clr_map   = pp.clr_map
+    # Concatonate all the pandas data frames together
+    df = pd.concat(a_group.data_frames)
+    # print('in make_subplot, df:')
+    # print(df)
     # Decide on a plot type
     if plot_type == 'xy':
         ## Make a standard x vs. y scatter plot
@@ -1368,7 +1368,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
         # Check whether plotting a parameter sweep of clustering
         for var in [x_key, y_key, tw_x_key, tw_y_key]:
             if var in clstr_ps_vars:
-                plot_clstr_param_sweep(ax, a_group)
+                # Add a standard title
+                plt_title = add_std_title(a_group)
+                # Plot the parameter sweep
+                xlabel, ylabel = plot_clstr_param_sweep(ax, tw_ax_x, a_group)
+                return xlabel, ylabel, plt_title, ax
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
             if pp.plot_scale == 'by_pf':
@@ -2249,7 +2253,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
 def get_cluster_args(pp):
     # Get the dictionary stored in extra_args
     cluster_plt_dict = pp.extra_args
-    print('cluster_plt_dict:',cluster_plt_dict)
+    # print('cluster_plt_dict:',cluster_plt_dict)
     # Get minimum cluster size parameter, if it was given
     try:
         min_cs = int(cluster_plt_dict['min_cs'])
@@ -2281,7 +2285,7 @@ def get_cluster_args(pp):
 
 ################################################################################
 
-def HDBSCAN_(df, x_key, y_key, min_cs, min_samp=None, extra_cl_vars=None):
+def HDBSCAN_(df, x_key, y_key, min_cs, min_samp=None, extra_cl_vars=[None]):
     """
     Runs the HDBSCAN algorithm on the set of data specified. Returns a pandas
     dataframe with columns for x_key, y_key, 'cluster', and 'clst_prob' and a
@@ -2330,7 +2334,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
         split_var = this_var.split('_', 1)
         prefix = split_var[0]
         var = split_var[1]
-        print('prefix:',prefix,'- var:',var)
+        # print('prefix:',prefix,'- var:',var)
         # Make a new blank column in the data frame for this variable
         df[this_var] = None
         # Calculate the new values based on the prefix
@@ -2498,100 +2502,106 @@ def plot_n_clusters_per_n_prof(ax, df, x_key, y_key, n_pf_step, min_css, min_sam
 
 ################################################################################
 
-def plot_clstr_param_sweep(ax, df, x_key, y_key, x_param, y_param, xlabel, ylabel, x_tuple, z_param=None, z_list=[None]):
+def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
     """
     Plots the number of clusters found by HDBSCAN vs. the number of profiles
     included in the data set
 
     ax              The axis on which to plot
-    df              A pandas data frame on which to run HDBSCAN_
-    x_key           String of the name of the column to use on the x-axis when clustering
-    y_key           String of the name of the column to use on the y-axis when clustering
-    x_param         String of the name of clustering attribute on the x-axis in the output
-    y_param         String of the name of clustering attribute on the y-axis in the output
-    x_tuple         A tuple for the x_param with (start, stop, step) to define the x-axis
-    z_param         String of the name of clustering attribute to plot one line for each
-    z_list          A list of values of the z_param to plot one line for each
     """
+    ## Get relevant parameters for the plot
+    pp = a_group.plt_params
+    # Concatonate all the pandas data frames together
+    df = pd.concat(a_group.data_frames)
+    # Get the dictionary stored in extra_args
+    cluster_plt_dict = pp.extra_args
+    # Set the main x and y data keys
+    x_key = pp.x_vars[0]
+    y_key = pp.y_vars[0]
+    # Check for twin axis data key
+    try:
+        tw_y_key = pp.y_vars[1]
+    except:
+        tw_y_key = None
+    # Get cluster arguments
+    min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
+    # Get the parameter sweep tuple, expect the form [start,stop,step]
+    try:
+        cl_ps_tuple = cluster_plt_dict['cl_ps_tuple']
+    except:
+        print('Cannot find `cl_ps_tuple` in `extra_args`, aborting script')
+        exit(0)
+    # Build the array for the x_var axis
+    x_var_array = np.arange(cl_ps_tuple[0], cl_ps_tuple[1], cl_ps_tuple[2])
+    print('Plotting these values of',x_key,':',x_var_array)
+    # Check for a z variable
+    try:
+        z_key = cluster_plt_dict['z_var']
+        z_list = cluster_plt_dict['z_list']
+        print('Plotting these values of',z_key,':',z_list)
+    except:
+        z_key = None
+        z_list = [0]
     # If limiting the number of profiles, find the total number of profiles in the given dataframe
-    if x_param == 'n_pfs' or z_param == 'n_pfs':
-        max_entries = int(max(df['entry']))
-    # Build the array for the x_param axis
-    x_param_array = np.arange(x_tuple[0], x_tuple[1], x_tuple[2])
-    print('x_param:',x_param)
-    print('y_param:',y_param)
-    print('xp_array:',x_param_array)
-    # exit(0)
-    j=0
+    # if x_param == 'n_pfs' or z_param == 'n_pfs':
+    #     max_entries = int(max(df['entry']))
     for i in range(len(z_list)):
-        y_param_array = []
-        twin_y_param_array = []
-        for x in x_param_array:
-            # Set input params
-            min_cs = None
-            min_samps = None
-            if x_param == 'min_cs':
+        y_var_array = []
+        tw_y_var_array = []
+        for x in x_var_array:
+            # Set parameters based on variables selected
+            if x_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(x)
                 xlabel = 'Minimum cluster size'
-            elif x_param == 'min_samps':
+            elif x_key == 'min_samps':
                 # min samples must be an integer
-                min_samps = int(x)
+                min_s = int(x)
                 xlabel = 'Minimum samples'
-            if z_param == 'min_cs':
+            if z_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(z_list[i])
                 zlabel = 'Minimum cluster size: '+str(min_cs)
-            elif z_param == 'min_samps':
+            elif z_key == 'min_samps':
                 # min samps must be an integer, or None
                 if not isinstance(z_list[i], type(None)):
-                    min_samps = int(z_list[i])
+                    min_s = int(z_list[i])
                 else:
-                    min_samps = z_list[i]
-                zlabel = 'Minimum samples: '+str(min_samps)
+                    min_s = z_list[i]
+                zlabel = 'Minimum samples: '+str(min_s)
             else:
                 zlabel = None
-            # Run the HDBSCAN algorithm
-            new_df, rel_val = HDBSCAN_(df, x_key, y_key, min_cs, min_samps)
-            # Set output params
-            #   Check whether to do dual vertical axes
-            if not isinstance(y_param, list):
-                twin_sweep = False
-                y_p = y_param
-            elif len(y_param) == 2:
-                twin_sweep = True
-                y_p = y_param[0]
-                # Create the twin axis
-                ax1 = ax.twinx()
-                if y_param[1] == 'n_clusters':
-                    # Clusters are labeled starting from 0, so total number of clusters is
-                    #   the largest label plus 1
-                    twin_y_param_array.append(new_df['cluster'].max()+1)
-                    twin_ylabel = 'Number of clusters'
-                elif y_param[1] == 'DBCV':
-                    # relative_validity_ is a rough measure of DBCV
-                    twin_y_param_array.append(rel_val)
-                    twin_ylabel = 'DBCV (relative_validity_)'
-                #
-            else:
-                print('Too many arguments in y_param:',y_param)
-                exit(0)
-            if y_p == 'n_clusters':
+            # Run the HDBSCAN algorithm on the provided dataframe
+            new_df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s)
+            # Record outputs to plot
+            if y_key == 'DBCV':
+                # relative_validity_ is a rough measure of DBCV
+                y_var_array.append(rel_val)
+                ylabel = 'DBCV (relative_validity_)'
+            elif y_key == 'n_clusters':
                 # Clusters are labeled starting from 0, so total number of clusters is
                 #   the largest label plus 1
-                y_param_array.append(new_df['cluster'].max()+1)
+                y_var_array.append(new_df['cluster'].max()+1)
                 ylabel = 'Number of clusters'
-            elif y_p == 'DBCV':
-                # relative_validity_ is a rough measure of DBCV
-                y_param_array.append(rel_val)
-                ylabel = 'DBCV (relative_validity_)'
+            if tw_y_key:
+                if tw_y_key == 'DBCV':
+                    # relative_validity_ is a rough measure of DBCV
+                    tw_y_var_array.append(rel_val)
+                    tw_ylabel = 'DBCV (relative_validity_)'
+                elif tw_y_key == 'n_clusters':
+                    # Clusters are labeled starting from 0, so total number of clusters is
+                    #   the largest label plus 1
+                    tw_y_var_array.append(new_df['cluster'].max()+1)
+                    tw_ylabel = 'Number of clusters'
+                #
             #
-        ax.plot(x_param_array, y_param_array, color=mpl_clrs[i%len(mpl_clrs)], linestyle=l_styles[j], label=zlabel)
-        if twin_sweep:
-            ax1.plot(x_param_array, twin_y_param_array, color=mpl_clrs[i%len(mpl_clrs)], linestyle=l_styles[1])
-            ax1.set_ylabel(twin_ylabel)
-            # ax1.tick_params(axis='y', colors='b')
-    ax.legend()
+        ax.plot(x_var_array, y_var_array, color=std_clr, linestyle=l_styles[i], label=zlabel)
+        if tw_y_key:
+            tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
+            tw_ax_x.set_ylabel(tw_ylabel)
+            tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
+    if z_key:
+        ax.legend()
     return xlabel, ylabel
 
 ################################################################################
