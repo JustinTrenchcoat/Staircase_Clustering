@@ -1181,10 +1181,10 @@ def set_fig_axes(heights, widths, fig_ratio=0.5, fig_size=1, share_x_axis=None, 
             share_y_axis = False
     elif share_y_axis == None:
         share_y_axis = False
-        print('Set share_y_axis to', share_y_axis)
+        print('\tSet share_y_axis to', share_y_axis)
     elif share_x_axis == None:
         share_x_axis = False
-        print('Set share_x_axis to', share_x_axis)
+        print('\tSet share_x_axis to', share_x_axis)
     # Set ratios by passing dictionary as 'gridspec_kw', and share y axis
     fig, axes = plt.subplots(figsize=(w*fig_size,h*fig_size), nrows=rows, ncols=cols, gridspec_kw=plot_ratios, sharex=share_x_axis, sharey=share_y_axis, subplot_kw=dict(projection=prjctn))
     # Set ticklabel format for all axes
@@ -1577,7 +1577,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
-        elif clr_map in ['cluster']:
+        elif clr_map == 'cluster':
             # Add a standard title
             plt_title = add_std_title(a_group)
             # Legend is handled inside plot_clusters() or plot_n_clusters_per_n_prof()
@@ -2262,6 +2262,8 @@ def get_cluster_args(pp):
     # Get minimum samples parameter, if it was given
     try:
         min_s = cluster_plt_dict['min_samp']
+        if not isinstance(min_s, type(None)):
+            min_s = int(min_s)
     except:
         min_s = None
     # Get x and y parameters, if given
@@ -2533,18 +2535,25 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
         exit(0)
     # Build the array for the x_var axis
     x_var_array = np.arange(cl_ps_tuple[0], cl_ps_tuple[1], cl_ps_tuple[2])
-    print('Plotting these values of',x_key,':',x_var_array)
     # Check for a z variable
     try:
         z_key = cluster_plt_dict['z_var']
         z_list = cluster_plt_dict['z_list']
-        print('Plotting these values of',z_key,':',z_list)
     except:
         z_key = None
         z_list = [0]
-    # If limiting the number of profiles, find the total number of profiles in the given dataframe
-    # if x_param == 'n_pfs' or z_param == 'n_pfs':
-    #     max_entries = int(max(df['entry']))
+    # If limiting the number of pfs, find total number of pfs in the given df
+    if x_key == 'n_pfs':
+        max_entries = int(max(df['entry']))
+        print('\tMax entry number:',max_entries)
+        x_var_array = x_var_array[x_var_array <= max_entries]
+    if z_key == 'n_pfs':
+        max_entries = int(max(df['entry']))
+        print('\tMax entry number:',max_entries)
+        z_list = z_list[z_list <= max_entries]
+    print('\tPlotting these x values of',x_key,':',x_var_array)
+    if z_key:
+        print('\tPlotting these z values of',z_key,':',z_list)
     for i in range(len(z_list)):
         y_var_array = []
         tw_y_var_array = []
@@ -2553,11 +2562,16 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
             if x_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(x)
+                this_df = df
                 xlabel = 'Minimum cluster size'
             elif x_key == 'min_samps':
                 # min samples must be an integer
                 min_s = int(x)
+                this_df = df
                 xlabel = 'Minimum samples'
+            elif x_key == 'n_pfs':
+                this_df = df[df['entry'] <= x].copy()
+                xlabel = 'Number of profiles included'
             if z_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(z_list[i])
@@ -2572,7 +2586,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
             else:
                 zlabel = None
             # Run the HDBSCAN algorithm on the provided dataframe
-            new_df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s)
+            new_df, rel_val = HDBSCAN_(this_df, cl_x_var, cl_y_var, min_cs, min_samp=min_s)
             # Record outputs to plot
             if y_key == 'DBCV':
                 # relative_validity_ is a rough measure of DBCV

@@ -54,7 +54,7 @@ print('- Creating plotting parameter objects')
 
 ### xy plots
 pp_xy_default = ahf.Plot_Parameters()
-pp_test = ahf.Plot_Parameters(x_vars=['min_cs'], y_vars=['DBCV','n_clusters'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'cl_ps_tuple':[30,410,10]})
+pp_test = ahf.Plot_Parameters(x_vars=['n_pfs'], y_vars=['DBCV','n_clusters'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':200, 'cl_ps_tuple':[10,300,50], 'z_var':'min_cs', 'z_list':[100,150,200]})
 pp_test0 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_iT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':200})
 # pp_test = ahf.Plot_Parameters(x_vars=['iT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same')
 
