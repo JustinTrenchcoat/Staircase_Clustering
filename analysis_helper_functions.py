@@ -2550,6 +2550,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
     if z_key == 'n_pfs':
         max_entries = int(max(df['entry']))
         print('\tMax entry number:',max_entries)
+        z_list = np.array(z_list)
         z_list = z_list[z_list <= max_entries]
     print('\tPlotting these x values of',x_key,':',x_var_array)
     if z_key:
@@ -2565,8 +2566,11 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
                 this_df = df
                 xlabel = 'Minimum cluster size'
             elif x_key == 'min_samps':
-                # min samples must be an integer
-                min_s = int(x)
+                # min samples must be an integer, or None
+                if not isinstance(x, type(None)):
+                    min_s = int(x)
+                else:
+                    min_s = x
                 this_df = df
                 xlabel = 'Minimum samples'
             elif x_key == 'n_pfs':
@@ -2575,7 +2579,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
             if z_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(z_list[i])
-                zlabel = 'Minimum cluster size: '+str(min_cs)
+                zlabel = r'$m_{pts}=$: '+str(min_cs)
             elif z_key == 'min_samps':
                 # min samps must be an integer, or None
                 if not isinstance(z_list[i], type(None)):
@@ -2583,6 +2587,9 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
                 else:
                     min_s = z_list[i]
                 zlabel = 'Minimum samples: '+str(min_s)
+            elif z_key == 'n_pfs':
+                this_df = df[df['entry'] <= z_list[i]].copy()
+                zlabel = r'$n_{profiles}=$'+str(z_list[i])
             else:
                 zlabel = None
             # Run the HDBSCAN algorithm on the provided dataframe
