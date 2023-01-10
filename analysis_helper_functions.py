@@ -210,11 +210,9 @@ class Profile_Filters:
     iT_range            [T_min, T_max] where the values are floats in degrees C
     SP_range            [S_min, S_max] where the values are floats in g/kg
     subsample           True/False whether to apply the subsample mask to the profiles
-    regrid_TS           [T_var, d_temp, S_var, d_salt] or None if you don't want to re-grid
-    detected_layers     'all', 'ml', or 'gl'. If None, this is ignored
-    regime              'all', 'dc', or 'sf'. If None, this is ignored
+    m_avg_win           The value in dbar of the moving average window to take for ma_ variables
     """
-    def __init__(self, p_range=None, d_range=None, iT_range=None, CT_range=None, SP_range=None, SA_range=None, subsample=False, regrid_TS=None, run_SDA=False, detected_layers=None, regime=None):
+    def __init__(self, p_range=None, d_range=None, iT_range=None, CT_range=None, SP_range=None, SA_range=None, subsample=False, regrid_TS=None, m_avg_win=None):
         self.p_range = p_range
         self.d_range = d_range
         self.iT_range = iT_range
@@ -223,9 +221,7 @@ class Profile_Filters:
         self.SA_range = SA_range
         self.subsample = subsample
         self.regrid_TS = regrid_TS
-        self.run_SDA = run_SDA
-        self.detected_layers = detected_layers
-        self.regime = regime
+        self.m_avg_win = m_avg_win
 
 ################################################################################
 
@@ -552,6 +548,9 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
             df = ds[vars_to_keep].to_dataframe()
             # Add a notes column
             df['notes'] = ''
+            #   If the m_avg_win is not None, take the moving average of the data
+            if not isinstance(profile_filters.m_avg_win, type(None)):
+                df = take_m_avg(df, profile_filters.m_avg_win, vars_to_keep)
             #   True/False, apply the subsample mask to the profiles
             if profile_filters.subsample:
                 # `ss_mask` is null for the points that should be masked out
@@ -709,6 +708,36 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
         #
     #
     return output_dfs
+
+################################################################################
+
+def take_m_avg(df, m_avg_win, vars_available):
+    """
+    Returns the same pandas dataframe, but with the filters provided applied to
+    the data within
+
+    df              A pandas dataframe
+    m_avg_win       The value of the moving average window in dbar
+    vars_available
+    """
+    # Use the pandas `rolling` function to get the moving average
+    #   center=True makes the first and last window/2 of the profiles are masked
+    #   win_type='boxcar' uses a rectangular window shape
+    #   on='press' means it will take `press` as the index column
+    #   .mean() takes the average of the rolling
+    df1 = df.rolling(window=int(m_avg_win), center=True, win_type='boxcar', on='press').mean()
+    # Put the moving average profiles for temperature, salinity, and density into the dataset
+    if 'ma_iT' in vars_available:
+        df['ma_iT'] = df1['iT']
+    if 'ma_SP' in vars_available:
+        df['ma_SP'] = df1['SP']
+    if 'ma_sigma' in vars_available:
+        df['ma_sigma']= gsw.sigma1(df['ma_SP'], df['ma_iT'])
+    if 'ma_CT' in vars_available:
+        df['ma_CT'] = df1['CT']
+    if 'ma_SA' in vars_available:
+        df['ma_SA'] = df1['SA']
+    return df
 
 ################################################################################
 
@@ -2026,83 +2055,80 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     profile_dfs = []
     # Concatonate all the pandas data frames together
     df = pd.concat(a_group.data_frames)
-    # Loop through each data frame, the same as looping through instrmts,
-    #   to build a list of dataframes for each profile to plot
-    if True: #for df in a_group.data_frames:
-        # Filter to specified range if applicable
-        if not isinstance(a_group.plt_params.ax_lims, type(None)):
-            try:
-                y_lims = a_group.plt_params.ax_lims['y_lims']
-                # Get endpoints of vertical range, make sure they are positive
-                y_lims = [abs(ele) for ele in y_lims]
-                y_max = max(y_lims)
-                y_min = min(y_lims)
-                # Filter the data frame to the specified vertical range
-                df = df[(df[y_key] < y_max) & (df[y_key] > y_min)]
-            except:
-                foo = 2
-            #
-        # Clean out the null values
-        df = df[df[x_key].notnull() & df[y_key].notnull()]
-        if tw_x_key:
-            df = df[df[tw_x_key].notnull()]
-        if tw_y_key:
-            df = df[df[tw_y_key].notnull()]
-        # Check whether to run the clustering algorithm
-        cluster_this = False
-        #   Find all the plotting variables
-        plot_vars = [x_key,y_key,tw_x_key,tw_y_key,clr_map]
-        for var in plot_vars:
-            if var in clstr_vars:
-                cluster_this = True
-            #
-        if cluster_this:
-            min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
-            df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s, extra_cl_vars=plot_vars)
-        # Get notes
-        notes_string = ''.join(df.notes.unique())
-        # Check for extra arguments
-        if extra_args:
-            # Check whether to narrow down the profiles to plot
-            try:
-                pfs_to_plot = extra_args['pfs_to_plot']
-                # Make a temporary list of dataframes for the profiles to plot
-                tmp_df_list = []
-                for pf_no in pfs_to_plot:
-                    tmp_df_list.append(df[df['prof_no'] == pf_no])
-                df = pd.concat(tmp_df_list)
-            except:
-                extra_args = None
-        # Find the unique profiles for this instrmt
-        pfs_in_this_df = np.unique(np.array(df['prof_no']))
-        print('pfs_in_this_df:',pfs_in_this_df)
-        # Make sure you're not trying to plot too many profiles
-        if len(pfs_in_this_df) > 10:
-            print('You are trying to plot',len(pfs_in_this_df),'profiles')
-            print('That is too many. Try to plot less than 10')
-            exit(0)
-        # else:
-        #     print('Plotting',len(pfs_in_this_df),'profiles')
-        # Loop through each profile to create a list of dataframes
-        for pf_no in pfs_in_this_df:
-            # print('')
-            # print('profile:',pf_no)
-            # Get just the part of the dataframe for this profile
-            pf_df = df[df['prof_no']==pf_no]
-            if scale == 'by_vert':
-                # Drop `Layer` dimension to reduce size of data arrays
-                #   (need to make the index `Vertical` a column first)
-                pf_df_v = pf_df.reset_index(level=['Vertical'])
-                pf_df_v.drop_duplicates(inplace=True, subset=['Vertical'])
-            elif scale == 'by_layer':
-                # Drop `Vertical` dimension to reduce size of data arrays
-                #   (need to make the index `Layer` a column first)
-                pf_df_v = pf_df.reset_index(level=['Layer'])
-                pf_df_v.drop_duplicates(inplace=True, subset=['Layer'])
-                # Technically, this profile dataframe isn't `Vertical` but
-                #   it works as is, so I'll keep the variable name
-            profile_dfs.append(pf_df_v)
+    # Filter to specified range if applicable
+    if not isinstance(a_group.plt_params.ax_lims, type(None)):
+        try:
+            y_lims = a_group.plt_params.ax_lims['y_lims']
+            # Get endpoints of vertical range, make sure they are positive
+            y_lims = [abs(ele) for ele in y_lims]
+            y_max = max(y_lims)
+            y_min = min(y_lims)
+            # Filter the data frame to the specified vertical range
+            df = df[(df[y_key] < y_max) & (df[y_key] > y_min)]
+        except:
+            foo = 2
         #
+    # Clean out the null values
+    df = df[df[x_key].notnull() & df[y_key].notnull()]
+    if tw_x_key:
+        df = df[df[tw_x_key].notnull()]
+    if tw_y_key:
+        df = df[df[tw_y_key].notnull()]
+    # Check whether to run the clustering algorithm
+    cluster_this = False
+    #   Find all the plotting variables
+    plot_vars = [x_key,y_key,tw_x_key,tw_y_key,clr_map]
+    for var in plot_vars:
+        if var in clstr_vars:
+            cluster_this = True
+        #
+    if cluster_this:
+        min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
+        df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s, extra_cl_vars=plot_vars)
+    # Get notes
+    notes_string = ''.join(df.notes.unique())
+    # Check for extra arguments
+    if extra_args:
+        # Check whether to narrow down the profiles to plot
+        try:
+            pfs_to_plot = extra_args['pfs_to_plot']
+            # Make a temporary list of dataframes for the profiles to plot
+            tmp_df_list = []
+            for pf_no in pfs_to_plot:
+                tmp_df_list.append(df[df['prof_no'] == pf_no])
+            df = pd.concat(tmp_df_list)
+        except:
+            extra_args = None
+    # Find the unique profiles for this instrmt
+    pfs_in_this_df = np.unique(np.array(df['prof_no']))
+    print('pfs_in_this_df:',pfs_in_this_df)
+    # Make sure you're not trying to plot too many profiles
+    if len(pfs_in_this_df) > 10:
+        print('You are trying to plot',len(pfs_in_this_df),'profiles')
+        print('That is too many. Try to plot less than 10')
+        exit(0)
+    # else:
+    #     print('Plotting',len(pfs_in_this_df),'profiles')
+    # Loop through each profile to create a list of dataframes
+    for pf_no in pfs_in_this_df:
+        # print('')
+        # print('profile:',pf_no)
+        # Get just the part of the dataframe for this profile
+        pf_df = df[df['prof_no']==pf_no]
+        if scale == 'by_vert':
+            # Drop `Layer` dimension to reduce size of data arrays
+            #   (need to make the index `Vertical` a column first)
+            pf_df_v = pf_df.reset_index(level=['Vertical'])
+            pf_df_v.drop_duplicates(inplace=True, subset=['Vertical'])
+        elif scale == 'by_layer':
+            # Drop `Vertical` dimension to reduce size of data arrays
+            #   (need to make the index `Layer` a column first)
+            pf_df_v = pf_df.reset_index(level=['Layer'])
+            pf_df_v.drop_duplicates(inplace=True, subset=['Layer'])
+            # Technically, this profile dataframe isn't `Vertical` but
+            #   it works as is, so I'll keep the variable name
+        profile_dfs.append(pf_df_v)
+    #
     # Check to see whether any profiles were actually loaded
     if len(profile_dfs) < 1:
         print('No profiles loaded')
@@ -2179,11 +2205,11 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # Plot a background line for each profile
             ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, label=pf_label, zorder=1)
             # Plot every point the same color, size, and marker
-            ax.scatter(xvar, pf_df[y_key], color=var_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
+            # ax.scatter(xvar, pf_df[y_key], color=var_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
             # Plot on twin axes, if specified
             if not isinstance(tw_x_key, type(None)):
                 tw_ax_y.plot(tvar, pf_df[y_key], color=tw_clr, linestyle=l_style, zorder=1)
-                tw_ax_y.scatter(tvar, pf_df[y_key], color=tw_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
+                # tw_ax_y.scatter(tvar, pf_df[y_key], color=tw_clr, s=pf_mrk_size, marker=mkr, alpha=mrk_alpha)
             #
         if clr_map == 'cluster':
             # Plot a background line for each profile
