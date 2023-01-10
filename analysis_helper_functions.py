@@ -716,9 +716,9 @@ def take_m_avg(df, m_avg_win, vars_available):
     Returns the same pandas dataframe, but with the filters provided applied to
     the data within
 
-    df              A pandas dataframe
-    m_avg_win       The value of the moving average window in dbar
-    vars_available
+    df                  A pandas dataframe
+    m_avg_win           The value of the moving average window in dbar
+    vars_available      A list of variables available in the dataframe
     """
     # Use the pandas `rolling` function to get the moving average
     #   center=True makes the first and last window/2 of the profiles are masked
@@ -727,16 +727,26 @@ def take_m_avg(df, m_avg_win, vars_available):
     #   .mean() takes the average of the rolling
     df1 = df.rolling(window=int(m_avg_win), center=True, win_type='boxcar', on='press').mean()
     # Put the moving average profiles for temperature, salinity, and density into the dataset
-    if 'ma_iT' in vars_available:
+    if 'iT' in vars_available:
         df['ma_iT'] = df1['iT']
-    if 'ma_SP' in vars_available:
+        if 'la_iT' in vars_available:
+            df['la_iT'] = df['iT'] - df['ma_iT']
+    if 'SP' in vars_available:
         df['ma_SP'] = df1['SP']
-    if 'ma_sigma' in vars_available:
+        if 'la_SP' in vars_available:
+            df['la_SP'] = df['SP'] - df['ma_SP']
+    if 'sigma' in vars_available:
         df['ma_sigma']= gsw.sigma1(df['ma_SP'], df['ma_iT'])
-    if 'ma_CT' in vars_available:
+        if 'la_sigma' in vars_available:
+            df['la_sigma'] = df['sigma'] - df['ma_sigma']
+    if 'CT' in vars_available:
         df['ma_CT'] = df1['CT']
-    if 'ma_SA' in vars_available:
+        if 'la_CT' in vars_available:
+            df['la_CT'] = df['CT'] - df['ma_CT']
+    if 'SA' in vars_available:
         df['ma_SA'] = df1['SA']
+        if 'la_SA' in vars_available:
+            df['la_SA'] = df['SA'] - df['ma_SA']
     return df
 
 ################################################################################
@@ -2602,6 +2612,8 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
             elif x_key == 'n_pfs':
                 this_df = df[df['entry'] <= x].copy()
                 xlabel = 'Number of profiles included'
+            elif x_key == 'maw_size':
+                this_df = take_m_avg(df, x, vars_to_keep)
             if z_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(z_list[i])
