@@ -44,7 +44,7 @@ print('- Creating profile filtering objects')
 ################################################################################
 
 pfs_f0 = ahf.Profile_Filters()
-pfs_f1 = ahf.Profile_Filters(p_range=staircase_range)
+pfs_f1 = ahf.Profile_Filters(p_range=staircase_range, m_avg_win=60)
 
 ################################################################################
 # Create plotting parameter objects
@@ -54,9 +54,10 @@ print('- Creating plotting parameter objects')
 
 ### xy plots
 pp_xy_default = ahf.Plot_Parameters()
-pp_test = ahf.Plot_Parameters(x_vars=['n_pfs'], y_vars=['DBCV','n_clusters'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':200, 'cl_ps_tuple':[10,300,50], 'z_var':'min_cs', 'z_list':[100,150,200]})
-pp_test0 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_iT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':200})
-# pp_test = ahf.Plot_Parameters(x_vars=['iT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same')
+pp_test = ahf.Plot_Parameters(x_vars=['maw_size'], y_vars=['DBCV','n_clusters'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':200, 'cl_ps_tuple':[10,210,10]})#, 'z_var':'n_pfs', 'z_list':[100,150,200]})
+# pp_test0 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_iT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':200})
+# pp_test = ahf.Plot_Parameters(x_vars=['iT', 'la_iT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same')
+# pp_test = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_iT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':200})
 
 ################################################################################
 # Create analysis group objects
@@ -65,12 +66,14 @@ print('- Creating analysis group objects')
 
 # Analysis Groups
 my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_test)
-my_group1 = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_test0)
-# my_group0 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_f1, pp_test)
+# my_group1 = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_test)
+# my_group0 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_f0, pp_test)
+# my_group1 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_f1, pp_test)
 
 ################################################################################
 # Declare figures or summaries to output
 print('- Creating outputs')
 ################################################################################
 
-ahf.make_figure([my_group0, my_group1])
+ahf.make_figure([my_group0])
+# ahf.make_figure([my_group0, my_group1])

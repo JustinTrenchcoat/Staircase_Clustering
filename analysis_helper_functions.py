@@ -720,6 +720,7 @@ def take_m_avg(df, m_avg_win, vars_available):
     m_avg_win           The value of the moving average window in dbar
     vars_available      A list of variables available in the dataframe
     """
+    print('\tIn take_m_avg(), m_avg_win:',m_avg_win)
     # Use the pandas `rolling` function to get the moving average
     #   center=True makes the first and last window/2 of the profiles are masked
     #   win_type='boxcar' uses a rectangular window shape
@@ -727,26 +728,30 @@ def take_m_avg(df, m_avg_win, vars_available):
     #   .mean() takes the average of the rolling
     df1 = df.rolling(window=int(m_avg_win), center=True, win_type='boxcar', on='press').mean()
     # Put the moving average profiles for temperature, salinity, and density into the dataset
-    if 'iT' in vars_available:
-        df['ma_iT'] = df1['iT']
-        if 'la_iT' in vars_available:
-            df['la_iT'] = df['iT'] - df['ma_iT']
-    if 'SP' in vars_available:
-        df['ma_SP'] = df1['SP']
-        if 'la_SP' in vars_available:
-            df['la_SP'] = df['SP'] - df['ma_SP']
-    if 'sigma' in vars_available:
-        df['ma_sigma']= gsw.sigma1(df['ma_SP'], df['ma_iT'])
-        if 'la_sigma' in vars_available:
-            df['la_sigma'] = df['sigma'] - df['ma_sigma']
-    if 'CT' in vars_available:
-        df['ma_CT'] = df1['CT']
-        if 'la_CT' in vars_available:
-            df['la_CT'] = df['CT'] - df['ma_CT']
-    if 'SA' in vars_available:
-        df['ma_SA'] = df1['SA']
-        if 'la_SA' in vars_available:
-            df['la_SA'] = df['SA'] - df['ma_SA']
+    for var in vars_available:
+        if var in ['iT','ma_iT','la_iT']:
+            df['ma_iT'] = df1['iT']
+            if 'la_iT' in vars_available:
+                df['la_iT'] = df['iT'] - df['ma_iT']
+        if var in ['SP','ma_SP','la_SP']:
+            df['ma_SP'] = df1['SP']
+            if 'la_SP' in vars_available:
+                df['la_SP'] = df['SP'] - df['ma_SP']
+        if var in ['sigma','ma_sigma','la_sigma']:
+            df['ma_sigma'] = df1['sigma']
+            if 'la_sigma' in vars_available:
+                df['la_sigma'] = df['sigma'] - df['ma_sigma']
+        if var in ['CT','ma_CT','la_CT']:
+            df['ma_CT'] = df1['CT']
+            if 'la_CT' in vars_available:
+                df['la_CT'] = df['CT'] - df['ma_CT']
+        if var in ['SA','ma_SA','la_SA']:
+            df['ma_SA'] = df1['SA']
+            if 'la_SA' in vars_available:
+                df['la_SA'] = df['SA'] - df['ma_SA']
+            #
+        #
+    #
     return df
 
 ################################################################################
@@ -2613,7 +2618,12 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
                 this_df = df[df['entry'] <= x].copy()
                 xlabel = 'Number of profiles included'
             elif x_key == 'maw_size':
-                this_df = take_m_avg(df, x, vars_to_keep)
+                # Need to apply moving average window to original data, before
+                #   the data filters were applied, so make a new Analysis_Group
+                a_group.profile_filters.m_avg_win = x
+                new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
+                this_df = pd.concat(new_a_group.data_frames)
+                xlabel = 'Moving average window (dbar)'
             if z_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(z_list[i])
