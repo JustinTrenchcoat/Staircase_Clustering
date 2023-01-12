@@ -2584,15 +2584,18 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
         z_key = None
         z_list = [0]
     # If limiting the number of pfs, find total number of pfs in the given df
+    #   In the multi-index of df, level 0 is 'Time'
     if x_key == 'n_pfs':
-        max_entries = int(max(df['entry']))
-        print('\tMax entry number:',max_entries)
-        x_var_array = x_var_array[x_var_array <= max_entries]
+        pf_nos = np.unique(np.array(df['prof_no'].values))
+        number_of_pfs = len(pf_nos)
+        print('\tNumber of profiles:',number_of_pfs)
+        x_var_array = x_var_array[x_var_array <= number_of_pfs]
     if z_key == 'n_pfs':
-        max_entries = int(max(df['entry']))
-        print('\tMax entry number:',max_entries)
+        pf_nos = np.unique(np.array(df['prof_no'].values))
+        number_of_pfs = len(pf_nos)
+        print('\tNumber of profiles:',number_of_pfs)
         z_list = np.array(z_list)
-        z_list = z_list[z_list <= max_entries]
+        z_list = z_list[z_list <= number_of_pfs]
     print('\tPlotting these x values of',x_key,':',x_var_array)
     if z_key:
         print('\tPlotting these z values of',z_key,':',z_list)
@@ -2600,11 +2603,34 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
         y_var_array = []
         tw_y_var_array = []
         for x in x_var_array:
+            # Set initial values for some variables
+            zlabel = None
+            this_df = df.copy()
             # Set parameters based on variables selected
+            #   NOTE: need to run `maw_size` BEFORE `n_pfs`
+            if x_key == 'maw_size':
+                # Need to apply moving average window to original data, before
+                #   the data filters were applied, so make a new Analysis_Group
+                a_group.profile_filters.m_avg_win = x
+                new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
+                this_df = pd.concat(new_a_group.data_frames)
+                xlabel = 'Moving average window (dbar)'
+            if z_key == 'maw_size':
+                # Need to apply moving average window to original data, before
+                #   the data filters were applied, so make a new Analysis_Group
+                a_group.profile_filters.m_avg_win = z_list[i]
+                new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
+                this_df = pd.concat(new_a_group.data_frames)
+                zlabel = r'$\ell_{maw}=$'+str(z_list[i])+' dbar'
+            if x_key == 'n_pfs':
+                this_df = this_df[this_df['prof_no'] <= pf_nos[x-1]].copy()
+                xlabel = 'Number of profiles included'
+            if z_key == 'n_pfs':
+                this_df = this_df[this_df['prof_no'] <= pf_nos[z_list[i]-1]].copy()
+                zlabel = r'$n_{profiles}=$'+str(z_list[i])
             if x_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(x)
-                this_df = df
                 xlabel = 'Minimum cluster size'
             elif x_key == 'min_samps':
                 # min samples must be an integer, or None
@@ -2612,18 +2638,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
                     min_s = int(x)
                 else:
                     min_s = x
-                this_df = df
                 xlabel = 'Minimum samples'
-            elif x_key == 'n_pfs':
-                this_df = df[df['entry'] <= x].copy()
-                xlabel = 'Number of profiles included'
-            elif x_key == 'maw_size':
-                # Need to apply moving average window to original data, before
-                #   the data filters were applied, so make a new Analysis_Group
-                a_group.profile_filters.m_avg_win = x
-                new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
-                this_df = pd.concat(new_a_group.data_frames)
-                xlabel = 'Moving average window (dbar)'
             if z_key == 'min_cs':
                 # min cluster size must be an integer
                 min_cs = int(z_list[i])
@@ -2635,11 +2650,6 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
                 else:
                     min_s = z_list[i]
                 zlabel = 'Minimum samples: '+str(min_s)
-            elif z_key == 'n_pfs':
-                this_df = df[df['entry'] <= z_list[i]].copy()
-                zlabel = r'$n_{profiles}=$'+str(z_list[i])
-            else:
-                zlabel = None
             # Run the HDBSCAN algorithm on the provided dataframe
             new_df, rel_val = HDBSCAN_(this_df, cl_x_var, cl_y_var, min_cs, min_samp=min_s)
             # Record outputs to plot
@@ -2674,321 +2684,5 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
     return xlabel, ylabel
 
 ################################################################################
-
-def plot_clstr_outputs(ax, df, min_cs, rel_val, x_param, y_param, xlabel=None, ylabel=None, z_param=None, z_list=[None], plot_slopes=False):
-    """
-    Plots some outputs of the HDBSCAN algorithm
-
-    ax              The axis on which to plot
-    df              A pandas data frame output from HDBSCAN_
-    min_cs          Minimum points per cluster used in HDBSCAN_
-    rel_val         The `relative_validity_` value from the output from HDBSCAN_
-    x_param         String of the name of clustering attribute on the x-axis in the output
-    y_param         String of the name of clustering attribute on the y-axis in the output
-    z_param         String of the name of clustering attribute to plot one line for each
-    z_list          A list of values of the z_param to plot one line for each
-    plot_slopes     Boolean True/False whether to plot the trend lines of each cluster
-    """
-    print('From plot_clstr_outputs,')
-    print('\tTotal points:',len(df))
-    print('\trel_val:',rel_val)
-    print('\tdf vars:',df.columns)
-    # Create blank arrays to fill
-    x_param_array = []
-    y_param_array = []
-    y_param_spans = []
-    # Get the array of unique cluster labels, minus the noise
-    clstr_array = np.unique(np.array(df[df['cluster'] != -1]['cluster']))
-    # print('clstr_array:',clstr_array)
-    if y_param != 'n_clusters':
-        for i in range(len(clstr_array)):
-            x_param_array.append([])
-            y_param_array.append([])
-            y_param_spans.append([])
-        #
-    #
-    # Reformat dates so the ticks on the axis make sense
-    if x_param == 'dt_start':
-        df[x_param] = mpl.dates.date2num(df[x_param])
-        use_dist = False
-    # Calculate distances between profiles
-    elif x_param == 'distance':
-        # Set xlabel
-        xlabel = 'Along-path distance (km)'
-        # Reset x_param to `entry` so that it sorts profiles correctly
-        x_param = 'entry'
-        # Set the distance switch to True
-        use_dist = True
-        along_path_dist = 0
-    else:
-        use_dist = False
-    # If the x_param is one listed here, loop over each profile
-    if x_param in ['prof_no', 'entry', 'dt_start']:
-        # Find the number of values of x_param and y_param
-        xps = np.unique(np.array(df[x_param].values))
-        n_xps = len(xps)
-        ycs = np.unique(np.array(df['cluster'].values))
-        # delete the noise point index [-1]
-        ycs = ycs[ycs != -1]
-        n_ycs = len(ycs)
-        # Create blank arrays to fill with n_ycs rows, n_xps columns
-        #   Need to use NaN instead of None so the error bars will work
-        x_param_array = np.full((n_ycs,n_xps), float('NaN'))
-        y_param_array = np.full((n_ycs,n_xps), float('NaN'))
-        y_param_spans = np.full((n_ycs,n_xps), float('NaN'))
-        # print('shape of y_param_array:',y_param_array.shape)
-        if use_dist:
-            df_first_pf = df[df[x_param] == min(xps)]
-            past_lat_lon = (df_first_pf['lat'].values[0], df_first_pf['lon'].values[0])
-        for ix in range(len(xps)):
-            # Get just the dataframe for this profile
-            df_this_pf = df[df[x_param] == xps[ix]]
-            if use_dist:
-                new_lat_lon = (df_this_pf['lat'].values[0], df_this_pf['lon'].values[0])
-                along_path_dist += geodesic(past_lat_lon, new_lat_lon).km
-                past_lat_lon = new_lat_lon
-                pf = along_path_dist
-            # Get the y_param for this profile
-            if y_param == 'n_clusters':
-                # Find the number of clusters identified in this profile
-                n_clust_this_pf = len(np.unique(np.array(df_this_pf['cluster'])))-1
-                # Record values
-                x_param_array[0][ix] = pf
-                y_param_array[0][ix] = n_clust_this_pf
-                ylabel = 'Number of clusters'
-            else:
-                # Loop over each cluster
-                for iy in range(len(ycs)): #np.unique(np.array(df_this_pf['cluster'])):
-                    clstr = ycs[iy]
-                    # Get just the dataframe for this cluster in this profile
-                    df_this_pf_this_cluster = df_this_pf[df_this_pf['cluster']==clstr]
-                    this_pf_this_clstr_values = df_this_pf_this_cluster[y_param].values
-                    if len(this_pf_this_clstr_values) > 0:
-                        # Find the average pressure for this cluster in this profile
-                        clstr_avg_y_param = np.mean(this_pf_this_clstr_values)
-                        # Find the span of pressures for this cluster in this profile
-                        clstr_y_param_span = 0.5*(max(this_pf_this_clstr_values)-min(this_pf_this_clstr_values))
-                        # Record values
-                        x_param_array[iy][ix] = pf
-                        y_param_array[iy][ix] = clstr_avg_y_param
-                        y_param_spans[iy][ix] = clstr_y_param_span
-                    #
-                # end loop over clusters
-            #
-        # end loop over profiles
-        if len(y_param_array) == 1:
-            this_plt = ax.scatter(x_param_array, y_param_array, color=std_clr, s=layer_mrk_size, marker=std_marker)
-        else:
-            # Make empty list for normalized variations from the mean
-            vars_from_mean = []
-            # Loop over each cluster
-            for i in range(n_ycs):
-                # Decide on the color and symbol, don't go off the end of the arrays
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
-                my_mkr = mpl_mrks[i%len(mpl_mrks)]
-                # Plot this cluster
-                this_plt = ax.scatter(x_param_array[i], y_param_array[i], color=my_clr, s=layer_mrk_size, marker=my_mkr, alpha=0.5, label=str(i))
-                # this_plt = ax.scatter(x_param_array[i], y_param_array[i], color=my_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), alpha=0.5, label=str(i))
-                ax.errorbar(x_param_array[i], y_param_array[i], y_param_spans[i], color=my_clr, capsize=l_cap_size, linestyle='none', alpha=0.5)
-                # Format the ticks on the x-axis if using datetime
-                if x_param == 'dt_start':
-                    loc = mpl.dates.AutoDateLocator()
-                    ax.xaxis.set_major_locator(loc)
-                    ax.xaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
-                # Calculate the average variation from the mean for this cluster
-                # vfm = np.mean(abs(y_param_array[i] - np.mean(y_param_array[i])))
-                # Normalize that variation by the standard deviation and record it
-                # vars_from_mean.append(vfm/np.std(y_param_array[i]))
-            # Add the average normalized variation from the mean to the legend
-            # nvfm_patch = mpl.patches.Patch(color='none', label='ANVFM:%.3E'%(np.mean(vars_from_mean)))
-            # ax.legend(handles=[nvfm_patch])
-            # ax.legend()
-            ax.invert_yaxis()
-            #
-        #
-        return xlabel, ylabel
-    # If x_param is one listed here, loop over each cluster
-    elif x_param in ['iT','CT','SP','SA','aiT','aCT','BSP','BSA']:
-        # Clusters are labeled starting from 0, so total number of clusters is
-        #   the largest label plus 1
-        n_clusters  = df['cluster'].max()+1
-        # Plot noise points first
-        df_noise = df[df.cluster==-1]
-        ax.scatter(df_noise[x_param], df_noise[y_param], color=std_clr, s=mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
-        n_noise_pts = len(df_noise)
-        for i in range(len(clstr_array)):
-            # Decide on the color and symbol, don't go off the end of the arrays
-            my_clr = mpl_clrs[i%len(mpl_clrs)]
-            my_mkr = mpl_mrks[i%len(mpl_mrks)]
-            # Get relevant data
-            x_data = df[df.cluster == i][x_param]
-            x_mean = np.mean(x_data)
-            y_data = df[df.cluster == i][y_param]
-            y_mean = np.mean(y_data)
-            alphas = df[df.cluster == i]['clst_prob']
-            # Plot the points for this cluster with the specified color, marker, and alpha value
-            # ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=alphas, zorder=5)
-            ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=noise_alpha, zorder=5)
-            # Plot the centroid(?) of this cluster
-            ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=my_mkr, zorder=10)
-            # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
-            # Plot the trend lines of each cluster if specified
-            if plot_slopes:
-                # Find the slope of the least-squares of the points for this cluster
-                m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
-                # Plot the least-squares fit line for this cluster through the centroid
-                ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
-                # Add annotation to say what the slope is
-                ax.annotate('%.2f'%(1/m), xy=(x_mean,y_mean), xycoords='data', color=my_clr)
-        # Add legend to report the total number of points and notes on the data
-        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_param]))+' points')
-        min_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(min_cs))
-        n_clstr_patch = mpl.lines.Line2D([],[],color='r', label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
-        n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
-        rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
-        if y_param == 'la_CT':
-            ax.legend(handles=[n_pts_patch, min_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
-        #
-        return xlabel, ylabel
-    # If x_param is one listed here, loop over each cluster
-    elif x_param == 'TS_slope':
-        x_key = 'CT'
-        y_key = 'SP'
-        xlabel = r'Lateral density ratio $R_L$'
-        for i in range(max(clstr_array)):
-            # Decide on the color and symbol, don't go off the end of the arrays
-            my_clr = mpl_clrs[i%len(mpl_clrs)]
-            my_mkr = mpl_mrks[i%len(mpl_mrks)]
-            # Get relevant data
-            x_data = df[df.cluster == i][x_key]
-            y_data = df[df.cluster == i][y_key]
-            y_param_data = df[df.cluster == i][y_param]
-            y_param_mean = np.mean(y_param_data)
-            if y_param == 'press':
-                y_param_mean = -1*y_param_mean
-            # Get mean values of alpha and beta for this cluster
-            alpha_data = df[df.cluster == i]['alpha']
-            beta_data  = df[df.cluster == i]['beta']
-            alpha = np.mean(alpha_data)
-            beta  = np.mean(beta_data)
-            # Find the slope of the least-squares of the points for this cluster
-            m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
-            # Calculate the lateral density ratio
-            R_L = (beta/alpha)*m
-            # Plot the ST slope vs the y_param_mean
-            ax.scatter(R_L, y_param_mean, color=my_clr, s=pf_mrk_size, marker=my_mkr, zorder=10)
-        #
-        # Plot a vertical line across zero slope
-        ax.axvline(0, alpha=noise_alpha, zorder=1)
-        return xlabel, ylabel
-    # Make histogram by subtracting the mean of the variable for each cluster
-    elif x_param == 'hist':
-        # Add column in dataset for normalized values
-        mc_y_param = 'mean centered '+y_param
-        df[mc_y_param] = None
-        # Loop across each cluster
-        for i in range(max(clstr_array)):
-            clstr = clstr_array[i]
-            # Get just the dataframe for that cluster
-            df_this_cluster = df[df['cluster']==clstr]
-            # Find the average for the parameter for this cluster
-            clstr_mean = np.mean(df_this_cluster[y_param].values)
-            # Calculate normalized values
-            df_this_cluster[mc_y_param] = df_this_cluster[y_param] - clstr_mean
-            # Put those values back into the original dataframe
-            df.loc[df['cluster']==clstr, mc_y_param] = df_this_cluster[mc_y_param]
-            # clstr_mean = np.mean(df[df['cluster']==clstr][mc_y_param].values)
-            # print('clstr_mean:',clstr_mean)
-        # Get histogram parameters
-        x_var, res_bins, median, mean, std_dev = get_hist_params(df, mc_y_param)
-        # Plot the histogram
-        ax.hist(x_var, bins=res_bins, color=std_clr, orientation='horizontal')
-        # Add legend to report overall statistics
-        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(x_var))+' points')
-        median_patch  = mpl.patches.Patch(color='none', label='Median:  '+'%.4f'%median)
-        mean_patch    = mpl.patches.Patch(color='none', label='Mean:    ' + '%.4f'%mean)
-        std_dev_patch = mpl.patches.Patch(color='none', label='Std dev: '+'%.4f'%std_dev)
-        notes_string = ''.join(df.notes.unique())
-        # Only add the notes_string if it contains something
-        if len(notes_string) > 1:
-            notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-            ax.legend(handles=[n_pts_patch, median_patch, mean_patch, std_dev_patch, notes_patch])
-        else:
-            ax.legend(handles=[n_pts_patch, median_patch, mean_patch, std_dev_patch])
-        return 'Number of points', ylabel+' (mean centered by cluster)'
-    else:
-        print('Given x_param:',x_param,'is not valid')
-        exit(0)
-    j=0
-    for i in range(len(z_list)):
-        y_param_array = []
-        twin_y_param_array = []
-        for x in x_param_array:
-            # Set input params
-            min_cs = None
-            min_samps = None
-            if x_param == 'min_cs':
-                # min cluster size must be an integer
-                min_cs = int(x)
-                xlabel = 'Minimum cluster size'
-            elif x_param == 'min_samps':
-                # min samples must be an integer
-                min_samps = int(x)
-                xlabel = 'Minimum samples'
-            if z_param == 'min_cs':
-                # min cluster size must be an integer
-                min_cs = int(z_list[i])
-                zlabel = 'Minimum cluster size: '+str(min_cs)
-            elif z_param == 'min_samps':
-                # min samps must be an integer, or None
-                if not isinstance(z_list[i], type(None)):
-                    min_samps = int(z_list[i])
-                else:
-                    min_samps = z_list[i]
-                zlabel = 'Minimum samples: '+str(min_samps)
-            else:
-                zlabel = None
-            # Run the HDBSCAN algorithm
-            new_df, rel_val = HDBSCAN_(df, x_key, y_key, min_cs, min_samps)
-            # Set output params
-            #   Check whether to do dual vertical axes
-            if not isinstance(y_param, list):
-                twin_sweep = False
-                y_p = y_param
-            elif len(y_param) == 2:
-                twin_sweep = True
-                y_p = y_param[0]
-                # Create the twin axis
-                ax1 = ax.twinx()
-                if y_param[1] == 'n_clusters':
-                    # Clusters are labeled starting from 0, so total number of clusters is
-                    #   the largest label plus 1
-                    twin_y_param_array.append(new_df['cluster'].max()+1)
-                    twin_ylabel = 'Number of clusters'
-                elif y_param[1] == 'DBCV':
-                    # relative_validity_ is a rough measure of DBCV
-                    twin_y_param_array.append(rel_val)
-                    twin_ylabel = 'DBCV (relative_validity_)'
-                #
-            else:
-                print('Too many arguments in y_param:',y_param)
-                exit(0)
-            if y_p == 'n_clusters':
-                # Clusters are labeled starting from 0, so total number of clusters is
-                #   the largest label plus 1
-                y_param_array.append(new_df['cluster'].max()+1)
-                ylabel = 'Number of clusters'
-            elif y_p == 'DBCV':
-                # relative_validity_ is a rough measure of DBCV
-                y_param_array.append(rel_val)
-                ylabel = 'DBCV (relative_validity_)'
-            #
-        ax.plot(x_param_array, y_param_array, color=mpl_clrs[i%len(mpl_clrs)], linestyle=l_styles[j], label=zlabel)
-        if twin_sweep:
-            ax1.plot(x_param_array, twin_y_param_array, color=mpl_clrs[i%len(mpl_clrs)], linestyle=l_styles[1])
-            ax1.set_ylabel(twin_ylabel)
-            # ax1.tick_params(axis='y', colors='b')
-    ax.legend()
-    return xlabel, ylabel
 
 ################################################################################
