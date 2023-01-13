@@ -279,11 +279,17 @@ class Plot_Parameters:
                     If plotting anything that has to do clustering, need these:
                         {'cl_x_var':var0, 'cl_y_var':var1} where the two variables
                         can be any that work for an 'xy' plot
+                        Optional 'b_a_w_plt':True/False for box and whisker plots,
+                        'min_cs':90 / 'min_samp':90 to specify m_pts or min pts per
+                        cluster, 'plot_slopes' to plot lines showing the least
+                        squares slope of each cluster
                     If doing a parameter sweep of clustering, expects the following:
                         {'cl_x_var':var0, 'cl_y_var':var1, 'cl_ps_tuple':[100,410,50]}
                         where var0 and var1 are as specified above, 'cl_ps_tuple' is
-                        the [start,stop,step] for the xvar which must be 'min_cs'
-                        or 'n_pfs', and yvar(s) must be 'DBCV' or 'n_clusters'
+                        the [start,stop,step] for the xvar can be 'min_cs', 'min_samps'
+                        'n_pfs' or 'maw_size', and yvar(s) must be 'DBCV' or 'n_clusters'
+                        Optional: {'z_var':'min_cs', 'z_list':[90,120,240]} where
+                        z_var can be any variable that var0 can be
     """
     def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
         # Add all the input parameters to the object
@@ -1136,10 +1142,12 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
         if not isinstance(pp.ax_lims, type(None)):
             try:
                 ax.set_xlim(pp.ax_lims['x_lims'])
+                print('\tSet x_lims to',pp.ax_lims['x_lims'])
             except:
                 foo = 2
             try:
                 ax.set_ylim(pp.ax_lims['y_lims'])
+                print('\tSet y_lims to',pp.ax_lims['y_lims'])
             except:
                 foo = 2
         ax.set_title(plt_title)
@@ -1161,10 +1169,12 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
             if not isinstance(this_ax_pp.ax_lims, type(None)):
                 try:
                     ax.set_xlim(this_ax_pp.ax_lims['x_lims'])
+                    print('\tSet x_lims to',pp.ax_lims['x_lims'])
                 except:
                     foo = 2
                 try:
                     ax.set_ylim(this_ax_pp.ax_lims['y_lims'])
+                    print('\tSet y_lims to',pp.ax_lims['y_lims'])
                 except:
                     foo = 2
             ax.set_title(plt_title)
@@ -1624,11 +1634,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
         elif clr_map == 'cluster':
             # Add a standard title
             plt_title = add_std_title(a_group)
-            # Legend is handled inside plot_clusters() or plot_n_clusters_per_n_prof()
+            #   Legend is handled inside plot_clusters()
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
             min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
-            plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt)
+            plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
             #
         else:
@@ -1810,10 +1820,6 @@ def make_subplot(ax, a_group, fig, ax_pos):
         # Did not provide a valid plot type
         print('Plot type',plot_type,'not valid')
         exit(0)
-    #
-    #
-    #
-
     #
     print('ERROR: Should not have gotten here')
     return a_group.xlabel, a_group.ylabel, plt_title, ax
@@ -2434,7 +2440,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
 
 ################################################################################
 
-def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=None, box_and_whisker=True):
+def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=None, box_and_whisker=True, plot_slopes=False):
     """
     Plots the clusters found by HDBSCAN on the x-y plane
 
@@ -2446,6 +2452,8 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
     min_cs          An integer, the minimum number of points for a cluster
     min_samp        An integer, number of points in neighborhood for a core point
     box_and_whisker True/False whether to include the box and whisker plot
+    plot_slopes     True/False whether to plot lines of least-squares slopes for
+                        each cluster
     """
     # Decide whether to plot the centroid or not
     if x_key in pf_vars or y_key in pf_vars:
@@ -2473,15 +2481,26 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
             # Get relevant data
             x_data = df[df.cluster == i][x_key]
             x_mean = np.mean(x_data)
+            x_stdv = np.std(x_data)
             y_data = df[df.cluster == i][y_key]
             y_mean = np.mean(y_data)
+            y_stdv = np.std(y_data)
             alphas = df[df.cluster == i]['clst_prob']
             # Plot the points for this cluster with the specified color, marker, and alpha value
             ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=alphas, zorder=5)
             # Plot the centroid(?) of this cluster
             if plot_centroid:
+                # This will plot a marker at the centroid
                 ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=my_mkr, zorder=10)
-            # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
+                # This will plot the cluster number at the centroid
+                # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
+            if plot_slopes:
+                # Find the slope of the least-squares of the points for this cluster
+                m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
+                # Plot the least-squares fit line for this cluster through the centroid
+                ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
+                # Add annotation to say what the slope is
+                ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color='r', weight='bold', zorder=12)
             # Record the number of points in this cluster
             pts_per_cluster.append(len(x_data))
         # Add legend to report the total number of points and notes on the data
@@ -2506,42 +2525,6 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
             inset_ax.xaxis.set_label_position('top')
         #
     #
-
-################################################################################
-
-def plot_n_clusters_per_n_prof(ax, df, x_key, y_key, n_pf_step, min_css, min_samps=[None]):
-    """
-    Plots the number of clusters found by HDBSCAN vs. the number of profiles
-    included in the data set
-
-    ax          The axis on which to plot
-    df          A pandas data frame output from HDBSCAN_
-    x_key       String of the name of the column to use on the x-axis
-    y_key       String of the name of the column to use on the y-axis
-    n_pf_step   An integer, the step between number of profiles to include
-                    A larger step means fewer overall runs of HDBSCAN algorithm
-    min_css     A list of integers, the minimum number of points for a cluster
-    min_samp    An integer, number of points in neighborhood for a core point
-    """
-    # Get the total number of profiles in the given dataframe
-    max_entries = int(max(df['entry']))
-    for i in range(len(min_css)):
-        for j in range(len(min_samps)):
-            n_clusters_per_n_profs = []
-            n_profs = []
-            for k in range(2,max_entries,n_pf_step):
-                temp_df = df[df['entry'] < k]
-                # Run the HDBSCAN algorithm
-                new_df, rel_val = HDBSCAN_(temp_df, x_key, y_key, min_css[i], min_samps[j])
-                # Clusters are labeled starting from 0, so total number of clusters is
-                #   the largest label plus 1
-                n_clusters  = new_df['cluster'].max()+1
-                # print('Number of clusters for ',i,'profiles:',n_clusters)
-                n_clusters_per_n_profs.append(n_clusters)
-                n_profs.append(k)
-                #
-            ax.plot(n_profs, n_clusters_per_n_profs, color=mpl_clrs[i%len(mpl_clrs)], linestyle=l_styles[j], label='min(pts/cluster): '+str(min_css[i]))
-    ax.legend()
 
 ################################################################################
 
