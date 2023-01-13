@@ -78,7 +78,7 @@ clr_gl = 'tab:orange'
 mrk_size      = 0.5
 mrk_alpha     = 0.4 #0.05
 noise_alpha   = 0.1 #0.01
-pf_alpha      = 1.0 #0.5
+pf_alpha      = 0.5
 lgnd_mrk_size = 60
 map_mrk_size  = 7
 big_map_mrkr  = 80
@@ -105,7 +105,7 @@ l_styles = ['-', '--', '-.', ':']
 rand_seq = np.random.RandomState(1234567)
 
 # A list of variables for which the y-axis should be inverted so the surface is up
-y_invert_vars = ['press', 'depth', 'sigma', 'ma_sigma']
+y_invert_vars = ['press', 'pca_press', 'ca_press', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
 # A list of the variables on the `Layer` dimension
 layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
@@ -1169,12 +1169,12 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
             if not isinstance(this_ax_pp.ax_lims, type(None)):
                 try:
                     ax.set_xlim(this_ax_pp.ax_lims['x_lims'])
-                    print('\tSet x_lims to',pp.ax_lims['x_lims'])
+                    print('\tSet x_lims to',this_ax_pp.ax_lims['x_lims'])
                 except:
                     foo = 2
                 try:
                     ax.set_ylim(this_ax_pp.ax_lims['y_lims'])
-                    print('\tSet y_lims to',pp.ax_lims['y_lims'])
+                    print('\tSet y_lims to',this_ax_pp.ax_lims['y_lims'])
                 except:
                     foo = 2
             ax.set_title(plt_title)
@@ -1374,6 +1374,34 @@ def get_color_map(cmap_var):
         return None
 
 ################################################################################
+
+def format_datetime_axes(x_key, y_key, ax, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
+    """
+    Formats any datetime axes to show actual dates, as appropriate
+
+    x_key       The string of the name for the x data on the main axis
+    y_key       The string of the name for the y data on the main axis
+    ax          The main axis on which to format
+    tw_x_key    The string of the name for the x data on the twin axis
+    tw_ax_y     The twin y axis on which to format
+    tw_y_key    The string of the name for the y data on the twin axis
+    tw_ax_x     The twin x axis on which to format
+    """
+    loc = mpl.dates.AutoDateLocator()
+    if x_key in ['dt_start', 'dt_end']:
+        ax.xaxis.set_major_locator(loc)
+        ax.xaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+    if y_key in ['dt_start', 'dt_end']:
+        ax.yaxis.set_major_locator(loc)
+        ax.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+    if tw_x_key in ['dt_start', 'dt_end']:
+        tw_ax_y.xaxis.set_major_locator(loc)
+        tw_ax_y.xaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+    if tw_y_key in ['dt_start', 'dt_end']:
+        tw_ax_x.yaxis.set_major_locator(loc)
+        tw_ax_x.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+
+################################################################################
 # Main plotting function #######################################################
 ################################################################################
 
@@ -1436,6 +1464,10 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
             # Format the dates if necessary
+            if x_key in ['dt_start', 'dt_end']:
+                df[x_key] = mpl.dates.date2num(df[x_key])
+            if y_key in ['dt_start', 'dt_end']:
+                df[y_key] = mpl.dates.date2num(df[y_key])
             if clr_map == 'dt_start' or clr_map == 'dt_end':
                 cmap_data = mpl.dates.date2num(df[clr_map])
             else:
@@ -1469,6 +1501,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Add backing x to distinguish from main axis
                 tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=mrk_size*10, marker='x')
                 tw_ax_x.scatter(df[x_key], df[tw_y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
+                # Invert y-axis if specified
+                if tw_y_key in y_invert_vars:
+                    tw_ax_x.invert_yaxis()
                 tw_ax_x.set_ylabel(pp.ylabels[1])
                 # Change color of the ticks on the twin axis
                 tw_ax_x.tick_params(axis='y', colors=tw_clr)
@@ -1485,6 +1520,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             cbar.set_label(pp.clabel)
             # Add a standard legend
             add_std_legend(ax, df, x_key)
+            # Format the axes for datetimes, if necessary
+            format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1498,6 +1535,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Check for histogram
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=df, txk=tw_x_key, tay=tw_ax_y, tyk=tw_y_key, tax=tw_ax_x)
+            # Format the dates if necessary
+            if x_key in ['dt_start', 'dt_end']:
+                df[x_key] = mpl.dates.date2num(df[x_key])
+            if y_key in ['dt_start', 'dt_end']:
+                df[y_key] = mpl.dates.date2num(df[y_key])
             # Plot every point the same color, size, and marker
             ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
             # Invert y-axis if specified
@@ -1517,11 +1559,16 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 if tw_clr == std_clr:
                     tw_clr = alt_std_clr
                 tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+                # Invert y-axis if specified
+                if tw_y_key in y_invert_vars:
+                    tw_ax_x.invert_yaxis()
                 tw_ax_x.set_ylabel(pp.ylabels[1])
                 # Change color of the ticks on the twin axis
                 tw_ax_x.tick_params(axis='y', colors=tw_clr)
             # Add a standard legend
             add_std_legend(ax, df, x_key)
+            # Format the axes for datetimes, if necessary
+            format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1546,6 +1593,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 for df in a_group.data_frames:
                     these_dfs.append(df[df['source'] == source])
                 this_df = pd.concat(these_dfs)
+                # Format the dates if necessary
+                if x_key in ['dt_start', 'dt_end']:
+                    this_df[x_key] = mpl.dates.date2num(this_df[x_key])
+                if y_key in ['dt_start', 'dt_end']:
+                    this_df[y_key] = mpl.dates.date2num(this_df[y_key])
                 # Plot every point from this df the same color, size, and marker
                 ax.scatter(this_df[x_key], this_df[y_key], color=my_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
                 i += 1
@@ -1557,6 +1609,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             if len(notes_string) > 1:
                 notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
                 lgnd_hndls.append(notes_patch)
+            # Format the axes for datetimes, if necessary
+            format_datetime_axes(x_key, y_key, ax)
             # Add legend with custom handles
             lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
@@ -1569,6 +1623,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd_hndls = []
             # Loop through each data frame, the same as looping through instrmts
             for df in a_group.data_frames:
+                # Format the dates if necessary
+                if x_key in ['dt_start', 'dt_end']:
+                    df[x_key] = mpl.dates.date2num(df[x_key])
+                if y_key in ['dt_start', 'dt_end']:
+                    df[y_key] = mpl.dates.date2num(df[y_key])
                 df['source-instrmt'] = df['source']+' '+df['instrmt']
                 # Get instrument name
                 s_instrmt = np.unique(df['source-instrmt'])[0]
@@ -1587,6 +1646,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 lgnd_hndls.append(notes_patch)
             # Add legend with custom handles
             lgnd = ax.legend(handles=lgnd_hndls)
+            # Format the axes for datetimes, if necessary
+            format_datetime_axes(x_key, y_key, ax)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1596,6 +1657,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 exit(0)
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
+            # Format the dates if necessary
+            if x_key in ['dt_start', 'dt_end']:
+                df[x_key] = mpl.dates.date2num(df[x_key])
+            if y_key in ['dt_start', 'dt_end']:
+                df[y_key] = mpl.dates.date2num(df[y_key])
             # Plot a density histogram where each grid box is colored to show how
             #   many points fall within it
             # Get the density histogram plotting parameters from extra args
@@ -1628,6 +1694,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 ax.legend(handles=[n_pts_patch, pixel_patch, notes_patch])
             else:
                 ax.legend(handles=[n_pts_patch, pixel_patch])
+            # Format the axes for datetimes, if necessary
+            format_datetime_axes(x_key, y_key, ax)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1637,8 +1705,15 @@ def make_subplot(ax, a_group, fig, ax_pos):
             #   Legend is handled inside plot_clusters()
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
+            # Format the dates if necessary
+            if x_key in ['dt_start', 'dt_end']:
+                df[x_key] = mpl.dates.date2num(df[x_key])
+            if y_key in ['dt_start', 'dt_end']:
+                df[y_key] = mpl.dates.date2num(df[y_key])
             min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
             plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes)
+            # Format the axes for datetimes, if necessary
+            format_datetime_axes(x_key, y_key, ax)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
             #
         else:
@@ -2122,7 +2197,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             extra_args = None
     # Find the unique profiles for this instrmt
     pfs_in_this_df = np.unique(np.array(df['prof_no']))
-    print('pfs_in_this_df:',pfs_in_this_df)
+    print('\tpfs_in_this_df:',pfs_in_this_df)
     # Make sure you're not trying to plot too many profiles
     if len(pfs_in_this_df) > 10:
         print('You are trying to plot',len(pfs_in_this_df),'profiles')
@@ -2524,6 +2599,9 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
             inset_ax.set_xlabel('Points per cluster')
             inset_ax.xaxis.set_label_position('top')
         #
+        # Invert y-axis if specified
+        if y_key in y_invert_vars:
+            ax.invert_yaxis()
     #
 
 ################################################################################
