@@ -1928,8 +1928,13 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
             n_h_bins = pp.extra_args['n_h_bins']
         except:
             n_h_bins = None
+        try:
+            plt_hist_lines = pp.extra_args['plt_hist_lines']
+        except:
+            plt_hist_lines = False
     else:
         n_h_bins = None
+        plt_hist_lines = False
     # Load in variables
     if x_key == 'hist':
         var_key = y_key
@@ -1957,6 +1962,16 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
         h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
         # Plot the histogram
         ax.hist(h_var, bins=res_bins, color=std_clr, orientation=orientation)
+        # Check whether to plot lines for mean and standard deviation
+        if plt_hist_lines:
+            if orientation == 'vertical':
+                ax.axvline(mean, color='r')
+                ax.axvline(mean-2*std_dev, color='r', linestyle='--')
+                ax.axvline(mean+2*std_dev, color='r', linestyle='--')
+            elif orientation == 'horizontal':
+                ax.axhline(mean, color='r')
+                ax.axhline(mean-2*std_dev, color='r', linestyle='--')
+                ax.axhline(mean+2*std_dev, color='r', linestyle='--')
         # Add legend to report overall statistics
         n_pts_patch   = mpl.patches.Patch(color=std_clr, label=str(len(h_var))+' points')
         median_patch  = mpl.patches.Patch(color=std_clr, label='Median:  '+'%.4f'%median)
@@ -1979,6 +1994,16 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
             elif orientation == 'horizontal':
                 tw_ax.set_ylabel(tw_label)
                 tw_ax.tick_params(axis='y', colors=tw_clr)
+            # Check whether to plot lines for mean and standard deviation
+            if plt_hist_lines:
+                if orientation == 'vertical':
+                    tw_ax.axvline(mean, color='r', alpha=0.5)
+                    tw_ax.axvline(mean-2*std_dev, color='r', linestyle='--', alpha=0.5)
+                    tw_ax.axvline(mean+2*std_dev, color='r', linestyle='--', alpha=0.5)
+                elif orientation == 'horizontal':
+                    tw_ax.axhline(mean, color='r', alpha=0.5)
+                    tw_ax.axhline(mean-2*std_dev, color='r', linestyle='--', alpha=0.5)
+                    tw_ax.axhline(mean+2*std_dev, color='r', linestyle='--', alpha=0.5)
             # Add legend to report overall statistics
             n_pts_patch   = mpl.patches.Patch(color=tw_clr, label=str(len(h_var))+' points', alpha=mrk_alpha)
             median_patch  = mpl.patches.Patch(color=tw_clr, label='Median:  '+'%.4f'%median, alpha=mrk_alpha)
@@ -2003,6 +2028,9 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
         plt_title = add_std_title(a_group)
         return x_label, y_label, plt_title, ax
     elif clr_map == 'clr_by_source':
+        # Can't make this type of plot for certain variables yet
+        if var_key in clstr_vars:
+            print('Cannot yet make a histogram plot of',var_key)
         # Find the list of sources
         sources_list = []
         for df in a_group.data_frames:
@@ -2022,9 +2050,19 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
                 these_dfs.append(df[df['source'] == source])
             this_df = pd.concat(these_dfs)
             # Get histogram parameters
-            h_var, res_bins, median, mean, std_dev = get_hist_params(this_df, var_key)
+            h_var, res_bins, median, mean, std_dev = get_hist_params(this_df, var_key, n_h_bins)
             # Plot the histogram
             ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation)
+            # Check whether to plot lines for mean and standard deviation
+            if plt_hist_lines:
+                if orientation == 'vertical':
+                    ax.axvline(mean, color='r')
+                    ax.axvline(mean-2*std_dev, color='r', linestyle='--')
+                    ax.axvline(mean+2*std_dev, color='r', linestyle='--')
+                elif orientation == 'horizontal':
+                    ax.axhline(mean, color='r')
+                    ax.axhline(mean-2*std_dev, color='r', linestyle='--')
+                    ax.axhline(mean+2*std_dev, color='r', linestyle='--')
             i += 1
             # Add legend handle to report the total number of points for this source
             lgnd_label = source+': '+str(len(this_df[var_key]))+' points, Median:'+'%.4f'%median
@@ -2043,6 +2081,9 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
         plt_title = add_std_title(a_group)
         return x_label, y_label, plt_title, ax
     elif clr_map == 'clr_by_instrmt':
+        # Can't make this type of plot for certain variables yet
+        if var_key in clstr_vars:
+            print('Cannot yet make a histogram plot of',var_key)
         i = 0
         lgnd_hndls = []
         # Loop through each data frame, the same as looping through instrmts
@@ -2053,9 +2094,19 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
             # Decide on the color, don't go off the end of the array
             my_clr = mpl_clrs[i%len(mpl_clrs)]
             # Get histogram parameters
-            h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key)
+            h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
             # Plot the histogram
             ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation)
+            # Check whether to plot lines for mean and standard deviation
+            if plt_hist_lines:
+                if orientation == 'vertical':
+                    ax.axvline(mean, color='r')
+                    ax.axvline(mean-2*std_dev, color='r', linestyle='--')
+                    ax.axvline(mean+2*std_dev, color='r', linestyle='--')
+                elif orientation == 'horizontal':
+                    ax.axhline(mean, color='r')
+                    ax.axhline(mean-2*std_dev, color='r', linestyle='--')
+                    ax.axhline(mean+2*std_dev, color='r', linestyle='--')
             i += 1
             # Add legend to report the total number of points for this instrmt
             lgnd_label = s_instrmt+': '+str(len(df[var_key]))+' points'
