@@ -67,7 +67,7 @@ print('- Creating plotting parameter objects')
 
 ### Test plots
 pp_xy_default = ahf.Plot_Parameters()
-pp_test0 = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aiT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90}, ax_lims=T2008_fig6a_ax_lims)
+pp_test0 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['iT'], clr_map='cluster', legend=False, extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
 # pp_test = ahf.Plot_Parameters(x_vars=['iT', 'la_iT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same')
 # pp_test = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_iT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':200})
 
@@ -83,15 +83,15 @@ pp_T2008_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='c
 ## Reproducing Timmermans et al. 2008 Figure 4, with cluster coloring and 2 extra profiles
 pp_T2008_fig4  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, ax_lims=T2008_fig4_y_lims)
 ## Reproducing Timmermans et al. 2008 Figure 5a, but with cluster coloring
-pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, ax_lims=T2008_fig5a_ax_lims)
+pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, ax_lims=T2008_fig5a_ax_lims, legend=False)
 ## Reproducing Timmermans et al. 2008 Figure 6a, but with cluster coloring
-pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, ax_lims=T2008_fig6a_ax_lims)
+pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, ax_lims=T2008_fig6a_ax_lims, legend=False)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
-pp_Lu2022_fig3a = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_press'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90})
-pp_Lu2022_fig3b = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90})
-pp_Lu2022_fig3c = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_SP'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90})
-pp_Lu2022_fig3d = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_sigma'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90})
+pp_Lu2022_fig3a = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_press'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
+pp_Lu2022_fig3b = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
+pp_Lu2022_fig3c = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_SP'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
+pp_Lu2022_fig3d = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_sigma'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
 
 ################################################################################
 # Create analysis group objects
@@ -99,7 +99,7 @@ print('- Creating analysis group objects')
 ################################################################################
 
 ## Test Analysis Groups
-my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_test0)
+# my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_test0)
 # my_group1 = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_test)
 # my_group0 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_f0, pp_test)
 # my_group1 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_f1, pp_test)

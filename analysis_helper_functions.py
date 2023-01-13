@@ -248,6 +248,7 @@ class Plot_Parameters:
                       'ma_SA', 'ma_sigma', 'ss_mask', 'la_iT', 'la_CT', 'la_SA',
                       'la_sigma'
                     Accepted 'by_layer' vars: ???
+    legend          True/False whether to add a legend on this plot. Default:True
     ax_lims         An optional dictionary of the limits on the axes for the final plot
                       Ex: {'x_lims':[x_min,x_max], 'y_lims':[y_min,y_max]}
     first_dfs       A list of booleans of whether to take the first differences
@@ -291,7 +292,7 @@ class Plot_Parameters:
                         Optional: {'z_var':'min_cs', 'z_list':[90,120,240]} where
                         z_var can be any variable that var0 can be
     """
-    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
+    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
         # Add all the input parameters to the object
         self.plot_type = plot_type
         self.plot_scale = plot_scale
@@ -299,6 +300,7 @@ class Plot_Parameters:
         self.y_vars = y_vars
         self.xlabels = [None,None]
         self.ylabels = [None,None]
+        self.legend = legend
         self.ax_lims = ax_lims
         self.first_dfs = first_dfs
         self.clr_map = clr_map
@@ -1519,7 +1521,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 cbar.ax.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
             cbar.set_label(pp.clabel)
             # Add a standard legend
-            add_std_legend(ax, df, x_key)
+            if pp.legend:
+                add_std_legend(ax, df, x_key)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
@@ -1566,7 +1569,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Change color of the ticks on the twin axis
                 tw_ax_x.tick_params(axis='y', colors=tw_clr)
             # Add a standard legend
-            add_std_legend(ax, df, x_key)
+            if pp.legend:
+                add_std_legend(ax, df, x_key)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
@@ -1612,7 +1616,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             # Add legend with custom handles
-            lgnd = ax.legend(handles=lgnd_hndls)
+            if pp.legend:
+                lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1645,7 +1650,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
                 lgnd_hndls.append(notes_patch)
             # Add legend with custom handles
-            lgnd = ax.legend(handles=lgnd_hndls)
+            if pp.legend:
+                lgnd = ax.legend(handles=lgnd_hndls)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             # Add a standard title
@@ -1689,11 +1695,12 @@ def make_subplot(ax, a_group, fig, ax_pos):
             pixel_patch  = mpl.patches.Patch(color='none', label=str(xy_bins)+'x'+str(xy_bins)+' pixels')
             notes_string = ''.join(df.notes.unique())
             # Only add the notes_string if it contains something
-            if len(notes_string) > 1:
-                notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-                ax.legend(handles=[n_pts_patch, pixel_patch, notes_patch])
-            else:
-                ax.legend(handles=[n_pts_patch, pixel_patch])
+            if pp.legend:
+                if len(notes_string) > 1:
+                    notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
+                    ax.legend(handles=[n_pts_patch, pixel_patch, notes_patch])
+                else:
+                    ax.legend(handles=[n_pts_patch, pixel_patch])
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             # Add a standard title
@@ -1711,7 +1718,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             if y_key in ['dt_start', 'dt_end']:
                 df[y_key] = mpl.dates.date2num(df[y_key])
             min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
-            plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes)
+            plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes, legend=pp.legend)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -2515,7 +2522,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
 
 ################################################################################
 
-def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=None, box_and_whisker=True, plot_slopes=False):
+def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=None, box_and_whisker=True, plot_slopes=False, legend=True):
     """
     Plots the clusters found by HDBSCAN on the x-y plane
 
@@ -2529,6 +2536,7 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
     box_and_whisker True/False whether to include the box and whisker plot
     plot_slopes     True/False whether to plot lines of least-squares slopes for
                         each cluster
+    legend          True/False whether to add a legend to the plot
     """
     # Decide whether to plot the centroid or not
     if x_key in pf_vars or y_key in pf_vars:
@@ -2584,7 +2592,8 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
         n_clstr_patch = mpl.lines.Line2D([],[],color='r', label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
         n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
         rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
-        ax.legend(handles=[n_pts_patch, min_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
+        if legend:
+            ax.legend(handles=[n_pts_patch, min_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
         # Add inset axis for box-and-whisker plot
         if box_and_whisker:
             inset_ax = inset_axes(ax, width="30%", height="10%", loc=4)
