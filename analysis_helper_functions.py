@@ -113,13 +113,17 @@ pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'reg
 # A list of the variables on the `Vertical` dimension
 vertical_vars = ['press', 'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_SP', 'ma_SA', 'ma_sigma', 'la_iT', 'la_CT', 'la_SP', 'la_SA', 'la_sigma']
 # Make lists of clustering variables
-pca_prefix = 'pca_'
+pca_prefix = 'pca_' # profile cluster average
 pca_vars   = [ f'{pca_prefix}{var}' for var in vertical_vars]
-cmc_prefix = 'cmc_'
+pcs_prefix = 'pcs_' # profile cluster span
+pcs_vars   = [ f'{pcs_prefix}{var}' for var in vertical_vars]
+cmc_prefix = 'cmc_' # cluster mean-centered
 cmc_vars   = [ f'{cmc_prefix}{var}' for var in vertical_vars]
-ca_prefix  = 'ca_'
-ca_vars    = [ f'{ca_prefix}{var}' for var in vertical_vars]
-clstr_vars = ['cluster'] + pca_vars + cmc_vars + ca_vars
+ca_prefix  = 'ca_'  # cluster average
+ca_vars    = [ f'{ca_prefix}{var}'  for var in vertical_vars]
+cs_prefix  = 'cs_'  # cluster span
+cs_vars    = [ f'{cs_prefix}{var}'  for var in vertical_vars]
+clstr_vars = ['cluster'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars
 # For parameter sweeps of clustering
 #   Independent variables
 clstr_ps_ind_vars = ['min_cs', 'n_pfs', 'maw_size']
@@ -950,6 +954,11 @@ def get_axis_label(var_key, var_attr_dicts):
         # Take out the first 4 characters of the string to leave the original variable name
         var_str = var_key[4:]
         return 'Profile cluster average of '+ var_attr_dicts[0][var_str]['label']
+    # Check for profile cluster span variables
+    if 'pcs_' in var_key:
+        # Take out the first 4 characters of the string to leave the original variable name
+        var_str = var_key[4:]
+        return 'Profile cluster span of '+ var_attr_dicts[0][var_str]['label']
     # Check for cluster mean-centered variables
     elif 'cmc_' in var_key:
         # Take out the first 4 characters of the string to leave the original variable name
@@ -965,6 +974,11 @@ def get_axis_label(var_key, var_attr_dicts):
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[3:]
         return 'Cluster average of '+ var_attr_dicts[0][var_str]['label']
+    # Check for cluster span variables
+    elif 'cs_' in var_key:
+        # Take out the first 3 characters of the string to leave the original variable name
+        var_str = var_key[3:]
+        return 'Cluster span of '+ var_attr_dicts[0][var_str]['label']
     # Check for mean-centered variables
     # elif 'mc_' in var_key:
     #     # Take out the first 3 characters of the string to leave the original variable name
@@ -2546,6 +2560,31 @@ def calc_extra_cl_vars(df, new_cl_vars):
                     #   Need to make a mask first for some reason
                     this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
                     df.loc[this_pf_this_cluster, this_var] = pf_clstr_mean
+        if prefix == 'pcs':
+            # Calculate the per profile cluster average version of the variable
+            #   Reduces the number of points to just one per cluster per profile
+            # Loop over each profile
+            n_pfs = int(max(df['entry'].values))
+            for pf in range(n_pfs+1):
+                # Find the data from just this profile
+                df_this_pf = df[df['entry']==pf]
+                # Get a list of clusters in this profile
+                clstr_ids = np.unique(np.array(df_this_pf['cluster'].values))
+                # Remove the noise points
+                clstr_ids = clstr_ids[clstr_ids != -1]
+                # Loop over every cluster in this profile
+                for i in clstr_ids:
+                    # Find the data from this cluster
+                    df_this_pf_this_cluster = df_this_pf[df_this_pf['cluster']==i]
+                    # Find the span of this var for this cluster for this profile
+                    pf_clstr_span = max(df_this_pf_this_cluster[var].values) - min(df_this_pf_this_cluster[var].values)
+                    # Replace any values of zero with `None`
+                    if pf_clstr_span == 0:
+                        pf_clstr_span = None
+                    # Put that value back into the original dataframe
+                    #   Need to make a mask first for some reason
+                    this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
+                    df.loc[this_pf_this_cluster, this_var] = pf_clstr_span
         if prefix == 'cmc':
             # Calculate the cluster mean-centered version of the variable
             #   Should not change the number of points to display
@@ -2570,6 +2609,17 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_mean = np.mean(df_this_cluster[var].values)
                 # Put those values back into the original dataframe
                 df.loc[df['cluster']==i, this_var] = clstr_mean
+        if prefix == 'cs':
+            # Calculate the cluster span version of the variable
+            #   Reduces the number of points to just one per cluster
+            # Loop over each cluster
+            for i in range(n_clusters+1):
+                # Find the data from this cluster
+                df_this_cluster = df[df['cluster']==i].copy()
+                # Find the mean of this var for this cluster
+                clstr_span = max(df_this_cluster[var].values) - min(df_this_cluster[var].values)
+                # Put those values back into the original dataframe
+                df.loc[df['cluster']==i, this_var] = clstr_span
             #
         #
     #

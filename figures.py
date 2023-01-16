@@ -93,6 +93,10 @@ pp_Lu2022_fig3b = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_CT'], cl
 pp_Lu2022_fig3c = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_SP'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
 pp_Lu2022_fig3d = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_sigma'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
 
+#
+pp_press_vs_date = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['press'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
+pp_press_vs_height = ahf.Plot_Parameters(x_vars=['pcs_press'], y_vars=['press'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=True)
+
 ## Histograms of data that's been mean centered by cluster
 pp_cmc_press = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['cmc_press'], extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90, 'plt_hist_lines':True})
 pp_cmc_sigma = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['cmc_sigma'], extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90, 'plt_hist_lines':True})
@@ -121,10 +125,13 @@ print('- Creating analysis group objects')
 # group_T2008_fig5a = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_T2008_fig5a)
 # group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_T2008_fig6a)
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
-group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3a)
-group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3b)
-group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3c)
-group_Lu2022_fig3d = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3d)
+# group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3a)
+# group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3b)
+# group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3c)
+# group_Lu2022_fig3d = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3d)
+#
+group_press_vs_date = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_press_vs_date)
+group_press_vs_height = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_press_vs_height)
 ## Histograms of data that's been mean centered by cluster
 # group_cmc_press = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_cmc_press)
 # group_cmc_sigma = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_cmc_sigma)
@@ -145,6 +152,8 @@ print('- Creating outputs')
 ## Reproducing figures from Timmermans et al. 2008
 # ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a])
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
-ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c])
+# ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c])
+#
+ahf.make_figure([group_press_vs_date, group_press_vs_height])
 ## Histograms of data that's been mean centered by cluster
 # ahf.make_figure([group_cmc_press, group_cmc_sigma, group_cmc_temp, group_cmc_salt])
