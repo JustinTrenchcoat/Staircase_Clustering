@@ -121,12 +121,12 @@ print('- Creating analysis group objects')
 # group_T2008_fig5a = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_T2008_fig5a)
 # group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_T2008_fig6a)
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
-# group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3a)
-# group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3b)
-# group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3c)
-# group_Lu2022_fig3d = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3d)
+group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3a)
+group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3b)
+group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3c)
+group_Lu2022_fig3d = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_Lu2022_fig3d)
 ## Histograms of data that's been mean centered by cluster
-group_cmc_press = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_cmc_press)
+# group_cmc_press = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_cmc_press)
 # group_cmc_sigma = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_cmc_sigma)
 # group_cmc_temp  = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_cmc_temp)
 # group_cmc_salt  = ahf.Analysis_Group(ds_ITP2_all, pfs_f1, pp_cmc_salt)
@@ -145,6 +145,6 @@ print('- Creating outputs')
 ## Reproducing figures from Timmermans et al. 2008
 # ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a])
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
-# ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c])
+ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c])
 ## Histograms of data that's been mean centered by cluster
-ahf.make_figure([group_cmc_press])#, group_cmc_sigma, group_cmc_temp, group_cmc_salt])
+# ahf.make_figure([group_cmc_press, group_cmc_sigma, group_cmc_temp, group_cmc_salt])

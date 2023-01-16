@@ -2141,7 +2141,11 @@ def get_hist_params(df, h_key, n_h_bins=25):
     if isinstance(n_h_bins, type(None)):
         n_h_bins = 25
     # Pull out the variable to plot, removing null values
-    h_var = np.array(df[df[h_key].notnull()][h_key])
+    try:
+        h_var = np.array(df[df[h_key].notnull()][h_key])
+    except:
+        print('Cannot find',h_key,'in the dataframe. Aborting script')
+        exit(0)
     # Find overall statistics
     median  = np.median(h_var)
     mean    = np.mean(h_var)
@@ -2606,8 +2610,11 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
     n_noise_pts = len(df_noise)
     # Which colormap?
     if clr_map == 'cluster':
-        # Loop through each cluster
+        # Make blank lists to record values
         pts_per_cluster = []
+        clstr_means = []
+        clstr_stdvs = []
+        # Loop through each cluster
         for i in range(n_clusters):
             # Decide on the color and symbol, don't go off the end of the arrays
             my_clr = mpl_clrs[i%len(mpl_clrs)]
@@ -2635,8 +2642,24 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
                 ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
                 # Add annotation to say what the slope is
                 ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color='r', weight='bold', zorder=12)
+            #
             # Record the number of points in this cluster
             pts_per_cluster.append(len(x_data))
+            # Record mean and standard deviation to calculate measure of variability
+            clstr_means.append(y_mean)
+            clstr_stdvs.append(y_stdv)
+        #
+        # Take first difference of sorted y_means
+        mean_diffs = np.diff(np.sort(np.array(clstr_means)))
+        # Get average of those first differences
+        avg_mean_diff = np.mean(mean_diffs)
+        print('For',y_key)
+        print('\tavg_mean_diff:',avg_mean_diff)
+        # Get average of the standard deviations
+        avg_stdev = np.mean(clstr_stdvs)
+        print('\tavg_stdev:',avg_stdev)
+        # Get the ratio of 4*avg_stdev / avg_mean_diff
+        print('\t4*avg_stdev / avg_mean_diff =',4*avg_stdev / avg_mean_diff)
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
         min_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(min_cs))
