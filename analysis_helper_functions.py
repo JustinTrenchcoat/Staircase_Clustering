@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 # For making insets in plots
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+# For storing figure objects in files
+import pickle as pl
 # For formatting data into dataframes
 import pandas as pd
 # For matching regular expressions
@@ -1207,9 +1209,15 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
     plt.tight_layout()
     #
     if filename != None:
-        print('Saving figure to',filename)
-        plt.savefig(filename, dpi=400)
+        print('- Saving figure to figures/'+filename)
+        if '.png' in filename:
+            plt.savefig('figures/'+filename, dpi=400)
+        elif '.pickle' in filename:
+            pl.dump(fig, open('figures/'+filename, 'wb'))
+        else:
+            print('File extension not recognized in',filename)
     else:
+        print('- Displaying figure')
         plt.show()
 
 ################################################################################
@@ -2678,7 +2686,8 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
             y_stdv = np.std(y_data)
             alphas = df[df.cluster == i]['clst_prob']
             # Plot the points for this cluster with the specified color, marker, and alpha value
-            ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=alphas, zorder=5)
+            #   Having an issue with actually using the alphas from above without a TypeError
+            ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=1.0, zorder=5)
             # Plot the centroid(?) of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
