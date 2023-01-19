@@ -17,16 +17,17 @@ from docopt import docopt
 args = docopt(__doc__)
 my_pickle   = args['PICKLE']       # filename of the pickle to unpickle
 
-import pickle as pl
+import dill as pl
 # Try to unpickle the specified figure
+print('- Loading figures/'+my_pickle+'.pickle')
 try:
-    print('Loading figures/'+my_pickle+'.pickle')
     fig = pl.load(open('figures/'+my_pickle+'.pickle', 'rb'))
 except:
-    print('Could not find figures/'+my_pickle+'.pickle')
+    print('Could not load figures/'+my_pickle+'.pickle')
     exit(0)
 
 # Display the figure in the interactive matplotlib GUI
+print('- Displaying figure')
 plt.show()
 
 exit(0)

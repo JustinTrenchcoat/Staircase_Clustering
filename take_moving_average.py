@@ -28,9 +28,9 @@ c3 = 50
 ################################################################################
 # Select the netcdfs to modify
 ncs_to_modify = [
-                 # 'netcdfs/ITP_1.nc',
+                 'netcdfs/ITP_1.nc',
                  # 'netcdfs/ITP_2.nc',
-                 'netcdfs/ITP_3.nc',
+                 # 'netcdfs/ITP_3.nc',
                  # 'netcdfs/ITP_13.nc'
                  ]
 

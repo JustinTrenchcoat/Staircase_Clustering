@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 # For making insets in plots
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-# For storing figure objects in files
-import pickle as pl
+# For storing figure objects in files (can use `pickle` instead if need be)
+import dill as pl
 # For formatting data into dataframes
 import pandas as pd
 # For matching regular expressions
