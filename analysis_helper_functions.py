@@ -56,7 +56,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = True
+dark_mode = False
 
 # Enable dark mode plotting
 if dark_mode:
@@ -2658,6 +2658,9 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
         plot_centroid = True
     # Run the HDBSCAN algorithm on the provided dataframe
     df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_samp, extra_cl_vars=[x_key,y_key])
+    # Remove rows where the plot variables are null
+    for var in [x_key, y_key]:
+        df = df[df[var].notnull()]
     # Clusters are labeled starting from 0, so total number of clusters is
     #   the largest label plus 1
     n_clusters  = df['cluster'].max()+1
@@ -2877,6 +2880,8 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
                     tw_ylabel = 'Number of clusters'
                 #
             #
+            with open('param_sweep.txt', 'w') as f:
+                f.write('\n min_cs: '+str(min_cs)+' maw_size?n_pfs? '+str(x)+' DBCV: '+str(rel_val)+' n_clstrs: '+str(new_df['cluster'].max()+1))
         ax.plot(x_var_array, y_var_array, color=std_clr, linestyle=l_styles[i], label=zlabel)
         if tw_y_key:
             tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
