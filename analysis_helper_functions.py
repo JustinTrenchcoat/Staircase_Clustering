@@ -1209,11 +1209,11 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
     plt.tight_layout()
     #
     if filename != None:
-        print('- Saving figure to figures/'+filename)
+        print('- Saving figure to outputs/'+filename)
         if '.png' in filename:
-            plt.savefig('figures/'+filename, dpi=400)
+            plt.savefig('outputs/'+filename, dpi=400)
         elif '.pickle' in filename:
-            pl.dump(fig, open('figures/'+filename, 'wb'))
+            pl.dump(fig, open('outputs/'+filename, 'wb'))
         else:
             print('File extension not recognized in',filename)
     else:
@@ -1477,7 +1477,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Add a standard title
                 plt_title = add_std_title(a_group)
                 # Plot the parameter sweep
-                xlabel, ylabel = plot_clstr_param_sweep(ax, tw_ax_x, a_group)
+                xlabel, ylabel = plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title)
                 return xlabel, ylabel, plt_title, ax
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
@@ -2751,7 +2751,7 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
 
 ################################################################################
 
-def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
+def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
     """
     Plots the number of clusters found by HDBSCAN vs. the number of profiles
     included in the data set
@@ -2789,6 +2789,11 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
     except:
         z_key = None
         z_list = [0]
+    # Open a text file to record values from the parameter sweep
+    sweep_txt_file = 'outputs/ps_x_'+x_key+'_z_'+z_key+'.txt'
+    f = open(sweep_txt_file,'w')
+    f.write('Parameter Sweep for '+plt_title+'\n')
+    f.close()
     # If limiting the number of pfs, find total number of pfs in the given df
     #   In the multi-index of df, level 0 is 'Time'
     if x_key == 'n_pfs':
@@ -2802,9 +2807,18 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
         print('\tNumber of profiles:',number_of_pfs)
         z_list = np.array(z_list)
         z_list = z_list[z_list <= number_of_pfs]
+    #
     print('\tPlotting these x values of',x_key,':',x_var_array)
+    f = open(sweep_txt_file,'a')
+    f.write('\nPlotting these x values of '+x_key+':\n')
+    f.write(str(x_var_array))
+    f.close()
     if z_key:
         print('\tPlotting these z values of',z_key,':',z_list)
+        f = open(sweep_txt_file,'a')
+        f.write('\nPlotting these z values of '+z_key+':\n')
+        f.write(str(z_list))
+        f.close()
     for i in range(len(z_list)):
         y_var_array = []
         tw_y_var_array = []
@@ -2880,13 +2894,20 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group):
                     tw_ylabel = 'Number of clusters'
                 #
             #
-            with open('param_sweep.txt', 'w') as f:
-                f.write('\n min_cs: '+str(min_cs)+' maw_size?n_pfs? '+str(x)+' DBCV: '+str(rel_val)+' n_clstrs: '+str(new_df['cluster'].max()+1))
+            f = open(sweep_txt_file,'a')
+            if z_key:
+                f.write('\n min_cs: '+str(min_cs)+' '+str(x_key)+': '+str(x)+' '+str(z_key)+': '+str(z_list[i])+' n_clstrs: '+str(new_df['cluster'].max()+1)+' DBCV: '+str(rel_val))
+            else:
+                f.write('\n min_cs: '+str(min_cs)+' '+str(x_key)+': '+str(x)+' n_clstrs: '+str(new_df['cluster'].max()+1+' DBCV: '+str(rel_val)))
+            f.close()
         ax.plot(x_var_array, y_var_array, color=std_clr, linestyle=l_styles[i], label=zlabel)
         if tw_y_key:
             tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
             tw_ax_x.set_ylabel(tw_ylabel)
             tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
+        f = open(sweep_txt_file,'a')
+        f.write('\n')
+        f.close()
     if z_key:
         ax.legend()
     return xlabel, ylabel
