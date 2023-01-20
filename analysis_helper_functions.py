@@ -56,7 +56,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = False
+dark_mode = True
 
 # Enable dark mode plotting
 if dark_mode:
@@ -1498,7 +1498,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 cmap_data = df[clr_map]
             # Get the colormap
             this_cmap = get_color_map(clr_map)
-
+            #
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map=clr_map)
             heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
@@ -1685,6 +1685,10 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 exit(0)
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
+            # Check for cluster-based variables
+            if x_key in clstr_vars or y_key in clstr_vars:
+                min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
+                df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s, extra_cl_vars=[x_key,y_key])
             # Format the dates if necessary
             if x_key in ['dt_start', 'dt_end']:
                 df[x_key] = mpl.dates.date2num(df[x_key])
@@ -1709,6 +1713,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 xy_bins = d_hist_dict['xy_bins']
             # Make the 2D histogram, the number of bins really changes the outcome
             heatmap = ax.hist2d(df[x_key], df[y_key], bins=xy_bins, cmap=get_color_map(clr_map), vmin=clr_min, vmax=clr_max)
+            # Invert y-axis if specified
+            if y_key in y_invert_vars:
+                ax.invert_yaxis()
             # `hist2d` returns a tuple, the index 3 of which is the mappable for a colorbar
             cbar = plt.colorbar(heatmap[3], ax=ax, extend=clr_ext)
             cbar.set_label('points per pixel')
@@ -2631,6 +2638,9 @@ def calc_extra_cl_vars(df, new_cl_vars):
             #
         #
     #
+    # Remove rows where the plot variables are null
+    for this_var in new_cl_vars:
+        df = df[df[this_var].notnull()]
     return df
 
 ################################################################################
