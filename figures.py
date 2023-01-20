@@ -106,7 +106,9 @@ print('- Creating plotting parameter objects')
 
 ### Test plots
 pp_xy_default = ahf.Plot_Parameters()
-pp_test0 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_iT'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':500})
+pp_test0 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['hist'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
+pp_test1 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_iT'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
+# pp_test1 = ahf.Plot_Parameters(x_vars=['pcs_press'], y_vars=['pca_press'], clr_map='density_hist', legend=True, extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'clr_min':0, 'clr_max':15, 'clr_ext':'max', 'xy_bins':250})
 # pp_test0 = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['lat'], clr_map='clr_all_same')
 pp_map = ahf.Plot_Parameters(plot_type='map', clr_map='prof_no')
 pp_pfs = ahf.Plot_Parameters(x_vars=['iT'], y_vars=['press'], plot_type='profiles')
@@ -161,7 +163,8 @@ print('- Creating analysis group objects')
 
 ## Test Analysis Groups
 # my_group0 = ahf.Analysis_Group(ds_ITP13_all, pfs_ITP13, pp_test0)
-# my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_test0)
+my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_test0)
+my_group1 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_test1)
 # my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_test0)
 # my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_f0, pp_test0)
 # my_group0 = ahf.Analysis_Group(ds_ITP1_all, pfs_f0, pp_map)
@@ -171,9 +174,9 @@ print('- Creating analysis group objects')
 ## Map of ITP drifts
 # group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_f0, pp_ITP_map)
 ## Parameter sweeps
-group_ps_min_cs = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_min_cs)
-group_ps_l_maw  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_l_maw)
-group_ps_n_pfs  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_n_pfs)
+# group_ps_min_cs = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_min_cs)
+# group_ps_l_maw  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_l_maw)
+# group_ps_n_pfs  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_n_pfs)
 # group_ps_min_cs = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_ITP3_ps_min_cs)
 # group_ps_l_maw  = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_ITP3_ps_l_maw)
 # group_ps_n_pfs  = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_ITP3_ps_n_pfs)
@@ -208,14 +211,14 @@ print('- Creating outputs')
 
 # ahf.make_figure([my_group0])
 # ahf.make_figure([my_group0], filename='test.pickle')
-# ahf.make_figure([my_group0, my_group1])
+ahf.make_figure([my_group0, my_group1])
 # ahf.make_figure([group_ps_min_cs])
 
 ### Figures for paper
 ## Map of ITP drifts
 # ahf.make_figure([group_ITP_map])#, filename='ITP_map.pickle')
 ## Parameter sweeps
-ahf.make_figure([group_ps_min_cs, group_ps_l_maw, group_ps_n_pfs], filename='ITP2_sweep.pickle')
+# ahf.make_figure([group_ps_min_cs, group_ps_l_maw, group_ps_n_pfs], filename='ITP2_sweep.pickle')
 ## Reproducing figures from Timmermans et al. 2008
 # ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a], filename='T2008.pickle')
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3

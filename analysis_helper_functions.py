@@ -1500,7 +1500,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             this_cmap = get_color_map(clr_map)
             #
             if plot_hist:
-                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map=clr_map)
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map=clr_map, legend=pp.legend)
             heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
@@ -1559,7 +1559,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s, extra_cl_vars=[x_key,y_key])
             # Check for histogram
             if plot_hist:
-                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=df, txk=tw_x_key, tay=tw_ax_y, tyk=tw_y_key, tax=tw_ax_x)
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=pp.legend, df=df, txk=tw_x_key, tay=tw_ax_y, tyk=tw_y_key, tax=tw_ax_x)
             # Format the dates if necessary
             if x_key in ['dt_start', 'dt_end']:
                 df[x_key] = mpl.dates.date2num(df[x_key])
@@ -1600,7 +1600,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'clr_by_source':
             if plot_hist:
-                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map)
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=pp.legend)
             # Find the list of sources
             sources_list = []
             for df in a_group.data_frames:
@@ -1645,7 +1645,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
         elif clr_map == 'clr_by_instrmt':
             if plot_hist:
-                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map)
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=pp.legend)
             i = 0
             lgnd_hndls = []
             # Loop through each data frame, the same as looping through instrmts
@@ -1741,6 +1741,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
             #   Legend is handled inside plot_clusters()
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
+            # Check for histogram
+            if plot_hist:
+                return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=pp.legend, df=df, txk=tw_x_key, tay=tw_ax_y, tyk=tw_y_key, tax=tw_ax_x)
             # Format the dates if necessary
             if x_key in ['dt_start', 'dt_end']:
                 df[x_key] = mpl.dates.date2num(df[x_key])
@@ -1939,7 +1942,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
 # Auxiliary plotting functions #################################################
 ################################################################################
 
-def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, tay=None, tyk=None, tax=None):
+def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None, txk=None, tay=None, tyk=None, tax=None):
     """
     Takes in an Analysis_Group object which has the data and plotting parameters
     to produce a subplot of individual profiles. Returns the x and y labels and
@@ -2150,6 +2153,65 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, df=None, txk=None, ta
             lgnd_hndls.append(notes_patch)
         # Add legend with custom handles
         lgnd = ax.legend(handles=lgnd_hndls)
+        # Add a standard title
+        plt_title = add_std_title(a_group)
+        return x_label, y_label, plt_title, ax
+    elif clr_map == 'cluster':
+        # Run clustering algorithm
+        min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
+        df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_s, extra_cl_vars=[x_key,y_key])
+        # Remove rows where the plot variables are null
+        df = df[df[var_key].notnull()]
+        # Clusters are labeled starting from 0, so total number of clusters is
+        #   the largest label plus 1
+        n_clusters  = df['cluster'].max()+1
+        # Make blank lists to record values
+        pts_per_cluster = []
+        clstr_means = []
+        clstr_stdvs = []
+        # Loop through each cluster
+        for i in range(n_clusters):
+            # Decide on the color and symbol, don't go off the end of the arrays
+            my_clr = mpl_clrs[i%len(mpl_clrs)]
+            my_mkr = mpl_mrks[i%len(mpl_mrks)]
+            # Get relevant data
+            this_clstr_df = df[df.cluster == i]
+            h_data = this_clstr_df[var_key]
+            h_mean = np.mean(h_data)
+            # Get histogram parameters
+            h_var, res_bins, median, mean, std_dev = get_hist_params(this_clstr_df, var_key, n_h_bins)
+            # Plot the histogram
+            n, bins, patches = ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation, zorder=5)
+            # Find the maximum value for this histogram
+            h_max = n.max()
+            # Plot a symbol to indicate which cluster is which histogram
+            if orientation == 'vertical':
+                ax.scatter(h_mean, h_max, color='r', s=cent_mrk_size, marker=my_mkr, zorder=1)
+            elif orientation == 'horizontal':
+                ax.scatter(h_max, h_mean, color='r', s=cent_mrk_size, marker=my_mkr, zorder=1)
+            #
+        # Noise points are labeled as -1
+        # Plot noise points
+        df_noise = df[df.cluster==-1]
+        # Get histogram parameters
+        h_var, res_bins, median, mean, std_dev = get_hist_params(df_noise, var_key, n_h_bins)
+        # Plot the noise histogram on a twin axis
+        if orientation == 'vertical':
+            tw_ax = ax.twinx()
+            tw_ax.set_ylabel('Number of noise points')
+        elif orientation == 'horizontal':
+            tw_ax = ax.twiny()
+            tw_ax.set_xlabel('Number of noise points')
+        n, bins, patches = tw_ax.hist(h_var, bins=res_bins, color=std_clr, alpha=noise_alpha, orientation=orientation, zorder=1)
+        n_noise_pts = len(df_noise)
+        # Add legend to report the total number of points and notes on the data
+        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
+        min_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(min_cs))
+        n_clstr_patch = mpl.lines.Line2D([],[],color='r', label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
+        n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
+        rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
+        if legend:
+            ax.legend(handles=[n_pts_patch, min_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
         # Add a standard title
         plt_title = add_std_title(a_group)
         return x_label, y_label, plt_title, ax
@@ -2700,7 +2762,7 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
             alphas = df[df.cluster == i]['clst_prob']
             # Plot the points for this cluster with the specified color, marker, and alpha value
             #   Having an issue with actually using the alphas from above without a TypeError
-            ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=1.0, zorder=5)
+            ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=0.7, zorder=5)
             # Plot the centroid(?) of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
