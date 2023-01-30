@@ -1750,7 +1750,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             if y_key in ['dt_start', 'dt_end']:
                 df[y_key] = mpl.dates.date2num(df[y_key])
             min_cs, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
-            plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes, legend=pp.legend)
+            plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1964,9 +1964,14 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             plt_hist_lines = pp.extra_args['plt_hist_lines']
         except:
             plt_hist_lines = False
+        try:
+            plt_noise = pp.extra_args['plt_noise']
+        except:
+            plt_noise = True
     else:
         n_h_bins = None
         plt_hist_lines = False
+        plt_noise = True
     # Load in variables
     if x_key == 'hist':
         var_key = y_key
@@ -2184,25 +2189,28 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             n, bins, patches = ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation, zorder=5)
             # Find the maximum value for this histogram
             h_max = n.max()
+            # Find where that max value occured
+            bin_h_max = bins[np.where(n == h_max)][0]
             # Plot a symbol to indicate which cluster is which histogram
             if orientation == 'vertical':
-                ax.scatter(h_mean, h_max, color='r', s=cent_mrk_size, marker=my_mkr, zorder=1)
+                ax.scatter(bin_h_max, h_max, color='r', s=cent_mrk_size, marker=my_mkr, zorder=1)
             elif orientation == 'horizontal':
-                ax.scatter(h_max, h_mean, color='r', s=cent_mrk_size, marker=my_mkr, zorder=1)
+                ax.scatter(h_max, bin_h_max, color='r', s=cent_mrk_size, marker=my_mkr, zorder=1)
             #
         # Noise points are labeled as -1
         # Plot noise points
         df_noise = df[df.cluster==-1]
-        # Get histogram parameters
-        h_var, res_bins, median, mean, std_dev = get_hist_params(df_noise, var_key, n_h_bins)
-        # Plot the noise histogram on a twin axis
-        if orientation == 'vertical':
-            tw_ax = ax.twinx()
-            tw_ax.set_ylabel('Number of noise points')
-        elif orientation == 'horizontal':
-            tw_ax = ax.twiny()
-            tw_ax.set_xlabel('Number of noise points')
-        n, bins, patches = tw_ax.hist(h_var, bins=res_bins, color=std_clr, alpha=noise_alpha, orientation=orientation, zorder=1)
+        if plt_noise:
+            # Get histogram parameters
+            h_var, res_bins, median, mean, std_dev = get_hist_params(df_noise, var_key, n_h_bins)
+            # Plot the noise histogram on a twin axis
+            if orientation == 'vertical':
+                tw_ax = ax.twinx()
+                tw_ax.set_ylabel('Number of noise points')
+            elif orientation == 'horizontal':
+                tw_ax = ax.twiny()
+                tw_ax.set_xlabel('Number of noise points')
+            n, bins, patches = tw_ax.hist(h_var, bins=res_bins, color=std_clr, alpha=noise_alpha, orientation=orientation, zorder=1)
         n_noise_pts = len(df_noise)
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
@@ -2348,6 +2356,10 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             df = pd.concat(tmp_df_list)
         except:
             extra_args = None
+        try:
+            plt_noise = extra_args['plt_noise']
+        except:
+            plt_noise = True
     # Find the unique profiles for this instrmt
     pfs_in_this_df = np.unique(np.array(df['prof_no']))
     print('\tpfs_in_this_df:',pfs_in_this_df)
@@ -2470,11 +2482,13 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             cluster_numbers = np.unique(np.array(df_clstrs['cluster'].values))
             cluster_numbers = np.delete(cluster_numbers, np.where(cluster_numbers == -1))
             # Plot noise points first
-            ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
+            if plt_noise:
+                ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
             # Plot on twin axes, if specified
             if not isinstance(tw_x_key, type(None)):
                 tw_ax_y.plot(tvar, pf_df[y_key], color=tw_clr, linestyle=l_style, label=pf_label, zorder=1)
-                tw_ax_y.scatter(df_clstrs[df_clstrs.cluster==-1][tw_x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
+                if plt_noise:
+                    tw_ax_y.scatter(df_clstrs[df_clstrs.cluster==-1][tw_x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
             # Loop through each cluster
             for i in cluster_numbers:
                 # Decide on the color and symbol, don't go off the end of the arrays
@@ -2707,11 +2721,12 @@ def calc_extra_cl_vars(df, new_cl_vars):
 
 ################################################################################
 
-def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=None, box_and_whisker=True, plot_slopes=False, legend=True):
+def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min_samp=None, box_and_whisker=True, plot_slopes=False):
     """
     Plots the clusters found by HDBSCAN on the x-y plane
 
     ax              The axis on which to plot
+    pp
     df              A pandas data frame output from HDBSCAN_
     x_key           String of the name of the column to use on the x-axis
     y_key           String of the name of the column to use on the y-axis
@@ -2721,8 +2736,16 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
     box_and_whisker True/False whether to include the box and whisker plot
     plot_slopes     True/False whether to plot lines of least-squares slopes for
                         each cluster
-    legend          True/False whether to add a legend to the plot
     """
+    # Find extra arguments, if given
+    legend = pp.legend
+    if not isinstance(pp.extra_args, type(None)):
+        try:
+            plt_noise = pp.extra_args['plt_noise']
+        except:
+            plt_noise = True
+    else:
+        plt_noise = True
     # Decide whether to plot the centroid or not
     if x_key in pf_vars or y_key in pf_vars:
         plot_centroid = False
@@ -2739,7 +2762,8 @@ def plot_clusters(ax, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs, min
     # Noise points are labeled as -1
     # Plot noise points first
     df_noise = df[df.cluster==-1]
-    ax.scatter(df_noise[x_key], df_noise[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
+    if plt_noise:
+        ax.scatter(df_noise[x_key], df_noise[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
     n_noise_pts = len(df_noise)
     # Which colormap?
     if clr_map == 'cluster':
