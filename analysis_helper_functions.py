@@ -107,7 +107,7 @@ l_styles = ['-', '--', '-.', ':']
 rand_seq = np.random.RandomState(1234567)
 
 # A list of variables for which the y-axis should be inverted so the surface is up
-y_invert_vars = ['press', 'pca_press', 'ca_press', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
+y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
 # A list of the variables on the `Layer` dimension
 layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
@@ -125,7 +125,9 @@ ca_prefix  = 'ca_'  # cluster average
 ca_vars    = [ f'{ca_prefix}{var}'  for var in vertical_vars]
 cs_prefix  = 'cs_'  # cluster span
 cs_vars    = [ f'{cs_prefix}{var}'  for var in vertical_vars]
-clstr_vars = ['cluster'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars
+cmm_prefix = 'cmm_' # cluster min/max
+cmm_vars   = [ f'{cmm_prefix}{var}'  for var in vertical_vars]
+clstr_vars = ['cluster'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars + cmm_vars
 # For parameter sweeps of clustering
 #   Independent variables
 clstr_ps_ind_vars = ['min_cs', 'n_pfs', 'maw_size']
@@ -981,6 +983,11 @@ def get_axis_label(var_key, var_attr_dicts):
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[3:]
         return 'Cluster span of '+ var_attr_dicts[0][var_str]['label']
+    # Check for cluster min/max variables
+    elif 'cmm_' in var_key:
+        # Take out the first 3 characters of the string to leave the original variable name
+        var_str = var_key[4:]
+        return 'Cluster min/max of '+ var_attr_dicts[0][var_str]['label']
     # Check for mean-centered variables
     # elif 'mc_' in var_key:
     #     # Take out the first 3 characters of the string to leave the original variable name
@@ -2711,6 +2718,20 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_span = max(df_this_cluster[var].values) - min(df_this_cluster[var].values)
                 # Put those values back into the original dataframe
                 df.loc[df['cluster']==i, this_var] = clstr_span
+        if prefix == 'cmm':
+            # Find the min/max of each cluster for the variable
+            #   Reduces the number of points to just one tuple per cluster
+            # Loop over each cluster
+            for i in range(n_clusters+1):
+                # Find the data from this cluster
+                df_this_cluster = df[df['cluster']==i].copy()
+                # Find the min/max of this var for this cluster
+                clstr_min = min(df_this_cluster[var].values)
+                clstr_max = max(df_this_cluster[var].values)
+                # Put those values back into the original dataframe
+                df.loc[df['cluster']==i, this_var] = -999
+                df.loc[df['cluster']==i, 'cmin_'+var] = clstr_min
+                df.loc[df['cluster']==i, 'cmax_'+var] = clstr_max
             #
         #
     #
@@ -2765,6 +2786,43 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
     if plt_noise:
         ax.scatter(df_noise[x_key], df_noise[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
     n_noise_pts = len(df_noise)
+    # Check whether to just plot one point per cluster
+    if x_key in ca_vars:
+        # Drop duplicates to have just one row per cluster
+        df.drop_duplicates(subset=[x_key], keep='first', inplace=True)
+        plot_centroid = False
+        mrk_size = cent_mrk_size
+        plot_slopes = False
+    if y_key in ca_vars:
+        # Drop duplicates to have just one row per cluster
+        df.drop_duplicates(subset=[y_key], keep='first', inplace=True)
+        plot_centroid = False
+        mrk_size = cent_mrk_size
+        plot_slopes = False
+    if x_key in cmm_vars:
+        # Split the prefix from the original variable (assumes an underscore split)
+        split_var = x_key.split('_', 1)
+        var = split_var[1]
+        # Drop duplicates to have just one row per cluster
+        df.drop_duplicates(subset=['cmin_'+var,'cmax_'+var], keep='first', inplace=True)
+        # Calculate
+        df['cmm_mid'] = (df['cmax_'+var] + df['cmin_'+var]) / 2
+        df['bar_len'] = (df['cmax_'+var] - df['cmin_'+var]) / 2
+        x_key = 'cmm_mid'
+        plot_centroid = False
+        plot_slopes = False
+    if y_key in cmm_vars:
+        # Split the prefix from the original variable (assumes an underscore split)
+        split_var = y_key.split('_', 1)
+        var = split_var[1]
+        # Drop duplicates to have just one row per cluster
+        df.drop_duplicates(subset=['cmin_'+var,'cmax_'+var], keep='first', inplace=True)
+        # Calculate
+        df['cmm_mid'] = (df['cmax_'+var] + df['cmin_'+var]) / 2
+        df['bar_len'] = (df['cmax_'+var] - df['cmin_'+var]) / 2
+        y_key = 'cmm_mid'
+        plot_centroid = False
+        plot_slopes = False
     # Which colormap?
     if clr_map == 'cluster':
         # Make blank lists to record values
@@ -2786,7 +2844,14 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
             alphas = df[df.cluster == i]['clst_prob']
             # Plot the points for this cluster with the specified color, marker, and alpha value
             #   Having an issue with actually using the alphas from above without a TypeError
-            ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=0.7, zorder=5)
+            if x_key == 'cmm_mid':
+                xerrs = df[df.cluster == i]['bar_len']
+                ax.errorbar(x_data, y_data, xerr=xerrs, color=my_clr, capsize=l_cap_size)
+            elif y_key == 'cmm_mid':
+                yerrs = df[df.cluster == i]['bar_len']
+                ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
+            else:
+                ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=0.7, zorder=5)
             # Plot the centroid(?) of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
@@ -2806,18 +2871,20 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
             # Record mean and standard deviation to calculate measure of variability
             clstr_means.append(y_mean)
             clstr_stdvs.append(y_stdv)
-        #
+        ## Calculate the average Overlap Ratio and Coefficient of Variation
         # Take first difference of sorted y_means
         mean_diffs = np.diff(np.sort(np.array(clstr_means)))
         # Get average of those first differences
         avg_mean_diff = np.mean(mean_diffs)
-        print('For',y_key)
-        print('\tavg_mean_diff:',avg_mean_diff)
         # Get average of the standard deviations
         avg_stdev = np.mean(clstr_stdvs)
-        print('\tavg_stdev:',avg_stdev)
-        # Get the ratio of 4*avg_stdev / avg_mean_diff
-        print('\t4*avg_stdev / avg_mean_diff =',4*avg_stdev / avg_mean_diff)
+        # Find the coefficients of variation for each cluster
+        clstr_covars = [i / j for i, j in zip(clstr_stdvs, clstr_means)]
+        print('For',y_key)
+        print('\tOverlap Ratio (4*avg_stdev / avg_mean_diff):')
+        print('\t\t',4*avg_stdev / avg_mean_diff)
+        print('\tCoefficient of Variation avg(stdvs / means):')
+        print('\t\t',np.mean(clstr_covars))
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
         min_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(min_cs))
