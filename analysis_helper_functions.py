@@ -127,7 +127,10 @@ cs_prefix  = 'cs_'  # cluster span
 cs_vars    = [ f'{cs_prefix}{var}'  for var in vertical_vars]
 cmm_prefix = 'cmm_' # cluster min/max
 cmm_vars   = [ f'{cmm_prefix}{var}'  for var in vertical_vars]
-clstr_vars = ['cluster'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars + cmm_vars
+cor_prefix = 'cor_' # cluster overlap ratio
+cor_vars   = [ f'{cor_prefix}{var}'  for var in vertical_vars]
+# Make a complete list of cluster-related variables
+clstr_vars = ['cluster'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars + cmm_vars + cor_vars
 # For parameter sweeps of clustering
 #   Independent variables
 clstr_ps_ind_vars = ['min_cs', 'n_pfs', 'maw_size']
@@ -468,42 +471,25 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append(var)
                 vars_to_keep.append('beta')
                 vars_to_keep.append('SA')
-            # Check for profile cluster average variables
-            if 'pca_' in var:
-                # Take out the first 4 characters of the string to leave the original variable name
-                var_str = var[4:]
-                vars_to_keep.append(var_str)
-                # Don't add cluster variables to vars_to_keep
-            # Check for cluster mean-centered variables
-            elif 'cmc_' in var:
-                # Take out the first 4 characters of the string to leave the original variable name
-                var_str = var[4:]
-                vars_to_keep.append(var_str)
-                # Don't add cluster variables to vars_to_keep
-            # Check for local anomaly variables
-            elif 'la_' in var:
-                # Take out the first 3 characters of the string to leave the original variable name
-                var_str = var[3:]
-                vars_to_keep.append(var_str)
-                # Calculate it later in calc_extra_vars
-                vars_to_keep.append(var)
-            # Check for cluster average variables
-            elif 'ca_' in var:
-                # Take out the first 3 characters of the string to leave the original variable name
-                var_str = var[3:]
-                vars_to_keep.append(var_str)
-                # Don't add cluster variables to vars_to_keep
-            # Check for mean-centered variables
-            elif 'mc_' in var:
-                # Take out the first 3 characters of the string to leave the original variable name
-                var_str = var[3:]
-                vars_to_keep.append(var_str)
-                # Calculate it later in calc_extra_vars
-                vars_to_keep.append(var)
+            # Check for variables that have underscores, ie. profile cluster
+            #   average variables and local anomalies
+            if '_' in var:
+                # Split the prefix from the original variable (assumes an underscore split)
+                split_var = var.split('_', 1)
+                prefix = split_var[0]
+                var_str = split_var[1]
+                # If plotting a cluster variable, add the original variable (without
+                #   the prefix) to the list of variables to keep
+                if var in clstr_vars:
+                    vars_to_keep.append(var_str)
+                # Add very specific variables directly to the list, including prefixes
+                if prefix in ['la', 'mc']:
+                    vars_to_keep.append(var)
+                #
             #
         # Add vars for the colormap, if applicable
-        if pp.clr_map in vars_available:
-            vars_to_keep.append(pp.clr_map)
+        # if pp.clr_map in vars_available:
+        #     vars_to_keep.append(pp.clr_map)
         # Add vars for the profile filters, if applicable
         scale = pp.plot_scale
         if scale == 'by_vert' or scale == 'by_layer':
@@ -988,6 +974,11 @@ def get_axis_label(var_key, var_attr_dicts):
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[4:]
         return 'Cluster min/max of '+ var_attr_dicts[0][var_str]['label']
+    # Check for cluster overlap ratio variables
+    elif 'cor_' in var_key:
+        # Take out the first 3 characters of the string to leave the original variable name
+        var_str = var_key[4:]
+        return 'Cluster overlap of '+ var_attr_dicts[0][var_str]['label']
     # Check for mean-centered variables
     # elif 'mc_' in var_key:
     #     # Take out the first 3 characters of the string to leave the original variable name
@@ -2220,7 +2211,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             n, bins, patches = tw_ax.hist(h_var, bins=res_bins, color=std_clr, alpha=noise_alpha, orientation=orientation, zorder=1)
         n_noise_pts = len(df_noise)
         # Add legend to report the total number of points and notes on the data
-        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
+        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[var_key]))+' points')
         min_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(min_cs))
         n_clstr_patch = mpl.lines.Line2D([],[],color='r', label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
         n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
@@ -2659,7 +2650,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                     this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
                     df.loc[this_pf_this_cluster, this_var] = pf_clstr_mean
         if prefix == 'pcs':
-            # Calculate the per profile cluster average version of the variable
+            # Calculate the per profile cluster span version of the variable
             #   Reduces the number of points to just one per cluster per profile
             # Loop over each profile
             n_pfs = int(max(df['entry'].values))
@@ -2720,7 +2711,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 df.loc[df['cluster']==i, this_var] = clstr_span
         if prefix == 'cmm':
             # Find the min/max of each cluster for the variable
-            #   Reduces the number of points to just one tuple per cluster
+            #   Reduces the number of points to just one per cluster
             # Loop over each cluster
             for i in range(n_clusters+1):
                 # Find the data from this cluster
@@ -2732,12 +2723,40 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 df.loc[df['cluster']==i, this_var] = -999
                 df.loc[df['cluster']==i, 'cmin_'+var] = clstr_min
                 df.loc[df['cluster']==i, 'cmax_'+var] = clstr_max
+        if prefix == 'cor':
+            # Find the cluster overlap ratios for the variable
+            #   Reduces the number of points to just one per cluster, minus one
+            #   because it depends on the difference between adjacent clusters
+            # Create dataframe to store means and standard deviations of each cluster
+            clstr_df = pd.DataFrame(data=np.arange(n_clusters), columns=['cluster'])
+            clstr_df['clstr_mean'] = None
+            clstr_df['clstr_stdv'] = None
+            # Loop over each cluster
+            for i in range(n_clusters+1):
+                # Find the data from this cluster
+                df_this_cluster = df[df['cluster']==i].copy()
+                # Find the mean and standard deviation of this var for this cluster
+                clstr_mean = np.mean(df_this_cluster[var].values)
+                clstr_stdv = np.std(df_this_cluster[var].values)
+                # Put those values into the cluster dataframe
+                clstr_df.loc[clstr_df['cluster']==i, 'clstr_mean'] = clstr_mean
+                clstr_df.loc[clstr_df['cluster']==i, 'clstr_stdv'] = clstr_stdv
+            # Sort the cluster dataframe by the mean values
+            sorted_clstr_df = clstr_df.sort_values(by='clstr_mean')
+            # Calculate the overlap ratios
+            sorted_clstr_df['mean_diff'] = sorted_clstr_df['clstr_mean'].diff()
+            sorted_clstr_df['overlap_ratio'] = 4*sorted_clstr_df['clstr_stdv'] / sorted_clstr_df['mean_diff']
+            # Loop over each cluster
+            for i in range(n_clusters+1):
+                # Put those values into the original dataframe
+                df.loc[df['cluster']==i, this_var] = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'overlap_ratio']
             #
         #
     #
     # Remove rows where the plot variables are null
     for this_var in new_cl_vars:
-        df = df[df[this_var].notnull()]
+        if 'cor_' not in this_var:
+            df = df[df[this_var].notnull()]
     return df
 
 ################################################################################
@@ -2758,6 +2777,9 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
     plot_slopes     True/False whether to plot lines of least-squares slopes for
                         each cluster
     """
+    # Needed to make changes to a copy of the global variable
+    global mrk_size
+    m_size = mrk_size
     # Find extra arguments, if given
     legend = pp.legend
     if not isinstance(pp.extra_args, type(None)):
@@ -2774,17 +2796,18 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
         plot_centroid = True
     # Run the HDBSCAN algorithm on the provided dataframe
     df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_samp, extra_cl_vars=[x_key,y_key])
+    print('unique cluster numbers:',np.unique(np.array(df['cluster'].values)))
+    # Clusters are labeled starting from 0, so total number of clusters is
+    #   the largest label plus 1
+    n_clusters = df['cluster'].max()+1
     # Remove rows where the plot variables are null
     for var in [x_key, y_key]:
         df = df[df[var].notnull()]
-    # Clusters are labeled starting from 0, so total number of clusters is
-    #   the largest label plus 1
-    n_clusters  = df['cluster'].max()+1
     # Noise points are labeled as -1
     # Plot noise points first
     df_noise = df[df.cluster==-1]
     if plt_noise:
-        ax.scatter(df_noise[x_key], df_noise[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=noise_alpha, zorder=1)
+        ax.scatter(df_noise[x_key], df_noise[y_key], color=std_clr, s=m_size, marker=std_marker, alpha=noise_alpha, zorder=1)
     n_noise_pts = len(df_noise)
     # Check whether to just plot one point per cluster
     if x_key in ca_vars:
@@ -2797,7 +2820,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
         # Drop duplicates to have just one row per cluster
         df.drop_duplicates(subset=[y_key], keep='first', inplace=True)
         plot_centroid = False
-        mrk_size = cent_mrk_size
+        m_size = cent_mrk_size
         plot_slopes = False
     if x_key in cmm_vars:
         # Split the prefix from the original variable (assumes an underscore split)
@@ -2851,7 +2874,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
                 yerrs = df[df.cluster == i]['bar_len']
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
             else:
-                ax.scatter(x_data, y_data, color=my_clr, s=mrk_size, marker=my_mkr, alpha=0.7, zorder=5)
+                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.7, zorder=5)
             # Plot the centroid(?) of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
@@ -2868,7 +2891,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
             #
             # Record the number of points in this cluster
             pts_per_cluster.append(len(x_data))
-            # Record mean and standard deviation to calculate measure of variability
+            # Record mean and standard deviation to calculate overlap ratio
             clstr_means.append(y_mean)
             clstr_stdvs.append(y_stdv)
         ## Calculate the average Overlap Ratio and Coefficient of Variation
