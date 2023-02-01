@@ -130,7 +130,7 @@ cmm_vars   = [ f'{cmm_prefix}{var}'  for var in vertical_vars]
 cor_prefix = 'cor_' # cluster overlap ratio
 cor_vars   = [ f'{cor_prefix}{var}'  for var in vertical_vars]
 # Make a complete list of cluster-related variables
-clstr_vars = ['cluster'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars + cmm_vars + cor_vars
+clstr_vars = ['cluster', 'cRL'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars + cmm_vars + cor_vars
 # For parameter sweeps of clustering
 #   Independent variables
 clstr_ps_ind_vars = ['min_cs', 'n_pfs', 'maw_size']
@@ -472,6 +472,11 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append(var)
                 vars_to_keep.append('beta')
                 vars_to_keep.append('SA')
+            elif var == 'cRL':
+                vars_to_keep.append('alpha')
+                vars_to_keep.append('CT')
+                vars_to_keep.append('beta')
+                vars_to_keep.append('SP')
             # Check for variables that have underscores, ie. profile cluster
             #   average variables and local anomalies
             if '_' in var:
@@ -999,7 +1004,8 @@ def get_axis_label(var_key, var_attr_dicts):
                  'distance':r'Along-path distance (km)',
                  'min_cs':r'Minimum cluster size $m_{pts}$',
                  'DBCV':'Relative validity measure (DBCV)',
-                 'n_clusters':'Number of clusters'
+                 'n_clusters':'Number of clusters',
+                 'cRL':r'Lateral density ratio $R_L$'
                 }
     if var_key in ax_labels.keys():
         return ax_labels[var_key]
@@ -2638,7 +2644,10 @@ def calc_extra_cl_vars(df, new_cl_vars):
         # Split the prefix from the original variable (assumes an underscore split)
         split_var = this_var.split('_', 1)
         prefix = split_var[0]
-        var = split_var[1]
+        try:
+            var = split_var[1]
+        except:
+            var = None
         # print('prefix:',prefix,'- var:',var)
         # Make a new blank column in the data frame for this variable
         df[this_var] = None
@@ -2665,7 +2674,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                     #   Need to make a mask first for some reason
                     this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
                     df.loc[this_pf_this_cluster, this_var] = pf_clstr_mean
-        if prefix == 'pcs':
+        elif prefix == 'pcs':
             # Calculate the per profile cluster span version of the variable
             #   Reduces the number of points to just one per cluster per profile
             # Loop over each profile
@@ -2690,7 +2699,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                     #   Need to make a mask first for some reason
                     this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
                     df.loc[this_pf_this_cluster, this_var] = pf_clstr_span
-        if prefix == 'cmc':
+        elif prefix == 'cmc':
             # Calculate the cluster mean-centered version of the variable
             #   Should not change the number of points to display
             # Loop over each cluster
@@ -2703,7 +2712,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 df_this_cluster[this_var] = df_this_cluster[var] - clstr_mean
                 # Put those values back into the original dataframe
                 df.loc[df['cluster']==i, this_var] = df_this_cluster[this_var]
-        if prefix == 'ca':
+        elif prefix == 'ca':
             # Calculate the cluster average version of the variable
             #   Reduces the number of points to just one per cluster
             # Loop over each cluster
@@ -2714,7 +2723,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_mean = np.mean(df_this_cluster[var].values)
                 # Put those values back into the original dataframe
                 df.loc[df['cluster']==i, this_var] = clstr_mean
-        if prefix == 'cs':
+        elif prefix == 'cs':
             # Calculate the cluster span version of the variable
             #   Reduces the number of points to just one per cluster
             # Loop over each cluster
@@ -2725,7 +2734,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_span = max(df_this_cluster[var].values) - min(df_this_cluster[var].values)
                 # Put those values back into the original dataframe
                 df.loc[df['cluster']==i, this_var] = clstr_span
-        if prefix == 'cmm':
+        elif prefix == 'cmm':
             # Find the min/max of each cluster for the variable
             #   Reduces the number of points to just one per cluster
             # Loop over each cluster
@@ -2739,7 +2748,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 df.loc[df['cluster']==i, this_var] = -999
                 df.loc[df['cluster']==i, 'cmin_'+var] = clstr_min
                 df.loc[df['cluster']==i, 'cmax_'+var] = clstr_max
-        if prefix == 'cor':
+        elif prefix == 'cor':
             # Find the cluster overlap ratios for the variable
             #   Reduces the number of points to just one per cluster, minus one
             #   because it depends on the difference between adjacent clusters
@@ -2769,8 +2778,29 @@ def calc_extra_cl_vars(df, new_cl_vars):
                     this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'overlap_ratio'].values[0]
                 except:
                     this_cor = None
-                # print('for cluster',i,'this_cor:',this_cor)
                 df.loc[df['cluster']==i, this_var] = this_cor
+            #
+        if this_var == 'cRL':
+            # Find the lateral density ratio R_L for each cluster
+            #   Reduces the number of points to just one per cluster
+            # Loop over each cluster
+            for i in range(n_clusters+1):
+                # Find the data from this cluster
+                df_this_cluster = df[df['cluster']==i].copy()
+                # Find the variables needed
+                alphas = df_this_cluster['alpha'].values
+                temps  = df_this_cluster['CT'].values
+                betas  = df_this_cluster['beta'].values
+                salts  = df_this_cluster['SP'].values
+                # Calculate variables needed
+                aTs = alphas * temps
+                BSs = betas * salts
+                # Find the slope of this cluster in aT-BS space
+                m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
+                # The lateral density ratio is the inverse of the slope
+                this_cRL = 1/m
+                # Put those values back into the original dataframe
+                df.loc[df['cluster']==i, this_var] = this_cRL
             #
         #
     #
@@ -2839,6 +2869,12 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
     if y_key in ca_vars:
         # Drop duplicates to have just one row per cluster
         df.drop_duplicates(subset=[y_key], keep='first', inplace=True)
+        plot_centroid = False
+        m_size = cent_mrk_size
+        plot_slopes = False
+    if 'cRL' in [x_key, y_key]:
+        # Drop duplicates to have just one row per cluster
+        df.drop_duplicates(subset=['cRL'], keep='first', inplace=True)
         plot_centroid = False
         m_size = cent_mrk_size
         plot_slopes = False

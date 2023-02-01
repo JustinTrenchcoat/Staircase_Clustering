@@ -32,6 +32,9 @@ T2008_fig6a_ax_lims = {'x_lims':[0.027,0.027045], 'y_lims':[-13e-6,3e-6]}
 # The actual limits are above, but need to adjust the x lims for some reason
 T2008_fig6a_ax_lims = {'x_lims':[0.026835,0.026880], 'y_lims':[-13e-6,3e-6]}
 
+# Filters used in Bebieva et al. 2019
+B2019_p_range = [220,400]
+
 # Shibley et al. 2019 Figure 6a I think shows profile 655
 S2019_fig6a_pfs = [654, 655, 656]
 # Filters to reproduce Shibley et al. 2019 Figure 6b
@@ -97,6 +100,7 @@ pfs_ITP2  = ahf.Profile_Filters(p_range=ITP2_p_range)#, m_avg_win=50)
 pfs_ITP3  = ahf.Profile_Filters(p_range=ITP3_p_range)
 pfs_Lu2022= ahf.Profile_Filters(p_range=Lu2022_p_range, CT_range=Lu2022_t_range, SP_range=Lu2022_s_range)
 pfs_ITP13 = ahf.Profile_Filters(p_range=ITP13_p_range, SP_range=[34.1,34.8])
+pfs_B2019 = ahf.Profile_Filters(p_range=B2019_p_range)
 
 ################################################################################
 # Create plotting parameter objects
@@ -160,6 +164,11 @@ pp_Lu2022_fig3a = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_press'],
 pp_Lu2022_fig3b = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':ITP3_min_cs}, legend=False)
 pp_Lu2022_fig3c = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_SP'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':ITP3_min_cs}, legend=False)
 pp_Lu2022_fig3d = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['pca_sigma'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':ITP3_min_cs}, legend=False)
+
+## The actual clustering done for reproducing Figure 3 from Bebieva et al. 2019
+pp_B2019_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
+## Reproducing Bebieva et al. 2019 Figure 3b
+pp_B2019_fig3b = ahf.Plot_Parameters(x_vars=['cRL'], y_vars=['ca_press'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90}, legend=False)
 
 ## Finding layer height vs. depth, reproducing Shibley et al. 2019 Figure 6
 pp_S2019_fig6a = ahf.Plot_Parameters(x_vars=['CT'], y_vars=['press'], plot_type='profiles')
@@ -226,10 +235,15 @@ print('- Creating analysis group objects')
 # group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_Lu2022_fig3b)
 # group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_Lu2022_fig3c)
 # group_Lu2022_fig3d = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_Lu2022_fig3d)
-group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3a)
-group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3b)
-group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3c)
-group_Lu2022_fig3d = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3d)
+# group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3a)
+# group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3b)
+# group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3c)
+# group_Lu2022_fig3d = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3d)
+
+## The actual clustering done for reproducing Figure 3 from Bebieva et al. 2019
+group_B2019_clstr = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_B2019_clstr)
+## Reproducing Bebieva et al. 2019 Figure 3b
+group_B2019_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_B2019_fig3b)
 
 ## Finding layer height vs. depth, reproducing Shibley et al. 2019 Figure 6
 # group_S2019_fig6a = ahf.Analysis_Group(ds_ITP13_all, pfs_ITP13, pp_S2019_fig6a)
@@ -268,7 +282,10 @@ print('- Creating outputs')
 # ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a])#, filename='T2008.pickle')
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
-ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c], filename='Lu2022_f3_ITP2.png')#'Lu2022_f3.pickle')
+# ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c], filename='Lu2022_f3_ITP2.png')#'Lu2022_f3.pickle')
+
+## Reproducing Bebieva et al. 2019 Figure 3b
+ahf.make_figure([group_B2019_clstr, group_B2019_fig3b])
 
 ## Finding layer height vs. depth, reproducing Shibley et al. 2019 Figure 6
 # ahf.make_figure([group_S2019_fig6a, group_S2019_fig6b, group_S2019_fig6c])
