@@ -94,7 +94,7 @@ l_cap_size = 3.0
 l_marker   = '+'
 
 # The magnitude limits for axis ticks before they use scientific notation
-sci_lims = (-3,3)
+sci_lims = (-2,3)
 
 #   Get list of standard colors
 mpl_clrs = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -452,6 +452,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 if key in ['cl_x_var', 'cl_y_var']:
                     plot_vars.append(pp.extra_args[key])
         # print('plot_vars:',plot_vars)
+        # print('vars_available:',vars_available)
         for var in plot_vars:
             if var in vars_available:
                 vars_to_keep.append(var)
@@ -485,6 +486,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 # Add very specific variables directly to the list, including prefixes
                 if prefix in ['la', 'mc']:
                     vars_to_keep.append(var)
+                    vars_to_keep.append(var_str)
                 #
             #
         # Add vars for the colormap, if applicable
@@ -735,22 +737,22 @@ def take_m_avg(df, m_avg_win, vars_available):
             df['ma_iT'] = df1['iT']
             if 'la_iT' in vars_available:
                 df['la_iT'] = df['iT'] - df['ma_iT']
-        if var in ['SP','ma_SP','la_SP']:
-            df['ma_SP'] = df1['SP']
-            if 'la_SP' in vars_available:
-                df['la_SP'] = df['SP'] - df['ma_SP']
-        if var in ['sigma','ma_sigma','la_sigma']:
-            df['ma_sigma'] = df1['sigma']
-            if 'la_sigma' in vars_available:
-                df['la_sigma'] = df['sigma'] - df['ma_sigma']
         if var in ['CT','ma_CT','la_CT']:
             df['ma_CT'] = df1['CT']
             if 'la_CT' in vars_available:
                 df['la_CT'] = df['CT'] - df['ma_CT']
+        if var in ['SP','ma_SP','la_SP']:
+            df['ma_SP'] = df1['SP']
+            if 'la_SP' in vars_available:
+                df['la_SP'] = df['SP'] - df['ma_SP']
         if var in ['SA','ma_SA','la_SA']:
             df['ma_SA'] = df1['SA']
             if 'la_SA' in vars_available:
                 df['la_SA'] = df['SA'] - df['ma_SA']
+        if var in ['sigma','ma_sigma','la_sigma']:
+            df['ma_sigma'] = df1['sigma']
+            if 'la_sigma' in vars_available:
+                df['la_sigma'] = df['sigma'] - df['ma_sigma']
             #
         #
     #
@@ -1125,7 +1127,7 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
     # Define number of rows and columns based on number of subplots
     #   key: number of subplots, value: (rows, cols, f_ratio, f_size)
     n_row_col_dict = {'1':[1,1, 0.8, 1.25], '2':[1,2, 0.5, 1.25], '2.5':[2,1, 0.8, 1.25],
-                      '3':[1,3, 0.3, 1.40], '4':[2,2, 0.8, 2.00],#1.50],
+                      '3':[1,3, 0.3, 1.40], '4':[2,2, 0.7, 2.00],
                       '5':[2,3, 0.5, 2.00], '6':[2,3, 0.5, 2.00],
                       '7':[2,4, 0.4, 2.00], '8':[2,4, 0.4, 2.00],
                       '9':[3,3, 0.8, 2.00]}
@@ -2864,6 +2866,9 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
         y_key = 'cmm_mid'
         plot_centroid = False
         plot_slopes = False
+    # Check whether to change the marker size
+    if 'pca_' in x_key or 'pca_' in y_key:
+        m_size = layer_mrk_size
     # Which colormap?
     if clr_map == 'cluster':
         # Make blank lists to record values
@@ -2875,6 +2880,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
             # Decide on the color and symbol, don't go off the end of the arrays
             my_clr = mpl_clrs[i%len(mpl_clrs)]
             my_mkr = mpl_mrks[i%len(mpl_mrks)]
+            # print('\tCluster',i,'my_clr:',my_clr,'my_mkr',my_mkr)
             # Get relevant data
             x_data = df[df.cluster == i][x_key]
             x_mean = np.mean(x_data)
@@ -2892,7 +2898,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
                 yerrs = df[df.cluster == i]['bar_len']
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
             else:
-                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.7, zorder=5)
+                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
                 # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             # Plot the centroid(?) of this cluster
             if plot_centroid:

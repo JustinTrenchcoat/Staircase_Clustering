@@ -21,15 +21,15 @@ from scipy import interpolate
 import gsw
 
 # The moving average window in dbar
-c3 = 50
+c3 = 90
 
 ################################################################################
 # Main execution
 ################################################################################
 # Select the netcdfs to modify
 ncs_to_modify = [
-                 'netcdfs/ITP_1.nc',
-                 # 'netcdfs/ITP_2.nc',
+                 # 'netcdfs/ITP_1.nc',
+                 'netcdfs/ITP_2.nc',
                  # 'netcdfs/ITP_3.nc',
                  # 'netcdfs/ITP_13.nc'
                  ]
@@ -63,10 +63,10 @@ for my_nc in ncs_to_modify:
     df1 = df.rolling(window=c3, center=True, win_type='boxcar', on='press').mean()
     # Put the moving average profiles for temperature, salinity, and density into the dataset
     ds['ma_iT'].values = df1['iT'].values.reshape((len0, len1))
-    ds['ma_SP'].values = df1['SP'].values.reshape((len0, len1))
-    ds['ma_sigma'].values= gsw.sigma1(ds['ma_SP'], ds['ma_iT'])
     ds['ma_CT'].values = df1['CT'].values.reshape((len0, len1))
+    ds['ma_SP'].values = df1['SP'].values.reshape((len0, len1))
     ds['ma_SA'].values = df1['SA'].values.reshape((len0, len1))
+    ds['ma_sigma'].values= gsw.sigma1(ds['ma_SP'], ds['ma_CT'])
 
     # Update the global variables:
     ds.attrs['Last modified'] = str(datetime.now())
