@@ -106,8 +106,8 @@ print('- Creating plotting parameter objects')
 
 ### Test plots
 pp_xy_default = ahf.Plot_Parameters()
-pp_test0 = ahf.Plot_Parameters(x_vars=['cmm_SP'], y_vars=['ca_press'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
-pp_test1 = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['cmm_press'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
+pp_test0 = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['cmc_press'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
+# pp_test1 = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['cmm_press'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
 # pp_test1 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['hist'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
 # pp_test1 = ahf.Plot_Parameters(x_vars=['pcs_press'], y_vars=['pca_press'], clr_map='density_hist', legend=True, extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'clr_min':0, 'clr_max':15, 'clr_ext':'max', 'xy_bins':250})
 # pp_test0 = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['lat'], clr_map='clr_all_same')
@@ -115,8 +115,20 @@ pp_map = ahf.Plot_Parameters(plot_type='map', clr_map='prof_no')
 pp_pfs = ahf.Plot_Parameters(x_vars=['iT'], y_vars=['press'], plot_type='profiles')
 
 ## Test Figures
+#
 pp_cmm_SP = ahf.Plot_Parameters(x_vars=['cmm_SP'], y_vars=['ca_press'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
 pp_cmm_press = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['cmm_press'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90})
+#
+pp_press_cor  = ahf.Plot_Parameters(x_vars=['cor_press'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'b_a_w_plt':False, 'plt_noise':False})
+pp_press_hist = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'b_a_w_plt':False, 'plt_noise':False})
+pp_sigma_cor  = ahf.Plot_Parameters(x_vars=['cor_sigma'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'b_a_w_plt':False, 'plt_noise':False})
+pp_sigma_hist = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['sigma'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'b_a_w_plt':False, 'plt_noise':False})
+pp_temp_cor   = ahf.Plot_Parameters(x_vars=['cor_iT'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'b_a_w_plt':False, 'plt_noise':False})
+pp_temp_hist  = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['iT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'b_a_w_plt':False, 'plt_noise':False})
+pp_salt_cor   = ahf.Plot_Parameters(x_vars=['cor_SP'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'b_a_w_plt':False, 'plt_noise':False})
+pp_salt_hist  = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['SP'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_iT', 'min_cs':90, 'b_a_w_plt':False, 'plt_noise':False})
+
+
 
 ### Figures for paper
 ## Map of ITP drifts
@@ -176,8 +188,18 @@ print('- Creating analysis group objects')
 # my_group1 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_ITP2, pp_test0)
 
 ## Test figures
-group_cmm_SP = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_SP)
-group_cmm_press = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_press)
+#
+# group_cmm_SP = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_SP)
+# group_cmm_press = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_press)
+#
+group_press_cor  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_press_cor)
+group_press_hist = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_press_hist)
+group_sigma_cor  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_sigma_cor)
+group_sigma_hist = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_sigma_hist)
+group_temp_cor   = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_temp_cor)
+group_temp_hist  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_temp_hist)
+group_salt_cor   = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_cor)
+group_salt_hist  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_hist)
 
 ### Figures for paper
 ## Map of ITP drifts
@@ -224,7 +246,8 @@ print('- Creating outputs')
 # ahf.make_figure([group_T2008_fig4])
 
 ## Test Figures
-ahf.make_figure([group_cmm_SP, group_cmm_press])
+# ahf.make_figure([group_cmm_SP, group_cmm_press])
+ahf.make_figure([group_press_hist, group_press_cor, group_sigma_hist, group_sigma_cor, group_temp_hist, group_temp_cor, group_salt_hist, group_salt_cor], filename='ITP2_cor_vs_press_all_var.pickle')
 
 ### Figures for paper
 ## Map of ITP drifts

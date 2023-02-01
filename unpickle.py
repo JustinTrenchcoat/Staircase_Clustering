@@ -9,7 +9,7 @@ Usage:
     unpickle.py PICKLE
 
 Options:
-    PICKLE          # filename of the pickle to unpickle in the `figures` folder
+    PICKLE          # filepath of the pickle to unpickle
 """
 import matplotlib.pyplot as plt
 # Parse input parameters
@@ -19,11 +19,11 @@ my_pickle   = args['PICKLE']       # filename of the pickle to unpickle
 
 import dill as pl
 # Try to unpickle the specified figure
-print('- Loading figures/'+my_pickle+'.pickle')
+print('- Loading '+my_pickle)
 try:
-    fig = pl.load(open('figures/'+my_pickle+'.pickle', 'rb'))
+    fig = pl.load(open(my_pickle, 'rb'))
 except:
-    print('Could not load figures/'+my_pickle+'.pickle')
+    print('Could not load '+my_pickle)
     exit(0)
 
 # Display the figure in the interactive matplotlib GUI

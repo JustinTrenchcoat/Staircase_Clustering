@@ -107,7 +107,7 @@ l_styles = ['-', '--', '-.', ':']
 rand_seq = np.random.RandomState(1234567)
 
 # A list of variables for which the y-axis should be inverted so the surface is up
-y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
+y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'SP', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
 # A list of the variables on the `Layer` dimension
 layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
@@ -1126,7 +1126,9 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
     #   key: number of subplots, value: (rows, cols, f_ratio, f_size)
     n_row_col_dict = {'1':[1,1, 0.8, 1.25], '2':[1,2, 0.5, 1.25], '2.5':[2,1, 0.8, 1.25],
                       '3':[1,3, 0.3, 1.40], '4':[2,2, 0.8, 2.00],#1.50],
-                      '5':[2,3, 0.5, 2.00], '6':[2,3, 0.5, 2.00]}
+                      '5':[2,3, 0.5, 2.00], '6':[2,3, 0.5, 2.00],
+                      '7':[2,4, 0.4, 2.00], '8':[2,4, 0.4, 2.00],
+                      '9':[3,3, 0.8, 2.00]}
     # Figure out what layout of subplots to make
     n_subplots = len(groups_to_plot)
     y_keys = []
@@ -1167,7 +1169,7 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
             except:
                 foo = 2
         ax.set_title(plt_title)
-    elif n_subplots > 1 and n_subplots < 7:
+    elif n_subplots > 1 and n_subplots < 10:
         rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
         n_subplots = int(np.floor(n_subplots))
         fig, axes = set_fig_axes([1]*rows, [1]*cols, fig_ratio=f_ratio, fig_size=f_size, share_y_axis=use_same_y_axis)
@@ -1997,6 +1999,9 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
         # Plot the histogram
         ax.hist(h_var, bins=res_bins, color=std_clr, orientation=orientation)
+        # Invert y-axis if specified
+        if y_key in y_invert_vars:
+            ax.invert_yaxis()
         # Check whether to plot lines for mean and standard deviation
         if plt_hist_lines:
             if orientation == 'vertical':
@@ -2112,6 +2117,9 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             lgnd_hndls.append(notes_patch)
         # Add legend with custom handles
         lgnd = ax.legend(handles=lgnd_hndls)
+        # Invert y-axis if specified
+        if y_key in y_invert_vars:
+            ax.invert_yaxis()
         # Add a standard title
         plt_title = add_std_title(a_group)
         return x_label, y_label, plt_title, ax
@@ -2156,6 +2164,9 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             lgnd_hndls.append(notes_patch)
         # Add legend with custom handles
         lgnd = ax.legend(handles=lgnd_hndls)
+        # Invert y-axis if specified
+        if y_key in y_invert_vars:
+            ax.invert_yaxis()
         # Add a standard title
         plt_title = add_std_title(a_group)
         return x_label, y_label, plt_title, ax
@@ -2191,9 +2202,10 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             bin_h_max = bins[np.where(n == h_max)][0]
             # Plot a symbol to indicate which cluster is which histogram
             if orientation == 'vertical':
-                ax.scatter(bin_h_max, h_max, color='r', s=cent_mrk_size, marker=my_mkr, zorder=1)
+                ax.scatter(bin_h_max, h_max, color=my_clr, s=cent_mrk_size, marker=my_mkr, zorder=1)
             elif orientation == 'horizontal':
-                ax.scatter(h_max, bin_h_max, color='r', s=cent_mrk_size, marker=my_mkr, zorder=1)
+                ax.scatter(h_max, bin_h_max, color=my_clr, s=cent_mrk_size, marker=my_mkr, zorder=1)
+                # ax.scatter(h_max, bin_h_max, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             #
         # Noise points are labeled as -1
         # Plot noise points
@@ -2218,6 +2230,9 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
         if legend:
             ax.legend(handles=[n_pts_patch, min_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
+        # Invert y-axis if specified
+        if y_key in y_invert_vars:
+            ax.invert_yaxis()
         # Add a standard title
         plt_title = add_std_title(a_group)
         return x_label, y_label, plt_title, ax
@@ -2474,7 +2489,6 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # Plot a background line for each profile
             ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, label=pf_label, zorder=1)
             # Make a dataframe with adjusted xvar and tvar
-            # df_clstrs = pd.DataFrame({x_key:xvar, y_key:pf_df[y_key], 'cluster':pf_df['cluster'], 'clst_prob':pf_df['clst_prob']})
             df_clstrs = pd.DataFrame({x_key:xvar, tw_x_key:tvar, y_key:pf_df[y_key], 'cluster':pf_df['cluster'], 'clst_prob':pf_df['clst_prob']})
             # Get a list of unique cluster numbers, but delete the noise point label "-1"
             cluster_numbers = np.unique(np.array(df_clstrs['cluster'].values))
@@ -2749,7 +2763,12 @@ def calc_extra_cl_vars(df, new_cl_vars):
             # Loop over each cluster
             for i in range(n_clusters+1):
                 # Put those values into the original dataframe
-                df.loc[df['cluster']==i, this_var] = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'overlap_ratio']
+                try:
+                    this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'overlap_ratio'].values[0]
+                except:
+                    this_cor = None
+                # print('for cluster',i,'this_cor:',this_cor)
+                df.loc[df['cluster']==i, this_var] = this_cor
             #
         #
     #
@@ -2796,7 +2815,6 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
         plot_centroid = True
     # Run the HDBSCAN algorithm on the provided dataframe
     df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_cs, min_samp=min_samp, extra_cl_vars=[x_key,y_key])
-    print('unique cluster numbers:',np.unique(np.array(df['cluster'].values)))
     # Clusters are labeled starting from 0, so total number of clusters is
     #   the largest label plus 1
     n_clusters = df['cluster'].max()+1
@@ -2875,6 +2893,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_cs,
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
             else:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.7, zorder=5)
+                # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             # Plot the centroid(?) of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
