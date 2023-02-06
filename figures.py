@@ -139,10 +139,14 @@ pp_salt_hist  = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['SP'], clr_map='clu
 pp_ITP_map = ahf.Plot_Parameters(plot_type='map', clr_map='clr_by_instrmt')
 
 ## Parameter sweeps
-# ITP 2
+# ITP 2, Timmermans et al. 2008
 pp_ITP2_ps_min_cs = ahf.Plot_Parameters(x_vars=['min_cs'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90, 'cl_ps_tuple':[20,450,10], 'z_var':'maw_size', 'z_list':[50,90,110]})
 pp_ITP2_ps_l_maw  = ahf.Plot_Parameters(x_vars=['maw_size'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90, 'cl_ps_tuple':[10,310,10], 'z_var':'min_cs', 'z_list':[50,90,140]})
 pp_ITP2_ps_n_pfs  = ahf.Plot_Parameters(x_vars=['n_pfs'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90, 'cl_ps_tuple':[10,210,5], 'z_var':'min_cs', 'z_list':[50,90,140]})
+# ITP 2, Bebieva et al. 2019
+pp_ITP2B_ps_min_cs = ahf.Plot_Parameters(x_vars=['min_cs'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90, 'cl_ps_tuple':[20,550,10], 'z_var':'maw_size', 'z_list':[50,60,140]})
+pp_ITP2B_ps_l_maw  = ahf.Plot_Parameters(x_vars=['maw_size'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90, 'cl_ps_tuple':[10,310,10], 'z_var':'min_cs', 'z_list':[130,210,340]})
+pp_ITP2B_ps_n_pfs  = ahf.Plot_Parameters(x_vars=['n_pfs'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':90, 'cl_ps_tuple':[10,210,5], 'z_var':'min_cs', 'z_list':[130,210,340]})
 # ITP 3
 pp_ITP3_ps_min_cs = ahf.Plot_Parameters(x_vars=['min_cs'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':500, 'cl_ps_tuple':[500,50001,500]})
 pp_ITP3_ps_l_maw  = ahf.Plot_Parameters(x_vars=['maw_size'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_cs':500, 'cl_ps_tuple':[10,210,10]})
@@ -216,9 +220,14 @@ print('- Creating analysis group objects')
 # group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_f0, pp_ITP_map)
 
 ## Parameter sweeps
+## ITP2, Timmermans et al. 2008
 # group_ps_min_cs = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_min_cs)
 # group_ps_l_maw  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_l_maw)
 # group_ps_n_pfs  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_n_pfs)
+## ITP2, Bebieva et al. 2019
+group_ps_min_cs = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_ITP2B_ps_min_cs)
+group_ps_l_maw  = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_ITP2B_ps_l_maw)
+group_ps_n_pfs  = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_ITP2B_ps_n_pfs)
 #
 # group_ps_min_cs = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_ITP3_ps_min_cs)
 # group_ps_l_maw  = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_ITP3_ps_l_maw)
@@ -241,9 +250,9 @@ print('- Creating analysis group objects')
 # group_Lu2022_fig3d = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3d)
 
 ## The actual clustering done for reproducing Figure 3 from Bebieva et al. 2019
-group_B2019_clstr = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_B2019_clstr)
+# group_B2019_clstr = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_B2019_clstr)
 ## Reproducing Bebieva et al. 2019 Figure 3b
-group_B2019_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_B2019_fig3b)
+# group_B2019_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_B2019, pp_B2019_fig3b)
 
 ## Finding layer height vs. depth, reproducing Shibley et al. 2019 Figure 6
 # group_S2019_fig6a = ahf.Analysis_Group(ds_ITP13_all, pfs_ITP13, pp_S2019_fig6a)
@@ -276,7 +285,7 @@ print('- Creating outputs')
 # ahf.make_figure([group_ITP_map])#, filename='ITP_map.pickle')
 
 ## Parameter sweeps
-# ahf.make_figure([group_ps_min_cs, group_ps_l_maw, group_ps_n_pfs], filename='ITP2_sweep.pickle')
+ahf.make_figure([group_ps_min_cs, group_ps_l_maw, group_ps_n_pfs], filename='ITP2B_sweep.pickle')
 
 ## Reproducing figures from Timmermans et al. 2008
 # ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a])#, filename='T2008.pickle')
@@ -285,7 +294,7 @@ print('- Creating outputs')
 # ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c], filename='Lu2022_f3_ITP2.png')#'Lu2022_f3.pickle')
 
 ## Reproducing Bebieva et al. 2019 Figure 3b
-ahf.make_figure([group_B2019_clstr, group_B2019_fig3b])
+# ahf.make_figure([group_B2019_clstr, group_B2019_fig3b])
 
 ## Finding layer height vs. depth, reproducing Shibley et al. 2019 Figure 6
 # ahf.make_figure([group_S2019_fig6a, group_S2019_fig6b, group_S2019_fig6c])
