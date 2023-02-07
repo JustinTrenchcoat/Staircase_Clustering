@@ -1522,6 +1522,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=mrk_size*10, marker='x')
                 tw_ax_y.scatter(df[tw_x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
                 tw_ax_y.set_xlabel(pp.xlabels[1])
+                # Change color of the axis label on the twin axis
+                tw_ax_y.xaxis.label.set_color(tw_clr)
                 # Change color of the ticks on the twin axis
                 tw_ax_y.tick_params(axis='x', colors=tw_clr)
                 # Create the colorbar
@@ -1537,6 +1539,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 if tw_y_key in y_invert_vars:
                     tw_ax_x.invert_yaxis()
                 tw_ax_x.set_ylabel(pp.ylabels[1])
+                # Change color of the axis label on the twin axis
+                tw_ax_x.yaxis.label.set_color(tw_clr)
                 # Change color of the ticks on the twin axis
                 tw_ax_x.tick_params(axis='y', colors=tw_clr)
                 # Create the colorbar
@@ -2539,6 +2543,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     # Plot on twin axes, if specified
     if not isinstance(tw_x_key, type(None)):
         tw_ax_y.set_xlabel(pp.xlabels[1])
+        # Change color of the axis label on the twin axis
+        tw_ax_y.xaxis.label.set_color(tw_clr)
         # Change color of the ticks on the twin axis
         tw_ax_y.tick_params(axis='x', colors=tw_clr)
     # Add legend
@@ -3151,6 +3157,9 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
         if tw_y_key:
             tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
             tw_ax_x.set_ylabel(tw_ylabel)
+            # Change color of the axis label on the twin axis
+            tw_ax_x.yaxis.label.set_color(alt_std_clr)
+            # Change color of the ticks on the twin axis
             tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
         f = open(sweep_txt_file,'a')
         f.write('\n')
