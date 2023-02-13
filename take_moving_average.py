@@ -21,7 +21,7 @@ from scipy import interpolate
 import gsw
 
 # The moving average window in dbar
-c3 = 90
+c3 = 50
 
 ################################################################################
 # Main execution
