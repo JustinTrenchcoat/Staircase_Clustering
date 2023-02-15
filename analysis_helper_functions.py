@@ -36,6 +36,8 @@ import hdbscan
 from sklearn import metrics
 # For calculating the distance between pairs of (latitude, longitude)
 from geopy.distance import geodesic
+# For calculating Orthogonal Distance Regression for Total Least Squares
+from orthoregress import orthoregress
 
 """
 To install Cartopy and its dependencies, follow:
@@ -2805,7 +2807,9 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 aTs = alphas * temps
                 BSs = betas * salts
                 # Find the slope of this cluster in aT-BS space
-                m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
+                # m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
+                # Find the slope of the total least-squares of the points for this cluster
+                m = orthoregress(BSs, aTs)[0]
                 # The lateral density ratio is the inverse of the slope
                 this_cRL = 1/m
                 # Put those values back into the original dataframe
@@ -2952,8 +2956,10 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
                 # This will plot the cluster number at the centroid
                 # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             if plot_slopes:
-                # Find the slope of the least-squares of the points for this cluster
-                m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
+                # Find the slope of the ordinary least-squares of the points for this cluster
+                # m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
+                # Find the slope of the total least-squares of the points for this cluster
+                m = orthoregress(x_data, y_data)[0]
                 # Plot the least-squares fit line for this cluster through the centroid
                 ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
                 # Add annotation to say what the slope is
