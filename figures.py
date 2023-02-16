@@ -310,7 +310,7 @@ print('- Creating outputs')
 ### Figures for paper
 
 ## Map of ITP drifts
-ahf.make_figure([group_ITP_map], filename='ITP_map.pickle')
+ahf.make_figure([group_ITP_map])#, filename='ITP_map.pickle')
 
 ## Parameter sweeps
 # ahf.make_figure([group_ps_min_pts, group_ps_l_maw, group_ps_n_pfs], filename='ITP2B_sweep.pickle')

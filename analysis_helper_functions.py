@@ -1788,11 +1788,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
         #   I found these values by guess-and-check, there really isn't a good way
         #       to know beforehand what you'll actually get
         if map_extent == 'Canada_Basin':
-            cent_lon = -140
-            ex_N = 80
-            ex_S = 69
-            ex_E = -156
-            ex_W = -124
+            cent_lon = -135 #-140
+            ex_N = 78 #80
+            ex_S = 73.5 #69
+            ex_E = -145 #-156
+            ex_W = -125 #-124
         elif map_extent == 'Western_Arctic':
             cent_lon = -140
             ex_N = 80
