@@ -58,7 +58,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = True
+dark_mode = False
 
 # Enable dark mode plotting
 if dark_mode:
@@ -2780,16 +2780,54 @@ def calc_extra_cl_vars(df, new_cl_vars):
             # Sort the cluster dataframe by the mean values
             sorted_clstr_df = clstr_df.sort_values(by='clstr_mean')
             # Calculate the overlap ratios
-            sorted_clstr_df['mean_diff'] = sorted_clstr_df['clstr_mean'].diff()
-            sorted_clstr_df['overlap_ratio'] = 4*sorted_clstr_df['clstr_stdv'] / sorted_clstr_df['mean_diff']
-            # Loop over each cluster
-            for i in range(n_clusters+1):
+            # sorted_clstr_df['mean_diff'] = sorted_clstr_df['clstr_mean'].diff()
+            # sorted_clstr_df['overlap_ratio'] = 4*sorted_clstr_df['clstr_stdv'] / sorted_clstr_df['mean_diff']
+            # Find overlap ratio for the first cluster
+            clstr_id_here  = sorted_clstr_df['cluster'].values[0]
+            clstr_id_below = sorted_clstr_df['cluster'].values[1]
+            clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+            clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
+            clstr_diff = abs(clstr_mean_below - clstr_mean_here)
+            this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_stdv'].values[0] / clstr_diff
+            # Put that value back into the original array
+            df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
+            # Loop over each middle cluster, finding the overlap ratios
+            for i in range(1,n_clusters-1):
+                clstr_id_above = sorted_clstr_df['cluster'].values[i-1]
+                clstr_id_here  = sorted_clstr_df['cluster'].values[i]
+                clstr_id_below = sorted_clstr_df['cluster'].values[i+1]
+                # print('i:',i,'sorted_clstr_id:',clstr_id_here)
+                clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
+                # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
+                clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+                diff_above = abs(clstr_mean_above - clstr_mean_here)
+                # print('\t\tdiff_above:',diff_above)
+                # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
+                clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
+                diff_below = abs(clstr_mean_below - clstr_mean_here)
+                # print('\t\tdiff_below:',diff_below)
+                # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
+                # Find maximum of the distances above and below
+                clstr_diff = max(diff_above, diff_below)
+                # clstr_diff = np.mean([diff_above, diff_below])
+                # Calculate the overlap ratio for this cluster
+                this_overlap_ratio = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_stdv'].values[0] / clstr_diff
                 # Put those values into the original dataframe
                 try:
-                    this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'overlap_ratio'].values[0]
+                    # this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'overlap_ratio'].values[0]
+                    this_cor = this_overlap_ratio
                 except:
                     this_cor = None
                 df.loc[df['cluster']==i, this_var] = this_cor
+            # Find overlap ratio for the last cluster
+            clstr_id_above  = sorted_clstr_df['cluster'].values[-2]
+            clstr_id_here = sorted_clstr_df['cluster'].values[-1]
+            clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+            clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
+            clstr_diff = abs(clstr_mean_above - clstr_mean_here)
+            this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_stdv'].values[0] / clstr_diff
+            # Put that value back into the original array
+            df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
             #
         if this_var == 'cRL':
             # Find the lateral density ratio R_L for each cluster
@@ -3113,7 +3151,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
             if x_key == 'min_pts':
                 # min cluster size must be an integer
                 min_pts = int(x)
-                xlabel = 'Minimum cluster size'
+                xlabel = r'Minimum density threshold $m_{pts}$'
             elif x_key == 'min_samps':
                 # min samples must be an integer, or None
                 if not isinstance(x, type(None)):
@@ -3138,7 +3176,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
             if y_key == 'DBCV':
                 # relative_validity_ is a rough measure of DBCV
                 y_var_array.append(rel_val)
-                ylabel = 'DBCV (relative_validity_)'
+                ylabel = 'DBCV'
             elif y_key == 'n_clusters':
                 # Clusters are labeled starting from 0, so total number of clusters is
                 #   the largest label plus 1
@@ -3148,7 +3186,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
                 if tw_y_key == 'DBCV':
                     # relative_validity_ is a rough measure of DBCV
                     tw_y_var_array.append(rel_val)
-                    tw_ylabel = 'DBCV (relative_validity_)'
+                    tw_ylabel = 'DBCV'
                 elif tw_y_key == 'n_clusters':
                     # Clusters are labeled starting from 0, so total number of clusters is
                     #   the largest label plus 1
