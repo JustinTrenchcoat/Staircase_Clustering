@@ -58,7 +58,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = False
+dark_mode = True
 
 # Enable dark mode plotting
 if dark_mode:
@@ -131,8 +131,10 @@ cmm_prefix = 'cmm_' # cluster min/max
 cmm_vars   = [ f'{cmm_prefix}{var}'  for var in vertical_vars]
 cor_prefix = 'cor_' # cluster overlap ratio
 cor_vars   = [ f'{cor_prefix}{var}'  for var in vertical_vars]
+com_prefix = 'com_' # cluster overlap ratio, with max-min instead of stdv
+com_vars   = [ f'{com_prefix}{var}'  for var in vertical_vars]
 # Make a complete list of cluster-related variables
-clstr_vars = ['cluster', 'cRL'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars + cmm_vars + cor_vars
+clstr_vars = ['cluster', 'cRL', 'cRl'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars + cmm_vars + cor_vars + com_vars
 # For parameter sweeps of clustering
 #   Independent variables
 clstr_ps_ind_vars = ['min_pts', 'n_pfs', 'maw_size']
@@ -988,6 +990,10 @@ def get_axis_label(var_key, var_attr_dicts):
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[4:]
         return 'Cluster overlap of '+ var_attr_dicts[0][var_str]['label']
+    elif 'com_' in var_key:
+        # Take out the first 3 characters of the string to leave the original variable name
+        var_str = var_key[4:]
+        return 'Cluster overlap (m/m) of '+ var_attr_dicts[0][var_str]['label']
     # Check for mean-centered variables
     # elif 'mc_' in var_key:
     #     # Take out the first 3 characters of the string to leave the original variable name
@@ -1007,7 +1013,8 @@ def get_axis_label(var_key, var_attr_dicts):
                  'min_pts':r'Minimum density threshold $m_{pts}$',
                  'DBCV':'Relative validity measure (DBCV)',
                  'n_clusters':'Number of clusters',
-                 'cRL':r'Lateral density ratio $R_L$'
+                 'cRL':r'Lateral density ratio $R_L$ with ODR',
+                 'cRl':r'Lateral density ratio $R_L$ with OLS'
                 }
     if var_key in ax_labels.keys():
         return ax_labels[var_key]
@@ -2695,7 +2702,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
     new_cl_vars         A list of clustering-related variables to calculate
     """
     # Find the number of clusters
-    n_clusters = max(df['cluster'])
+    n_clusters = max(df['cluster']+1)
     # Check for variables to calculate
     for this_var in new_cl_vars:
         # Split the prefix from the original variable (assumes an underscore split)
@@ -2760,7 +2767,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             # Calculate the cluster mean-centered version of the variable
             #   Should not change the number of points to display
             # Loop over each cluster
-            for i in range(n_clusters+1):
+            for i in range(n_clusters):
                 # Find the data from this cluster
                 df_this_cluster = df[df['cluster']==i].copy()
                 # Find the mean of this var for this cluster
@@ -2773,7 +2780,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             # Calculate the cluster average version of the variable
             #   Reduces the number of points to just one per cluster
             # Loop over each cluster
-            for i in range(n_clusters+1):
+            for i in range(n_clusters):
                 # Find the data from this cluster
                 df_this_cluster = df[df['cluster']==i].copy()
                 # Find the mean of this var for this cluster
@@ -2784,7 +2791,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             # Calculate the cluster span version of the variable
             #   Reduces the number of points to just one per cluster
             # Loop over each cluster
-            for i in range(n_clusters+1):
+            for i in range(n_clusters):
                 # Find the data from this cluster
                 df_this_cluster = df[df['cluster']==i].copy()
                 # Find the mean of this var for this cluster
@@ -2795,13 +2802,14 @@ def calc_extra_cl_vars(df, new_cl_vars):
             # Find the min/max of each cluster for the variable
             #   Reduces the number of points to just one per cluster
             # Loop over each cluster
-            for i in range(n_clusters+1):
+            for i in range(n_clusters):
                 # Find the data from this cluster
                 df_this_cluster = df[df['cluster']==i].copy()
                 # Find the min/max of this var for this cluster
                 clstr_min = min(df_this_cluster[var].values)
                 clstr_max = max(df_this_cluster[var].values)
                 # Put those values back into the original dataframe
+                #   Won't actually use the data in `this_var` so I'll make it obvious it's to be ignored
                 df.loc[df['cluster']==i, this_var] = -999
                 df.loc[df['cluster']==i, 'cmin_'+var] = clstr_min
                 df.loc[df['cluster']==i, 'cmax_'+var] = clstr_max
@@ -2814,7 +2822,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             clstr_df['clstr_mean'] = None
             clstr_df['clstr_stdv'] = None
             # Loop over each cluster
-            for i in range(n_clusters+1):
+            for i in range(n_clusters):
                 # Find the data from this cluster
                 df_this_cluster = df[df['cluster']==i].copy()
                 # Find the mean and standard deviation of this var for this cluster
@@ -2825,46 +2833,46 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_df.loc[clstr_df['cluster']==i, 'clstr_stdv'] = clstr_stdv
             # Sort the cluster dataframe by the mean values
             sorted_clstr_df = clstr_df.sort_values(by='clstr_mean')
-            # Calculate the overlap ratios
-            # sorted_clstr_df['mean_diff'] = sorted_clstr_df['clstr_mean'].diff()
-            # sorted_clstr_df['overlap_ratio'] = 4*sorted_clstr_df['clstr_stdv'] / sorted_clstr_df['mean_diff']
-            # Find overlap ratio for the first cluster
+            # Find overlap ratio for the first cluster in sorted order
             clstr_id_here  = sorted_clstr_df['cluster'].values[0]
             clstr_id_below = sorted_clstr_df['cluster'].values[1]
             clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
             clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
             clstr_diff = abs(clstr_mean_below - clstr_mean_here)
             this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_stdv'].values[0] / clstr_diff
-            # Put that value back into the original array
+            # print('i: 0 sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
+            # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
+            # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
+            # print('\tclstr_dff(min):',clstr_diff)
+            # print('\tthis_cor:',this_cor)
+            # Put that value back into the original dataframe
             df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
             # Loop over each middle cluster, finding the overlap ratios
             for i in range(1,n_clusters-1):
+                # Get cluster id's of this cluster, plus those above and below
                 clstr_id_above = sorted_clstr_df['cluster'].values[i-1]
                 clstr_id_here  = sorted_clstr_df['cluster'].values[i]
                 clstr_id_below = sorted_clstr_df['cluster'].values[i+1]
-                # print('i:',i,'sorted_clstr_id:',clstr_id_here)
+                # Get the mean value for each of the three clusters for this variable
                 clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
-                # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
                 clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
-                diff_above = abs(clstr_mean_above - clstr_mean_here)
-                # print('\t\tdiff_above:',diff_above)
-                # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
                 clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
+                # Find the distances from this cluster to the clusters above and below
+                diff_above = abs(clstr_mean_above - clstr_mean_here)
                 diff_below = abs(clstr_mean_below - clstr_mean_here)
-                # print('\t\tdiff_below:',diff_below)
-                # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
-                # Find maximum of the distances above and below
-                clstr_diff = max(diff_above, diff_below)
+                # Find minimum of the distances above and below
+                clstr_diff = min(diff_above, diff_below)
                 # clstr_diff = np.mean([diff_above, diff_below])
                 # Calculate the overlap ratio for this cluster
-                this_overlap_ratio = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_stdv'].values[0] / clstr_diff
-                # Put those values into the original dataframe
-                try:
-                    # this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'overlap_ratio'].values[0]
-                    this_cor = this_overlap_ratio
-                except:
-                    this_cor = None
-                df.loc[df['cluster']==i, this_var] = this_cor
+                this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_stdv'].values[0] / clstr_diff
+                # print('i:',i,'sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
+                # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
+                # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
+                # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
+                # print('\tclstr_dff(min):',clstr_diff)
+                # print('\tthis_cor:',this_cor)
+                # Put that value back into the original dataframe
+                df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
             # Find overlap ratio for the last cluster
             clstr_id_above  = sorted_clstr_df['cluster'].values[-2]
             clstr_id_here = sorted_clstr_df['cluster'].values[-1]
@@ -2872,14 +2880,96 @@ def calc_extra_cl_vars(df, new_cl_vars):
             clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
             clstr_diff = abs(clstr_mean_above - clstr_mean_here)
             this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_stdv'].values[0] / clstr_diff
-            # Put that value back into the original array
+            # print('i:',str(n_clusters-1),'sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
+            # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
+            # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
+            # print('\tclstr_dff(min):',clstr_diff)
+            # print('\tthis_cor:',this_cor)
+            # Put that value back into the original dataframe
+            df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
+            #
+        elif prefix == 'com':
+            # Find the cluster overlap ratios for the variable
+            #   Reduces the number of points to just one per cluster, minus one
+            #   because it depends on the difference between adjacent clusters
+            # Create dataframe to store means and standard deviations of each cluster
+            clstr_df = pd.DataFrame(data=np.arange(n_clusters), columns=['cluster'])
+            clstr_df['clstr_mean'] = None
+            clstr_df['clstr_stdv'] = None
+            # Loop over each cluster
+            for i in range(n_clusters):
+                # Find the data from this cluster
+                df_this_cluster = df[df['cluster']==i].copy()
+                # Find the mean and standard deviation of this var for this cluster
+                clstr_mean = np.mean(df_this_cluster[var].values)
+                clstr_min = min(df_this_cluster[var].values)
+                clstr_max = max(df_this_cluster[var].values)
+                clstr_span = abs(clstr_max - clstr_min)
+                # Put those values into the cluster dataframe
+                clstr_df.loc[clstr_df['cluster']==i, 'clstr_mean'] = clstr_mean
+                clstr_df.loc[clstr_df['cluster']==i, 'clstr_span'] = clstr_span
+            # Sort the cluster dataframe by the mean values
+            sorted_clstr_df = clstr_df.sort_values(by='clstr_mean')
+            # Find overlap ratio for the first cluster in sorted order
+            clstr_id_here  = sorted_clstr_df['cluster'].values[0]
+            clstr_id_below = sorted_clstr_df['cluster'].values[1]
+            clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+            clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
+            clstr_diff = abs(clstr_mean_below - clstr_mean_here)
+            this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_span'].values[0] / clstr_diff
+            # print('i: 0 sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
+            # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
+            # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
+            # print('\tclstr_dff(min):',clstr_diff)
+            # print('\tthis_cor:',this_cor)
+            # Put that value back into the original dataframe
+            df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
+            # Loop over each middle cluster, finding the overlap ratios
+            for i in range(1,n_clusters-1):
+                # Get cluster id's of this cluster, plus those above and below
+                clstr_id_above = sorted_clstr_df['cluster'].values[i-1]
+                clstr_id_here  = sorted_clstr_df['cluster'].values[i]
+                clstr_id_below = sorted_clstr_df['cluster'].values[i+1]
+                # Get the mean value for each of the three clusters for this variable
+                clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
+                clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+                clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
+                # Find the distances from this cluster to the clusters above and below
+                diff_above = abs(clstr_mean_above - clstr_mean_here)
+                diff_below = abs(clstr_mean_below - clstr_mean_here)
+                # Find minimum of the distances above and below
+                clstr_diff = min(diff_above, diff_below)
+                # clstr_diff = np.mean([diff_above, diff_below])
+                # Calculate the overlap ratio for this cluster
+                this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_span'].values[0] / clstr_diff
+                # print('i:',i,'sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
+                # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
+                # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
+                # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
+                # print('\tclstr_dff(min):',clstr_diff)
+                # print('\tthis_cor:',this_cor)
+                # Put that value back into the original dataframe
+                df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
+            # Find overlap ratio for the last cluster
+            clstr_id_above  = sorted_clstr_df['cluster'].values[-2]
+            clstr_id_here = sorted_clstr_df['cluster'].values[-1]
+            clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+            clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
+            clstr_diff = abs(clstr_mean_above - clstr_mean_here)
+            this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_span'].values[0] / clstr_diff
+            # print('i:',str(n_clusters-1),'sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
+            # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
+            # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
+            # print('\tclstr_dff(min):',clstr_diff)
+            # print('\tthis_cor:',this_cor)
+            # Put that value back into the original dataframe
             df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
             #
         if this_var == 'cRL':
             # Find the lateral density ratio R_L for each cluster
             #   Reduces the number of points to just one per cluster
             # Loop over each cluster
-            for i in range(n_clusters+1):
+            for i in range(n_clusters):
                 # Find the data from this cluster
                 df_this_cluster = df[df['cluster']==i].copy()
                 # Find the variables needed
@@ -2894,6 +2984,31 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 # m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
                 # Find the slope of the total least-squares of the points for this cluster
                 m = orthoregress(BSs, aTs)[0]
+                # The lateral density ratio is the inverse of the slope
+                this_cRL = 1/m
+                # Put those values back into the original dataframe
+                df.loc[df['cluster']==i, this_var] = this_cRL
+            #
+        #
+        if this_var == 'cRl':
+            # Find the lateral density ratio R_L for each cluster
+            #   Reduces the number of points to just one per cluster
+            # Loop over each cluster
+            for i in range(n_clusters):
+                # Find the data from this cluster
+                df_this_cluster = df[df['cluster']==i].copy()
+                # Find the variables needed
+                alphas = df_this_cluster['alpha'].values
+                temps  = df_this_cluster['CT'].values
+                betas  = df_this_cluster['beta'].values
+                salts  = df_this_cluster['SP'].values
+                # Calculate variables needed
+                aTs = alphas * temps
+                BSs = betas * salts
+                # Find the slope of this cluster in aT-BS space
+                m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
+                # Find the slope of the total least-squares of the points for this cluster
+                # m = orthoregress(BSs, aTs)[0]
                 # The lateral density ratio is the inverse of the slope
                 this_cRL = 1/m
                 # Put those values back into the original dataframe
@@ -2947,6 +3062,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
     # Clusters are labeled starting from 0, so total number of clusters is
     #   the largest label plus 1
     n_clusters = df['cluster'].max()+1
+    print('n_clusters:',n_clusters)
     # Remove rows where the plot variables are null
     for var in [x_key, y_key]:
         df = df[df[var].notnull()]
@@ -3030,9 +3146,11 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
             elif y_key == 'cmm_mid':
                 yerrs = df[df.cluster == i]['bar_len']
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
+            # elif 'cor' in x_key or 'cor' in y_key or 'com' in x_key or 'com' in y_key:
+            #     print('cluster:',i,x_key,x_mean)
+            #     ax.scatter(x_mean, y_mean, color=my_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             else:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
-                # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             # Plot the centroid(?) of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
@@ -3063,11 +3181,11 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
         avg_stdev = np.mean(clstr_stdvs)
         # Find the coefficients of variation for each cluster
         clstr_covars = [i / j for i, j in zip(clstr_stdvs, clstr_means)]
-        print('For',y_key)
-        print('\tOverlap Ratio (4*avg_stdev / avg_mean_diff):')
-        print('\t\t',4*avg_stdev / avg_mean_diff)
-        print('\tCoefficient of Variation avg(stdvs / means):')
-        print('\t\t',np.mean(clstr_covars))
+        # print('For',y_key)
+        # print('\tOverlap Ratio (4*avg_stdev / avg_mean_diff):')
+        # print('\t\t',4*avg_stdev / avg_mean_diff)
+        # print('\tCoefficient of Variation avg(stdvs / means):')
+        # print('\t\t',np.mean(clstr_covars))
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
         min_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(min_pts))

@@ -139,9 +139,11 @@ pp_pfs = ahf.Plot_Parameters(x_vars=['CT'], y_vars=['press'], plot_type='profile
 # pp_sigma_hist = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['sigma'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':90, 'b_a_w_plt':False, 'plt_noise':False})
 # pp_temp_cor   = ahf.Plot_Parameters(x_vars=['cor_CT'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':90, 'b_a_w_plt':False, 'plt_noise':False})
 # pp_temp_hist  = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':90, 'b_a_w_plt':False, 'plt_noise':False})
+pp_clstr_ST  = ahf.Plot_Parameters(x_vars=['la_CT'], y_vars=['SP'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=False)
 pp_salt_hist  = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['SP'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=False)
-pp_salt_cor   = ahf.Plot_Parameters(x_vars=['cor_SP'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=False)
-pp_salt_R_L = ahf.Plot_Parameters(x_vars=['cRL'], y_vars=['ca_press'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, legend=False)
+pp_salt_cor   = ahf.Plot_Parameters(x_vars=['cor_SP'], y_vars=['ca_SP'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=True)
+pp_salt_com   = ahf.Plot_Parameters(x_vars=['com_SP'], y_vars=['ca_SP'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=True)
+pp_salt_R_L = ahf.Plot_Parameters(x_vars=['cRL'], y_vars=['ca_SP'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, legend=False)
 
 
 
@@ -214,6 +216,12 @@ print('- Creating analysis group objects')
 # my_group1 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_ITP2, pp_test0)
 
 ## Test figures
+## How does overlap ratio change with salinity? Looking for outliers
+group_clstr_ST = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_clstr_ST)
+group_salt_hist= ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_hist)
+group_salt_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_cor)
+group_salt_com = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_com)
+group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_L)
 #
 # group_cmm_SP = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_SP)
 # group_cmm_press = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_press)
@@ -226,6 +234,7 @@ print('- Creating analysis group objects')
 # group_temp_hist  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_temp_hist)
 # group_salt_hist  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_hist)
 # group_salt_cor   = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_cor)
+# group_salt_com   = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_com)
 # group_salt_R_L   = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_L)
 ## Viewing example profiles with original, moving average, and local anomaly 
 # group_og_ma_la_pf = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_og_ma_la_pf)
@@ -240,7 +249,7 @@ print('- Creating analysis group objects')
 ### Figures for paper
 
 ## Map of ITP drifts
-group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_f0, pp_ITP_map, plot_title='Profile locations')
+# group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_f0, pp_ITP_map, plot_title='Profile locations')
 
 ## Parameter sweeps
 ## ITP2, Timmermans et al. 2008
@@ -304,6 +313,7 @@ print('- Creating outputs')
 
 ## Test Figures
 # ahf.make_figure([group_press_hist, group_press_cor, group_sigma_hist, group_sigma_cor, group_temp_hist, group_temp_cor, group_salt_hist, group_salt_cor], filename='ITP2_cor_vs_press_all_var.pickle')
+ahf.make_figure([group_clstr_ST, group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
 # ahf.make_figure([group_T2008_clstr, group_salt_hist, group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
 # ahf.make_figure([group_maw_001, group_maw_005, group_maw_010, group_maw_050, group_maw_100, group_maw_200], filename='ITP2_maw_size_tests.png')
 
@@ -311,7 +321,7 @@ print('- Creating outputs')
 
 ## Map of ITP drifts
 # ahf.make_figure([group_ITP_map], filename='ITP_map.pickle')
-ahf.find_max_distance([group_ITP_map])
+# ahf.find_max_distance([group_ITP_map])
 
 ## Parameter sweeps
 # ahf.make_figure([group_ps_min_pts, group_ps_l_maw, group_ps_n_pfs], filename='ITP2B_sweep.pickle')
