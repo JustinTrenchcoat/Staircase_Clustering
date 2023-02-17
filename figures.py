@@ -89,8 +89,8 @@ ds_ITP2_pfs = ahf.Data_Set(ITP2_pfs, dfs0)
 ds_ITP3_all = ahf.Data_Set(ITP3_all, dfs0)
 # ds_ITP3_all = ahf.Data_Set(ITP3_all, dfs_test)
 
-ds_ITP13_all = ahf.Data_Set(ITP13_all, dfs0)#dfs_S2019)
-ds_ITP13_pfs = ahf.Data_Set(ITP13_pfs, dfs0)
+# ds_ITP13_all = ahf.Data_Set(ITP13_all, dfs0)#dfs_S2019)
+# ds_ITP13_pfs = ahf.Data_Set(ITP13_pfs, dfs0)
 
 ################################################################################
 # Create profile filtering objects
@@ -310,7 +310,8 @@ print('- Creating outputs')
 ### Figures for paper
 
 ## Map of ITP drifts
-ahf.make_figure([group_ITP_map])#, filename='ITP_map.pickle')
+# ahf.make_figure([group_ITP_map], filename='ITP_map.pickle')
+ahf.find_max_distance([group_ITP_map])
 
 ## Parameter sweeps
 # ahf.make_figure([group_ps_min_pts, group_ps_l_maw, group_ps_n_pfs], filename='ITP2B_sweep.pickle')

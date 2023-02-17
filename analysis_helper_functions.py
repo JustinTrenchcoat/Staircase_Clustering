@@ -1003,7 +1003,7 @@ def get_axis_label(var_key, var_attr_dicts):
                  'p_theta_max':r'$p(\theta_{max})$ (dbar)',
                  's_theta_max':r'$S(\theta_{max})$ (g/kg)',
                  'theta_max':r'$\theta_{max}$ ($^\circ$C)',
-                 'distance':r'Along-path distance (km)',
+                #  'distance':r'Along-path distance (km)',
                  'min_pts':r'Minimum density threshold $m_{pts}$',
                  'DBCV':'Relative validity measure (DBCV)',
                  'n_clusters':'Number of clusters',
@@ -1118,6 +1118,52 @@ def print_global_variables(Dataset):
             else:
                 lines = lines+'\t'+attr+': '+ds.attrs[attr]+'\n'
     return lines
+
+################################################################################
+
+def find_max_distance(groups_to_analyze):
+    """
+    Reports the maximum distance between any two profiles in the given dataframe
+
+    groups_to_analyze   A list of Analysis_Group objects
+                        Each Analysis_Group contains a list of dataframes
+    """
+    for ag in groups_to_analyze:
+        for df in ag.data_frames:
+            # Drop duplicates in lat/lon to have just one row per profile
+            df.drop_duplicates(subset=['lon','lat'], keep='first', inplace=True)
+            # Get source and instrument for this df
+            this_source = df['source'].values[0]
+            this_instrmt = df['instrmt'].values[0]
+            # Get arrays of values
+            prof_nos = df['prof_no'].values
+            lon_vals = df['lon'].values
+            lat_vals = df['lat'].values
+            # Find the number of profiles
+            n_pfs = len(prof_nos)
+            # Placeholders to store the largest span between any two profiles
+            max_span = 0
+            ms_i = None
+            ms_i_latlon = None
+            ms_j = None
+            ms_j_latlon = None
+            # Nested loop over the profiles, only the upper triangle
+            #   Don't need to double-count, comparing profiles twice
+            for i in range(n_pfs):
+                for j in range(i+1,n_pfs):
+                    i_lat_lon = (lat_vals[i], lon_vals[i])
+                    j_lat_lon = (lat_vals[j], lon_vals[j])
+                    this_span = geodesic(i_lat_lon, j_lat_lon).km
+                    if this_span > max_span:
+                        max_span = this_span
+                        ms_i = prof_nos[i] 
+                        ms_i_latlon = i_lat_lon
+                        ms_j = prof_nos[j]
+                        ms_j_latlon = j_lat_lon
+                    # print('i:',i,'j:',j,'i_pf:',prof_nos[i],'j_pf:',prof_nos[j],'this_span:',this_span,'max_span:',max_span)
+                #
+            #
+            print('For',this_source,this_instrmt,'max_span:',max_span,'km between profiles',ms_i,'at',ms_i_latlon,'and',ms_j,'at',ms_j_latlon)
 
 ################################################################################
 # Admin plotting functions #####################################################
