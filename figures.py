@@ -143,7 +143,8 @@ pp_clstr_ST  = ahf.Plot_Parameters(x_vars=['la_CT'], y_vars=['SP'], clr_map='clu
 pp_salt_hist  = ahf.Plot_Parameters(x_vars=['hist'], y_vars=['SP'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=False)
 pp_salt_cor   = ahf.Plot_Parameters(x_vars=['cor_SP'], y_vars=['ca_SP'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=True)
 pp_salt_com   = ahf.Plot_Parameters(x_vars=['com_SP'], y_vars=['ca_SP'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=True)
-pp_salt_R_L = ahf.Plot_Parameters(x_vars=['cRL'], y_vars=['ca_SP'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, legend=False)
+pp_salt_R_L = ahf.Plot_Parameters(x_vars=['cRL'], y_vars=['ca_SP'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, legend=True)
+pp_salt_R_l = ahf.Plot_Parameters(x_vars=['cRl'], y_vars=['ca_SP'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, legend=False)
 
 
 
@@ -171,7 +172,7 @@ pp_ITP3_ps_n_pfs  = ahf.Plot_Parameters(x_vars=['n_pfs'], y_vars=['n_clusters','
 ## The actual clustering done for reproducing figures from Timmermans et al. 2008
 pp_T2008_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, legend=False)
 ## Reproducing Timmermans et al. 2008 Figure 4, with cluster coloring and 2 extra profiles
-pp_T2008_fig4  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, ax_lims=T2008_fig4_y_lims)
+pp_T2008_fig4  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts})#, ax_lims=T2008_fig4_y_lims)
 ## Reproducing Timmermans et al. 2008 Figure 5a, but with cluster coloring
 pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, ax_lims=T2008_fig5a_ax_lims, legend=True)
 ## Reproducing Timmermans et al. 2008 Figure 6a, but with cluster coloring
@@ -217,11 +218,12 @@ print('- Creating analysis group objects')
 
 ## Test figures
 ## How does overlap ratio change with salinity? Looking for outliers
-group_clstr_ST = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_clstr_ST)
-group_salt_hist= ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_hist)
-group_salt_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_cor)
-group_salt_com = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_com)
-group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_L)
+# group_clstr_ST = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_clstr_ST)
+# # group_salt_hist= ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_hist)
+# group_salt_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_cor)
+# # group_salt_com = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_com)
+# group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_L)
+# # group_salt_R_l = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_l)
 #
 # group_cmm_SP = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_SP)
 # group_cmm_press = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_press)
@@ -269,7 +271,7 @@ group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_L)
 
 ## Reproducing figures from Timmermans et al. 2008
 # group_T2008_clstr = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_clstr)
-# group_T2008_fig4  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig4)
+group_T2008_fig4  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig4)
 # group_T2008_fig5a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig5a)
 # group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig6a)
 
@@ -304,7 +306,7 @@ group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_L)
 print('- Creating outputs')
 ################################################################################
 
-# ahf.make_figure([my_group0])
+ahf.make_figure([group_T2008_fig4])
 # ahf.make_figure([group_salt_cor])
 # ahf.make_figure([group_ps_n_pfs])
 # ahf.make_figure([my_group0], filename='test.pickle')
@@ -313,7 +315,8 @@ print('- Creating outputs')
 
 ## Test Figures
 # ahf.make_figure([group_press_hist, group_press_cor, group_sigma_hist, group_sigma_cor, group_temp_hist, group_temp_cor, group_salt_hist, group_salt_cor], filename='ITP2_cor_vs_press_all_var.pickle')
-ahf.make_figure([group_clstr_ST, group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
+# ahf.make_figure([group_clstr_ST, group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
+# ahf.make_figure([group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
 # ahf.make_figure([group_T2008_clstr, group_salt_hist, group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
 # ahf.make_figure([group_maw_001, group_maw_005, group_maw_010, group_maw_050, group_maw_100, group_maw_200], filename='ITP2_maw_size_tests.png')
 

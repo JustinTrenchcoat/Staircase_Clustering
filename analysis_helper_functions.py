@@ -30,6 +30,8 @@ import string
 import scipy.ndimage as ndimage
 # For interpolating
 from scipy import interpolate
+# For getting zscores to find outliers
+from scipy import stats
 # For making clusters
 import hdbscan
 # For computing Adjusted Rand Index
@@ -476,7 +478,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append(var)
                 vars_to_keep.append('beta')
                 vars_to_keep.append('SA')
-            elif var == 'cRL':
+            elif var == 'cRL' or var == 'cRl':
                 vars_to_keep.append('alpha')
                 vars_to_keep.append('CT')
                 vars_to_keep.append('beta')
@@ -3024,6 +3026,31 @@ def calc_extra_cl_vars(df, new_cl_vars):
 
 ################################################################################
 
+def find_outliers(df, var_keys, threshold=2):
+    """
+    Finds any outliers in the dataframe with respect to the x and y keys
+
+    df              A pandas data frame
+    var_keys        A list of strings of the names of the columns on which to 
+                        find outliers
+    threshold       The threshold zscore for which to consider an outlier
+    """
+    for v_key in var_keys:
+        # Get the values of the variable for this key
+        v_values = np.array(df[v_key].values, dtype=np.float64)
+        # print(v_key,v_values)
+        # Find the zscores 
+        v_zscores = stats.zscore(v_values)
+        # Put those values back into the dataframe
+        df['zs_'+ v_key] = v_zscores
+        # Make a column of True/False whether that row is an outlier
+        df['out_'+v_key] = (df['zs_'+v_key] > threshold) | (df['zs_'+v_key] < -threshold)
+    # print(df)
+    # exit(0)
+    return df
+
+################################################################################
+
 def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts, min_samp=None, box_and_whisker=True, plot_slopes=False):
     """
     Plots the clusters found by HDBSCAN on the x-y plane
@@ -3062,7 +3089,6 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
     # Clusters are labeled starting from 0, so total number of clusters is
     #   the largest label plus 1
     n_clusters = df['cluster'].max()+1
-    print('n_clusters:',n_clusters)
     # Remove rows where the plot variables are null
     for var in [x_key, y_key]:
         df = df[df[var].notnull()]
@@ -3088,6 +3114,12 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
     if 'cRL' in [x_key, y_key]:
         # Drop duplicates to have just one row per cluster
         df.drop_duplicates(subset=['cRL'], keep='first', inplace=True)
+        plot_centroid = False
+        m_size = cent_mrk_size
+        plot_slopes = False
+    if 'cRl' in [x_key, y_key]:
+        # Drop duplicates to have just one row per cluster
+        df.drop_duplicates(subset=['cRl'], keep='first', inplace=True)
         plot_centroid = False
         m_size = cent_mrk_size
         plot_slopes = False
@@ -3124,20 +3156,26 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
         pts_per_cluster = []
         clstr_means = []
         clstr_stdvs = []
+        # Look for outliers
+        if 'cor' in x_key or 'cRL' in x_key:
+            df = find_outliers(df, [x_key, y_key])
         # Loop through each cluster
         for i in range(n_clusters):
             # Decide on the color and symbol, don't go off the end of the arrays
             my_clr = mpl_clrs[i%len(mpl_clrs)]
             my_mkr = mpl_mrks[i%len(mpl_mrks)]
             # print('\tCluster',i,'my_clr:',my_clr,'my_mkr',my_mkr)
+            # Find the data from this cluster
+            df_this_cluster = df[df['cluster']==i]
+            # print(df_this_cluster)
             # Get relevant data
-            x_data = df[df.cluster == i][x_key]
+            x_data = df_this_cluster[x_key] #df[df.cluster == i][x_key]
             x_mean = np.mean(x_data)
             x_stdv = np.std(x_data)
-            y_data = df[df.cluster == i][y_key]
+            y_data = df_this_cluster[y_key] #df[df.cluster == i][y_key]
             y_mean = np.mean(y_data)
             y_stdv = np.std(y_data)
-            alphas = df[df.cluster == i]['clst_prob']
+            alphas = df_this_cluster['clst_prob'] #df[df.cluster == i]['clst_prob']
             # Plot the points for this cluster with the specified color, marker, and alpha value
             #   Having an issue with actually using the alphas from above without a TypeError
             if x_key == 'cmm_mid':
@@ -3146,9 +3184,12 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
             elif y_key == 'cmm_mid':
                 yerrs = df[df.cluster == i]['bar_len']
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
-            # elif 'cor' in x_key or 'cor' in y_key or 'com' in x_key or 'com' in y_key:
-            #     print('cluster:',i,x_key,x_mean)
-            #     ax.scatter(x_mean, y_mean, color=my_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
+            elif 'cor' in x_key or 'cRL' in x_key:
+                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
+                # Plotting outliers
+                if df_this_cluster['out_'+x_key].all() == True:
+                    print('cluster:',i,'has outliers')
+                    ax.scatter(x_data, y_data, edgecolors='r', s=m_size*3, marker='o', facecolors='none', zorder=2)
             else:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
             # Plot the centroid(?) of this cluster
