@@ -139,6 +139,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
     list_of_depth_arrs      = []
     list_of_iT_arrs         = []
     list_of_CT_arrs         = []
+    list_of_PT_arrs         = []
     list_of_SP_arrs         = []
     list_of_SA_arrs         = []
     # Keep track of the maximum number of vertical measurements per profile
@@ -170,6 +171,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                     list_of_depth_arrs.append(out_dict['depth'])
                     list_of_iT_arrs.append(out_dict['iT'])
                     list_of_CT_arrs.append(out_dict['CT'])
+                    list_of_PT_arrs.append(out_dict['PT'])
                     list_of_SP_arrs.append(out_dict['SP'])
                     list_of_SA_arrs.append(out_dict['SA'])
                     # Check for a new maximum vertical dimension length
@@ -187,6 +189,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
         list_of_iT_arrs[i] = list(list_of_iT_arrs[i]) + [None]*(max_vert_count - len(list_of_iT_arrs[i]))
         list_of_SP_arrs[i] = list(list_of_SP_arrs[i]) + [None]*(max_vert_count - len(list_of_SP_arrs[i]))
         list_of_CT_arrs[i] = list(list_of_CT_arrs[i]) + [None]*(max_vert_count - len(list_of_CT_arrs[i]))
+        list_of_PT_arrs[i] = list(list_of_PT_arrs[i]) + [None]*(max_vert_count - len(list_of_PT_arrs[i]))
         list_of_SA_arrs[i] = list(list_of_SA_arrs[i]) + [None]*(max_vert_count - len(list_of_SA_arrs[i]))
     #
     # Make a blank array for each dimension
@@ -324,6 +327,15 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                             'long_name':'Conservative Temperature'
                         }
                 ),
+                'PT':(
+                        ['Time','Vertical'],
+                        list_of_PT_arrs,
+                        {
+                            'units':'degrees Celcius',
+                            'label':'Potential Temperature ($^\circ$C)',
+                            'long_name':'Potential Temperature'
+                        }
+                ),
                 'SP':(
                         ['Time','Vertical'],
                         list_of_SP_arrs,
@@ -360,6 +372,24 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                             'long_name':'Thermal expansion coefficient alpha'
                         }
                 ),
+                'alpha_PT':(
+                        ['Time','Vertical'],
+                        gsw.alpha(list_of_SA_arrs, list_of_PT_arrs, list_of_press_arrs),
+                        {
+                            'units':'1/(degrees Celcius)',
+                            'label':'$\\alpha_{PT}$ (1/$^\circ$C)',
+                            'long_name':'Thermal expansion coefficient alpha wrt PT'
+                        }
+                ),
+                'alpha_iT':(
+                        ['Time','Vertical'],
+                        gsw.alpha_wrt_t_exact(list_of_SA_arrs, list_of_iT_arrs, list_of_press_arrs),
+                        {
+                            'units':'1/(degrees Celcius)',
+                            'label':'$\\alpha_{iT}$ (1/$^\circ$C)',
+                            'long_name':'Thermal expansion coefficient alpha wrt iT'
+                        }
+                ),
                 'beta':(
                         ['Time','Vertical'],
                         gsw.beta(list_of_SA_arrs, list_of_CT_arrs, list_of_press_arrs),
@@ -367,6 +397,15 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                             'units':'1/(g/kg)',
                             'label':'$\\beta$ (kg/g)',
                             'long_name':'Saline contraction coefficient beta'
+                        }
+                ),
+                'beta_PT':(
+                        ['Time','Vertical'],
+                        gsw.beta(list_of_SA_arrs, list_of_PT_arrs, list_of_press_arrs),
+                        {
+                            'units':'1/(g/kg)',
+                            'label':'$\\beta_{PT}$ (kg/g)',
+                            'long_name':'Saline contraction coefficient beta wrt PT'
                         }
                 ),
                 'ss_mask':(
@@ -394,6 +433,15 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                             'units':'degrees Celcius',
                             'label':'Moving average conservative temperature ($^\circ$C)',
                             'long_name':'Moving average conservative temperature'
+                        }
+                ),
+                'ma_PT':(
+                        ['Time','Vertical'],
+                        Vertical_blank,
+                        {
+                            'units':'degrees Celcius',
+                            'label':'Moving average potential temperature ($^\circ$C)',
+                            'long_name':'Moving average potential temperature'
                         }
                 ),
                 'ma_SP':(
@@ -582,13 +630,13 @@ def read_ITP_cormat(file_path, file_name, instrmt, prof_no):
         press0 = dat['pr_filt'].flatten()
         iT0  = dat['te_adj'].flatten()
         SP0  = dat['sa_adj'].flatten()
-        # Convert to SA and CT to follow vdB21a
+        # Convert to absolute salinity (SA), conservative (CT) and potential temperature (PT) 
         pf_vert_len = len(press0)
         SA1 = gsw.SA_from_SP(SP0, press0, [lon]*pf_vert_len, [lat]*pf_vert_len)
         CT1 = gsw.CT_from_t(SA1, iT0, press0)
-        # Convert to depth from pressure,
-        #   take the negative so that depth increases downward
-        depth = -gsw.z_from_p(press0, [lat]*pf_vert_len)
+        PT1 = gsw.pt0_from_t(SA1, iT0, press0)
+        # Convert to depth from pressure
+        depth = gsw.z_from_p(press0, [lat]*pf_vert_len)
         # Down-casts have an issue with the profiler wake, so note whether the
         #   profile was taken going up or down
         if press0[0] < press0[-1]:
@@ -608,6 +656,7 @@ def read_ITP_cormat(file_path, file_name, instrmt, prof_no):
                     'depth': depth,
                     'iT': iT0,
                     'CT': CT1,
+                    'PT': PT1,
                     'SP': SP0,
                     'SA': SA1
                     }
@@ -660,10 +709,13 @@ def read_ITP_final(file_path, file_name, instrmt, prof_no):
         press0 = dat['%pressure(dbar)'][:].values
         iT0  = dat['temperature(C)'][:].values
         SP0  = dat['salinity'][:].values
-        # Convert to SA and CT to follow vdB21a
+        # Convert to absolute salinity (SA), conservative (CT) and potential temperature (PT) 
         pf_vert_len = len(press0)
         SA1 = gsw.SA_from_SP(SP0, press0, [lon]*pf_vert_len, [lat]*pf_vert_len)
         CT1 = gsw.CT_from_t(SA1, iT0, press0)
+        PT1 = gsw.pt0_from_t(SA1, iT0, press0)
+        # Convert to depth from pressure
+        depth = gsw.z_from_p(press0, [lat]*pf_vert_len)
         # `final` formatted profiles are sorted, so no way to tell which direction
         #   They were taken in. So, just mark all as up-casts
         up_cast = True
@@ -677,9 +729,10 @@ def read_ITP_final(file_path, file_name, instrmt, prof_no):
                     'region': reg,
                     'up_cast': up_cast,
                     'press': press0,
-                    'depth': [None]*len(press0),
+                    'depth': depth,
                     'iT': iT0,
                     'CT': CT1,
+                    'PT': PT1,
                     'SP': SP0,
                     'SA': SA1
                     }
@@ -743,9 +796,9 @@ def find_geo_region(lon, lat):
 
 ## Read instrument makes a netcdf for just the given instrument
 read_instrmt('ITP', '1', science_data_file_path+'ITPs/itp1/itp1cormat', 'netcdfs/ITP_1.nc')
-# read_instrmt('ITP', '2', science_data_file_path+'ITPs/itp2/itp2cormat', 'netcdfs/ITP_2.nc')
-# read_instrmt('ITP', '3', science_data_file_path+'ITPs/itp3/itp3cormat', 'netcdfs/ITP_3.nc')
-# read_instrmt('ITP', '13', science_data_file_path+'ITPs/itp13/itp13cormat', 'netcdfs/ITP_13.nc')
+read_instrmt('ITP', '2', science_data_file_path+'ITPs/itp2/itp2cormat', 'netcdfs/ITP_2.nc')
+read_instrmt('ITP', '3', science_data_file_path+'ITPs/itp3/itp3cormat', 'netcdfs/ITP_3.nc')
+read_instrmt('ITP', '13', science_data_file_path+'ITPs/itp13/itp13cormat', 'netcdfs/ITP_13.nc')
 
 ## These will make all the netcdfs for a certain source (takes a long time)
 # make_all_ITP_netcdfs(science_data_file_path)

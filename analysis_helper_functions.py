@@ -111,13 +111,13 @@ l_styles = ['-', '--', '-.', ':']
 rand_seq = np.random.RandomState(1234567)
 
 # A list of variables for which the y-axis should be inverted so the surface is up
-y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'SP', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
+y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_PT', 'ca_PT', 'SP', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
 # A list of the variables on the `Layer` dimension
 layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
 pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho', 'p_theta_max', 's_theta_max', 'theta_max']
 # A list of the variables on the `Vertical` dimension
-vertical_vars = ['press', 'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_SP', 'ma_SA', 'ma_sigma', 'la_iT', 'la_CT', 'la_SP', 'la_SA', 'la_sigma']
+vertical_vars = ['press', 'depth', 'iT', 'CT', 'PT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'aPT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_PT', 'ma_SP', 'ma_SA', 'ma_sigma', 'la_iT', 'la_CT', 'la_PT', 'la_SP', 'la_SA', 'la_sigma']
 # Make lists of clustering variables
 pca_prefix = 'pca_' # profile cluster average
 pca_vars   = [ f'{pca_prefix}{var}' for var in vertical_vars]
@@ -224,16 +224,17 @@ class Profile_Filters:
     p_range             [p_min, p_max] where the values are floats in dbar
                           or, "Shibley2017" to follow their method of selecting a range
     d_range             [d_min, d_max] where the values are floats in m
-    iT_range            [T_min, T_max] where the values are floats in degrees C
-    SP_range            [S_min, S_max] where the values are floats in g/kg
+    *T_range            [T_min, T_max] where the values are floats in degrees C
+    S*_range            [S_min, S_max] where the values are floats in g/kg
     subsample           True/False whether to apply the subsample mask to the profiles
     m_avg_win           The value in dbar of the moving average window to take for ma_ variables
     """
-    def __init__(self, p_range=None, d_range=None, iT_range=None, CT_range=None, SP_range=None, SA_range=None, subsample=False, regrid_TS=None, m_avg_win=None):
+    def __init__(self, p_range=None, d_range=None, iT_range=None, CT_range=None, PT_range=None, SP_range=None, SA_range=None, subsample=False, regrid_TS=None, m_avg_win=None):
         self.p_range = p_range
         self.d_range = d_range
         self.iT_range = iT_range
         self.CT_range = CT_range
+        self.PT_range = PT_range
         self.SP_range = SP_range
         self.SA_range = SA_range
         self.subsample = subsample
@@ -260,10 +261,10 @@ class Plot_Parameters:
                     Accepted 'by_pf' vars: 'entry', 'prof_no', 'BL_yn', 'dt_start',
                       'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho', 'hist'
                     Accepted 'by_vert' vars: all 'by_pf' vars plus 'press',
-                      'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta',
-                      'aiT', 'aCT', 'BSP', 'BSA', 'ma_iT', 'ma_CT', 'ma_SP',
-                      'ma_SA', 'ma_sigma', 'ss_mask', 'la_iT', 'la_CT', 'la_SA',
-                      'la_sigma'
+                      'depth', 'iT', 'CT', 'PT', 'SP', 'SA', 'sigma', 'alpha', 'beta',
+                      'aiT', 'aCT', 'aPT', 'BSP', 'BSA', 'ma_iT', 'ma_CT', 'ma_PT', 
+                      'ma_SP', 'ma_SA', 'ma_sigma', 'ss_mask', 'la_iT', 'la_CT', 
+                      'la_PT', 'la_SA','la_sigma'
                     Accepted 'by_layer' vars: ???
     legend          True/False whether to add a legend on this plot. Default:True
     ax_lims         An optional dictionary of the limits on the axes for the final plot
@@ -437,7 +438,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
         # Check the plot scale
         #   This will include all the measurements within each profile
         if plt_params.plot_scale == 'by_vert':
-            vars_to_keep = ['entry', 'prof_no', 'dt_start', 'dt_end', 'lon', 'lat', 'R_rho', 'press', 'depth', 'iT', 'CT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_SP', 'ma_SA', 'ma_sigma']
+            vars_to_keep = ['entry', 'prof_no', 'dt_start', 'dt_end', 'lon', 'lat', 'R_rho', 'press', 'depth', 'iT', 'CT', 'PT', 'SP', 'SA', 'sigma', 'alpha', 'beta', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_PT', 'ma_SP', 'ma_SA', 'ma_sigma']
         #   This will only include variables with 1 value per profile
         elif plt_params.plot_scale == 'by_pf':
             vars_to_keep = ['entry', 'prof_no', 'dt_start', 'dt_end', 'lon', 'lat', 'R_rho']
@@ -464,24 +465,37 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append(var)
             if var == 'aiT':
                 vars_to_keep.append(var)
-                vars_to_keep.append('alpha')
+                vars_to_keep.append('alpha_iT')
                 vars_to_keep.append('iT')
             elif var == 'aCT':
                 vars_to_keep.append(var)
                 vars_to_keep.append('alpha')
                 vars_to_keep.append('CT')
+            elif var == 'aPT':
+                vars_to_keep.append(var)
+                vars_to_keep.append('alpha_PT')
+                vars_to_keep.append('PT')
             elif var == 'BSP':
                 vars_to_keep.append(var)
                 vars_to_keep.append('beta')
+                vars_to_keep.append('SP')
+            elif var == 'BSt':
+                vars_to_keep.append(var)
+                vars_to_keep.append('beta_PT')
                 vars_to_keep.append('SP')
             elif var == 'BSA':
                 vars_to_keep.append(var)
                 vars_to_keep.append('beta')
                 vars_to_keep.append('SA')
-            elif var == 'cRL' or var == 'cRl':
+            elif var == 'cRL':
                 vars_to_keep.append('alpha')
                 vars_to_keep.append('CT')
                 vars_to_keep.append('beta')
+                vars_to_keep.append('SP')
+            elif var == 'cRl':
+                vars_to_keep.append('alpha_PT')
+                vars_to_keep.append('PT')
+                vars_to_keep.append('beta_PT')
                 vars_to_keep.append('SP')
             # Check for variables that have underscores, ie. profile cluster
             #   average variables and local anomalies
@@ -514,6 +528,8 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append('iT')
             if not isinstance(profile_filters.CT_range, type(None)):
                 vars_to_keep.append('CT')
+            if not isinstance(profile_filters.PT_range, type(None)):
+                vars_to_keep.append('PT')
             if not isinstance(profile_filters.SP_range, type(None)):
                 vars_to_keep.append('SP')
             if not isinstance(profile_filters.SA_range, type(None)):
@@ -581,7 +597,7 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
             df['source'] = ds.Expedition
             df['instrmt'] = ds.Instrument
             ## Filters on each profile separately
-            df = filter_profile_ranges(df, profile_filters, 'press', 'depth', iT_key='iT', CT_key='CT', SP_key='SP', SA_key='SA')
+            df = filter_profile_ranges(df, profile_filters, 'press', 'depth', iT_key='iT', CT_key='CT',PT_key='PT', SP_key='SP', SA_key='SA')
             ## Re-grid temperature and salinity data
             if not isinstance(profile_filters.regrid_TS, type(None)):
                 # Figure out which salinity and temperature variable to re-grid
@@ -675,7 +691,7 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
             df['source'] = ds.Expedition
             df['instrmt'] = ds.Instrument
             ## Filters on each profile separately
-            df = filter_profile_ranges(df, profile_filters, 'press', 'depth', iT_key='iT', CT_key='CT', SP_key='SP', SA_key='SA')
+            df = filter_profile_ranges(df, profile_filters, 'press', 'depth', iT_key='iT', CT_key='CT', PT_key='PT', SP_key='SP', SA_key='SA')
             # Find a value of the Vertical dimension that is included in all profiles
             try:
                 df.reset_index(inplace=True, level=['Vertical'])
@@ -701,7 +717,7 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
             df['source'] = ds.Expedition
             df['instrmt'] = ds.Instrument
             ## Filters on each profile separately
-            df = filter_profile_ranges(df, profile_filters, 'press', 'depth', iT_key='iT', CT_key='CT', SP_key='SP', SA_key='SA')
+            df = filter_profile_ranges(df, profile_filters, 'press', 'depth', iT_key='iT', CT_key='CT', PT_key='PT', SP_key='SP', SA_key='SA')
             # Drop dimensions, if needed
             if 'Vertical' in df.index.names or 'Layer' in df.index.names:
                 # Drop duplicates along the `Time` dimension
@@ -752,6 +768,10 @@ def take_m_avg(df, m_avg_win, vars_available):
             df['ma_CT'] = df1['CT']
             if 'la_CT' in vars_available:
                 df['la_CT'] = df['CT'] - df['ma_CT']
+        if var in ['PT','ma_PT','la_PT']:
+            df['ma_PT'] = df1['PT']
+            if 'la_PT' in vars_available:
+                df['la_PT'] = df['PT'] - df['ma_PT']
         if var in ['SP','ma_SP','la_SP']:
             df['ma_SP'] = df1['SP']
             if 'la_SP' in vars_available:
@@ -771,7 +791,7 @@ def take_m_avg(df, m_avg_win, vars_available):
 
 ################################################################################
 
-def filter_profile_ranges(df, profile_filters, p_key, d_key, iT_key=None, CT_key=None, SP_key=None, SA_key=None):
+def filter_profile_ranges(df, profile_filters, p_key, d_key, iT_key=None, CT_key=None, PT_key=None, SP_key=None, SA_key=None):
     """
     Returns the same pandas dataframe, but with the filters provided applied to
     the data within
@@ -782,6 +802,7 @@ def filter_profile_ranges(df, profile_filters, p_key, d_key, iT_key=None, CT_key
     d_key               A string of the depth variable to filter
     iT_key              A string of the in-situ temperature variable to filter
     CT_key              A string of the conservative temperature variable to filter
+    PT_key              A string of the potential temperature variable to filter
     SP_key              A string of the practical salinity variable to filter
     SA_key              A string of the absolute salinity variable to filter
     """
@@ -813,6 +834,13 @@ def filter_profile_ranges(df, profile_filters, p_key, d_key, iT_key=None, CT_key
         t_min = min(profile_filters.CT_range)
         # Filter the data frame to the specified conservative temperature range
         df = df[(df[CT_key] < t_max) & (df[CT_key] > t_min)]
+    #   Filter to a certain potential temperature range
+    if not isinstance(profile_filters.PT_range, type(None)):
+        # Get endpoints of potential temperature range
+        t_max = max(profile_filters.PT_range)
+        t_min = min(profile_filters.PT_range)
+        # Filter the data frame to the specified potential temperature range
+        df = df[(df[PT_key] < t_max) & (df[PT_key] > t_min)]
     #   Filter to a certain practical salinity range
     if not isinstance(profile_filters.SP_range, type(None)):
         # Get endpoints of practical salinity range
@@ -844,8 +872,12 @@ def calc_extra_vars(ds, vars_to_keep):
         ds['aiT'] = ds['alpha'] * ds['iT']
     if 'aCT' in vars_to_keep:
         ds['aCT'] = ds['alpha'] * ds['CT']
+    if 'aPT' in vars_to_keep:
+        ds['aPT'] = ds['alpha_PT'] * ds['PT']
     if 'BSP' in vars_to_keep:
         ds['BSP'] = ds['beta'] * ds['SP']
+    if 'BSt' in vars_to_keep:
+        ds['BSt'] = ds['beta_PT'] * ds['SP']
     if 'BSA' in vars_to_keep:
         ds['BSA'] = ds['beta'] * ds['SA']
     # Check for variables with an underscore
@@ -1006,7 +1038,9 @@ def get_axis_label(var_key, var_attr_dicts):
                  'hist':r'Occurrences',
                  'aiT':r'$\alpha T$',
                  'aCT':r'$\alpha \theta$',
+                 'aPT':r'$\alpha \theta_{PT}$',
                  'BSP':r'$\beta S_P$',
+                 'BSt':r'$\beta_{PT} S_P$',
                  'BSA':r'$\beta S_A$',
                  'p_theta_max':r'$p(\theta_{max})$ (dbar)',
                  's_theta_max':r'$S(\theta_{max})$ (g/kg)',
@@ -1015,8 +1049,8 @@ def get_axis_label(var_key, var_attr_dicts):
                  'min_pts':r'Minimum density threshold $m_{pts}$',
                  'DBCV':'Relative validity measure (DBCV)',
                  'n_clusters':'Number of clusters',
-                 'cRL':r'Lateral density ratio $R_L$ with ODR',
-                 'cRl':r'Lateral density ratio $R_L$ with OLS'
+                 'cRL':r'Lateral density ratio $R_L$ with CT',
+                 'cRl':r'Lateral density ratio $R_L$ with PT'
                 }
     if var_key in ax_labels.keys():
         return ax_labels[var_key]
@@ -1405,18 +1439,20 @@ def get_var_color(var):
     vars = {
             'aiT':'salmon',
             'aCT':'salmon',
+            'aPT':'salmon',
             'BSP':'darkturquoise',
+            'BSt':'darkturquoise',
             'BSA':'darkturquoise'
             }
     if var in ['entry', 'prof_no', 'dt_start', 'dt_end', 'lon', 'lat', 'press', 'depth', 'og_press', 'og_depth', 'p_theta_max']:
         return std_clr
-    elif var in ['iT', 'CT', 'theta_max', 'alpha']:
+    elif var in ['iT', 'CT', 'PT', 'theta_max', 'alpha']:
         return 'lightcoral'
     elif var in ['SP', 'SA', 's_theta_max', 'beta']:
         return 'cornflowerblue'
     elif var in ['sigma']:
         return 'mediumpurple'
-    elif var in ['ma_iT', 'ma_CT', 'la_iT', 'la_CT']:
+    elif var in ['ma_iT', 'ma_CT', 'ma_PT', 'la_iT', 'la_CT', 'la_PT']:
         return 'tab:red'
     elif var in ['ma_SP', 'ma_SA', 'la_SP', 'la_SA']:
         return 'tab:blue'
@@ -1447,9 +1483,9 @@ def get_color_map(cmap_var):
              }
     if cmap_var in ['press', 'depth', 'p_theta_max']:
         return 'cividis'
-    elif cmap_var in ['iT', 'CT', 'theta_max', 'alpha', 'aiT', 'aCT', 'ma_iT', 'ma_CT', 'la_iT', 'la_CT']:
+    elif cmap_var in ['iT', 'CT', 'PT', 'theta_max', 'alpha', 'aiT', 'aCT', 'aPT', 'ma_iT', 'ma_CT', 'ma_PT', 'la_iT', 'la_CT', 'la_PT']:
         return 'Reds'
-    elif cmap_var in ['SP', 'SA', 's_theta_max', 'beta', 'BSP', 'BSA', 'ma_SP', 'ma_SA', 'la_SP', 'la_SA']:
+    elif cmap_var in ['SP', 'SA', 's_theta_max', 'beta', 'BSP', 'BSt', 'BSA', 'ma_SP', 'ma_SA', 'la_SP', 'la_SA']:
         return 'Blues'
     elif cmap_var in ['sigma', 'ma_sigma', 'la_sigma']:
         return 'Purples'
@@ -2350,6 +2386,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     a_group         A Analysis_Group object containing the info to create this subplot
     pp              The Plot_Parameters object for a_group
     """
+    # Find extra arguments, if given
+    legend = pp.legend
     scale = pp.plot_scale
     if scale == 'by_pf':
         print('Cannot use',pp.plot_type,'with plot scale by_pf')
@@ -2447,10 +2485,10 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     pfs_in_this_df = np.unique(np.array(df['prof_no']))
     print('\tpfs_in_this_df:',pfs_in_this_df)
     # Make sure you're not trying to plot too many profiles
-    if len(pfs_in_this_df) > 10:
-        print('You are trying to plot',len(pfs_in_this_df),'profiles')
-        print('That is too many. Try to plot less than 10')
-        exit(0)
+    # if len(pfs_in_this_df) > 15:
+    #     print('You are trying to plot',len(pfs_in_this_df),'profiles')
+    #     print('That is too many. Try to plot less than 15')
+    #     exit(0)
     # else:
     #     print('Plotting',len(pfs_in_this_df),'profiles')
     # Loop through each profile to create a list of dataframes
@@ -2474,13 +2512,14 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         profile_dfs.append(pf_df_v)
     #
     # Check to see whether any profiles were actually loaded
-    if len(profile_dfs) < 1:
+    n_pfs = len(profile_dfs)
+    if n_pfs < 1:
         print('No profiles loaded')
         # Add a standard title
         plt_title = add_std_title(a_group)
         return pp.xlabels[0], pp.ylabels[0], plt_title, ax
     # Plot each profile
-    for i in range(len(profile_dfs)):
+    for i in range(n_pfs):
         # Pull the dataframe for this profile
         pf_df = profile_dfs[i]
         # Make a label for this profile
@@ -2495,26 +2534,34 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # Find upper and lower bounds of first profile, for reference points
             xvar_low  = min(xvar)
             xvar_high = max(xvar)
-            # Define shift for the profile
-            xv_shift = (xvar_high - xvar_low)/5
+            # Find span of the profile
+            xv_span = abs(xvar_high - xvar_low)
+            # Define far left bound for plot
+            left_bound = xvar_low-xv_span/15
             # Find upper and lower bounds of first profile for twin axis
             if tw_x_key:
                 tvar = pf_df[tw_x_key]
                 twin_low  = min(tvar)
                 twin_high = max(tvar)
-                tw_shift  = (twin_high - twin_low)/5
+                tw_span   = abs(twin_high - twin_low)
+                tw_left_bound = twin_low-tw_span/15
             else:
                 tvar = None
             #
         # Adjust the starting points of each subsequent profile
         elif i > 0:
             # Find array of data
-            xvar = pf_df[x_key] - min(pf_df[x_key]) + xvar_high
-            # Adjust upper bound
+            xvar = pf_df[x_key] - min(pf_df[x_key]) + xvar_low + xv_span/(n_pfs**0.8)
+            # Find new upper and lower bounds of profile
             xvar_high = max(xvar)
+            xvar_low  = min(xvar)
+            # Find span of this profile
+            xv_span = abs(xvar_high - xvar_low)
             if tw_x_key:
-                tvar = pf_df[tw_x_key] - min(pf_df[tw_x_key]) + twin_high
+                tvar = pf_df[tw_x_key] - min(pf_df[tw_x_key]) + twin_low + tw_span/(n_pfs**0.8)
                 twin_high = max(tvar)
+                twin_low  = min(tvar)
+                tw_span   = abs(twin_high - twin_low)
             else:
                 tvar = None
             #
@@ -2563,7 +2610,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # Get a list of unique cluster numbers, but delete the noise point label "-1"
             cluster_numbers = np.unique(np.array(df_clstrs['cluster'].values))
             cluster_numbers = np.delete(cluster_numbers, np.where(cluster_numbers == -1))
-            print('\tcluster_numbers:',cluster_numbers)
+            # print('\tcluster_numbers:',cluster_numbers)
             # Plot noise points first
             if plt_noise:
                 ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
@@ -2577,7 +2624,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
                 # Decide on the color and symbol, don't go off the end of the arrays
                 my_clr = mpl_clrs[i%len(mpl_clrs)]
                 my_mkr = mpl_mrks[i%len(mpl_mrks)]
-                print('\t\tcluster:',i,'my_clr:',my_clr,'my_mkr:',my_mkr)
+                # print('\t\tcluster:',i,'my_clr:',my_clr,'my_mkr:',my_mkr)
                 # Get relevant data
                 x_data = df_clstrs[df_clstrs.cluster == i][x_key]
                 y_data = df_clstrs[df_clstrs.cluster == i][y_key]
@@ -2592,14 +2639,14 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         #
     #
     # Compensate for shifting the twin axis by adjusting the max xvar
-    xvar_high = xvar_high + xv_shift
+    xvar_high = xvar_high + xv_span/5
     # Adjust bounds on axes
-    ax.set_xlim([xvar_low-0.5*xv_shift, xvar_high+xv_shift])
+    ax.set_xlim([left_bound, xvar_high])
     # Invert y-axis if specified
     if y_key in y_invert_vars or tw_x_key in y_invert_vars:
         ax.invert_yaxis()
     if tw_x_key:
-        tw_ax_y.set_xlim([twin_low-tw_shift, twin_high+0.5*tw_shift])
+        tw_ax_y.set_xlim([tw_left_bound, twin_high])
     # Plot on twin axes, if specified
     if not isinstance(tw_x_key, type(None)):
         tw_ax_y.set_xlabel(pp.xlabels[1])
@@ -2608,17 +2655,18 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         # Change color of the ticks on the twin axis
         tw_ax_y.tick_params(axis='x', colors=tw_clr)
     # Add legend
-    lgnd = ax.legend()
-    # Only add the notes_string if it contains something
-    if len(notes_string) > 1:
-        handles, labels = ax.get_legend_handles_labels()
-        handles.append(mpl.patches.Patch(color='none'))
-        labels.append(notes_string)
-        lgnd = ax.legend(handles=handles, labels=labels)
-    # Need to change the marker size for each label in the legend individually
-    for hndl in lgnd.legendHandles:
-        hndl._sizes = [lgnd_mrk_size]
-    #
+    if legend:
+        lgnd = ax.legend()
+        # Only add the notes_string if it contains something
+        if len(notes_string) > 1:
+            handles, labels = ax.get_legend_handles_labels()
+            handles.append(mpl.patches.Patch(color='none'))
+            labels.append(notes_string)
+            lgnd = ax.legend(handles=handles, labels=labels)
+        # Need to change the marker size for each label in the legend individually
+        for hndl in lgnd.legendHandles:
+            hndl._sizes = [lgnd_mrk_size]
+        #
     # Add a standard title
     plt_title = add_std_title(a_group)
     return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -2875,6 +2923,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 # print('\tthis_cor:',this_cor)
                 # Put that value back into the original dataframe
                 df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
+                # print('cluster:',i,'cor:',this_cor)
             # Find overlap ratio for the last cluster
             clstr_id_above  = sorted_clstr_df['cluster'].values[-2]
             clstr_id_here = sorted_clstr_df['cluster'].values[-1]
@@ -2988,10 +3037,10 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 m = orthoregress(BSs, aTs)[0]
                 # The lateral density ratio is the inverse of the slope
                 this_cRL = 1/m
+                # print('cluster:',i,'cRL:',this_cRL)
                 # Put those values back into the original dataframe
                 df.loc[df['cluster']==i, this_var] = this_cRL
             #
-        #
         if this_var == 'cRl':
             # Find the lateral density ratio R_L for each cluster
             #   Reduces the number of points to just one per cluster
@@ -3000,21 +3049,21 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 # Find the data from this cluster
                 df_this_cluster = df[df['cluster']==i].copy()
                 # Find the variables needed
-                alphas = df_this_cluster['alpha'].values
-                temps  = df_this_cluster['CT'].values
-                betas  = df_this_cluster['beta'].values
+                alphas = df_this_cluster['alpha_PT'].values
+                temps  = df_this_cluster['PT'].values
+                betas  = df_this_cluster['beta_PT'].values
                 salts  = df_this_cluster['SP'].values
                 # Calculate variables needed
                 aTs = alphas * temps
                 BSs = betas * salts
                 # Find the slope of this cluster in aT-BS space
-                m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
+                # m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
                 # Find the slope of the total least-squares of the points for this cluster
-                # m = orthoregress(BSs, aTs)[0]
+                m = orthoregress(BSs, aTs)[0]
                 # The lateral density ratio is the inverse of the slope
-                this_cRL = 1/m
+                this_cRl = 1/m
                 # Put those values back into the original dataframe
-                df.loc[df['cluster']==i, this_var] = this_cRL
+                df.loc[df['cluster']==i, this_var] = this_cRl
             #
         #
     #
@@ -3157,7 +3206,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
         clstr_means = []
         clstr_stdvs = []
         # Look for outliers
-        if 'cor' in x_key or 'cRL' in x_key:
+        if 'cor' in x_key or 'cRL' in x_key or 'cRl' in x_key:
             df = find_outliers(df, [x_key, y_key])
         # Loop through each cluster
         for i in range(n_clusters):
@@ -3184,7 +3233,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
             elif y_key == 'cmm_mid':
                 yerrs = df[df.cluster == i]['bar_len']
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
-            elif 'cor' in x_key or 'cRL' in x_key:
+            elif 'cor' in x_key or 'cRL' in x_key or 'cRl' in x_key:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
                 # Plotting outliers
                 if df_this_cluster['out_'+x_key].all() == True:

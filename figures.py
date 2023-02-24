@@ -25,13 +25,17 @@ T2008_min_pts = 100
 T2008_fig4_y_lims = {'y_lims':[260,220]}
 # Timmermans 2008 Figure 4 shows profile 185
 T2008_fig4_pfs = [183, 185, 187]
+start_pf = 1
+import numpy as np
+n_pfs_to_plot = 25
+# T2008_fig4_pfs = list(np.arange(start_pf, start_pf+(n_pfs_to_plot*2), 2))
 # Filters used in Timmermans 2008 T-S and aT-BS plots
 T2008_p_range = [180,300]
 T2008_S_range = [34.4,34.6]
 T2008_fig5a_ax_lims = {'x_lims':[34.05,34.75], 'y_lims':[-1.3,0.5]}
-T2008_fig6a_ax_lims = {'x_lims':[0.027,0.027045], 'y_lims':[-13e-6,3e-6]}
+T2008_fig6a_ax_lims = {'x_lims':[0.027002,0.027042], 'y_lims':[-13e-6,3e-6]}
 # The actual limits are above, but need to adjust the x lims for some reason
-T2008_fig6a_ax_lims = {'x_lims':[0.026835,0.026880], 'y_lims':[-13e-6,3e-6]}
+T2008_fig6a_ax_lims = {'x_lims':[0.026838,0.026878], 'y_lims':[-13e-6,3e-6]}
 
 # Filters used in Bebieva et al. 2019
 B2019_p_range = [220,400]
@@ -172,11 +176,13 @@ pp_ITP3_ps_n_pfs  = ahf.Plot_Parameters(x_vars=['n_pfs'], y_vars=['n_clusters','
 ## The actual clustering done for reproducing figures from Timmermans et al. 2008
 pp_T2008_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, legend=False)
 ## Reproducing Timmermans et al. 2008 Figure 4, with cluster coloring and 2 extra profiles
-pp_T2008_fig4  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts})#, ax_lims=T2008_fig4_y_lims)
+pp_T2008_fig4  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, legend=True, ax_lims=T2008_fig4_y_lims)
 ## Reproducing Timmermans et al. 2008 Figure 5a, but with cluster coloring
 pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, ax_lims=T2008_fig5a_ax_lims, legend=True)
+pp_T2008_fig5a2 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['PT'], clr_map='cluster', extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, ax_lims=T2008_fig5a_ax_lims, legend=True)
 ## Reproducing Timmermans et al. 2008 Figure 6a, but with cluster coloring
 pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, ax_lims=T2008_fig6a_ax_lims, legend=False)
+pp_T2008_fig6a2 = ahf.Plot_Parameters(x_vars=['BSt'], y_vars=['aPT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'min_pts':T2008_min_pts}, ax_lims=T2008_fig6a_ax_lims, legend=False)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 ITP3_min_pts = 90#300
@@ -222,9 +228,9 @@ print('- Creating analysis group objects')
 # # group_salt_hist= ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_hist)
 # group_salt_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_cor)
 # # group_salt_com = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_com)
-# group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_L)
-# # group_salt_R_l = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_l)
-#
+group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_L)
+group_salt_R_l = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_salt_R_l)
+
 # group_cmm_SP = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_SP)
 # group_cmm_press = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_cmm_press)
 ## Does the overlap ratio change with density? According to these plots, no
@@ -271,9 +277,12 @@ print('- Creating analysis group objects')
 
 ## Reproducing figures from Timmermans et al. 2008
 # group_T2008_clstr = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_clstr)
-group_T2008_fig4  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig4)
+# group_T2008_fig4  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig4)
 # group_T2008_fig5a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig5a)
 # group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig6a)
+# 
+# group_T2008_fig5a2 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig5a2)
+# group_T2008_fig6a2 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig6a2)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 # group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_Lu2022_fig3a)
@@ -306,7 +315,7 @@ group_T2008_fig4  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig4)
 print('- Creating outputs')
 ################################################################################
 
-ahf.make_figure([group_T2008_fig4])
+# ahf.make_figure([group_T2008_fig4])#, filename='test.pickle')
 # ahf.make_figure([group_salt_cor])
 # ahf.make_figure([group_ps_n_pfs])
 # ahf.make_figure([my_group0], filename='test.pickle')
@@ -316,7 +325,7 @@ ahf.make_figure([group_T2008_fig4])
 ## Test Figures
 # ahf.make_figure([group_press_hist, group_press_cor, group_sigma_hist, group_sigma_cor, group_temp_hist, group_temp_cor, group_salt_hist, group_salt_cor], filename='ITP2_cor_vs_press_all_var.pickle')
 # ahf.make_figure([group_clstr_ST, group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
-# ahf.make_figure([group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
+ahf.make_figure([group_salt_R_L, group_salt_R_l])#, filename='ITP2_cor_vs_press_all_var.pickle')
 # ahf.make_figure([group_T2008_clstr, group_salt_hist, group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
 # ahf.make_figure([group_maw_001, group_maw_005, group_maw_010, group_maw_050, group_maw_100, group_maw_200], filename='ITP2_maw_size_tests.png')
 
@@ -333,7 +342,7 @@ ahf.make_figure([group_T2008_fig4])
 
 ## Reproducing figures from Timmermans et al. 2008
 # ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a], filename='T2008.png')
-# ahf.make_figure([group_T2008_fig6a, group_B2019_fig3b])
+# ahf.make_figure([group_T2008_fig6a, group_T2008_fig6a2])
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 # ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c], filename='Lu2022_f3_ITP2.png')#'Lu2022_f3.pickle')
