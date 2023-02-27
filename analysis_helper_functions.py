@@ -1662,6 +1662,12 @@ def make_subplot(ax, a_group, fig, ax_pos):
             if x_key in clstr_vars or y_key in clstr_vars:
                 min_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
                 df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, min_pts, min_samp=min_s, extra_cl_vars=[x_key,y_key])
+            else:
+                # Check whether to plot slopes
+                try:
+                    plot_slopes = pp.extra_args['plot_slopes']
+                except:
+                    plot_slopes = False
             # Check for histogram
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=pp.legend, df=df, txk=tw_x_key, tay=tw_ax_y, tyk=tw_y_key, tax=tw_ax_x)
@@ -1670,8 +1676,30 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 df[x_key] = mpl.dates.date2num(df[x_key])
             if y_key in ['dt_start', 'dt_end']:
                 df[y_key] = mpl.dates.date2num(df[y_key])
+            # Drop duplicates
+            df.drop_duplicates(subset=[x_key, y_key], keep='first', inplace=True)
             # Plot every point the same color, size, and marker
             ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+            if plot_slopes:
+                # Find outliers
+                df = find_outliers(df, [x_key, y_key])
+                # Get data without outliers
+                x_data = np.array(df[df['out_'+x_key]==False][x_key].values, dtype=np.float64)
+                y_data = np.array(df[df['out_'+x_key]==False][y_key].values, dtype=np.float64)
+                print('len(x_data):',len(x_data))
+                # Find the slope of the ordinary least-squares of the points for this cluster
+                # m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
+                # Find the slope of the total least-squares of the points for this cluster
+                m = orthoregress(x_data, y_data)[0]
+                # Find mean and standard deviation of x and y data
+                x_mean = df.loc[:,x_key].mean()
+                y_mean = df.loc[:,y_key].mean()
+                x_stdv = df.loc[:,x_key].std()
+                y_stdv = df.loc[:,y_key].std()
+                # Plot the least-squares fit line for this cluster through the centroid
+                ax.axline((x_mean, y_mean), slope=m, color=alt_std_clr, zorder=3)
+                # Add annotation to say what the slope is
+                ax.annotate('%.2f'%(m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
                 ax.invert_yaxis()
@@ -3218,10 +3246,10 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, min_pts
             df_this_cluster = df[df['cluster']==i]
             # print(df_this_cluster)
             # Get relevant data
-            x_data = df_this_cluster[x_key] #df[df.cluster == i][x_key]
+            x_data = df_this_cluster[x_key] 
             x_mean = np.mean(x_data)
             x_stdv = np.std(x_data)
-            y_data = df_this_cluster[y_key] #df[df.cluster == i][y_key]
+            y_data = df_this_cluster[y_key] 
             y_mean = np.mean(y_data)
             y_stdv = np.std(y_data)
             alphas = df_this_cluster['clst_prob'] #df[df.cluster == i]['clst_prob']
