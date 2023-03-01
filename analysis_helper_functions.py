@@ -111,7 +111,7 @@ l_styles = ['-', '--', '-.', ':']
 rand_seq = np.random.RandomState(1234567)
 
 # A list of variables for which the y-axis should be inverted so the surface is up
-y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_PT', 'ca_PT', 'SP', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
+y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_PT', 'ca_PT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
 # A list of the variables on the `Layer` dimension
 layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
@@ -267,6 +267,7 @@ class Plot_Parameters:
                       'la_PT', 'la_SA','la_sigma'
                     Accepted 'by_layer' vars: ???
     legend          True/False whether to add a legend on this plot. Default:True
+    isopycnals      True/False whether to add isopycnal contour lines. Default:True
     ax_lims         An optional dictionary of the limits on the axes for the final plot
                       Ex: {'x_lims':[x_min,x_max], 'y_lims':[y_min,y_max]}
     first_dfs       A list of booleans of whether to take the first differences
@@ -310,7 +311,7 @@ class Plot_Parameters:
                         Optional: {'z_var':'m_pts', 'z_list':[90,120,240]} where
                         z_var can be any variable that var0 can be
     """
-    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
+    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, isopycnals=True, ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
         # Add all the input parameters to the object
         self.plot_type = plot_type
         self.plot_scale = plot_scale
@@ -319,6 +320,7 @@ class Plot_Parameters:
         self.xlabels = [None,None]
         self.ylabels = [None,None]
         self.legend = legend
+        self.isopycnals = isopycnals
         self.ax_lims = ax_lims
         self.first_dfs = first_dfs
         self.clr_map = clr_map
@@ -1602,7 +1604,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             #
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map=clr_map, legend=pp.legend)
-            heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
+            heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker, zorder=5)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
                 ax.invert_yaxis()
@@ -1612,8 +1614,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 if tw_clr == std_clr:
                     tw_clr = alt_std_clr
                 # Add backing x to distinguish from main axis
-                tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=mrk_size*10, marker='x')
-                tw_ax_y.scatter(df[tw_x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
+                tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=mrk_size*10, marker='x', zorder=3)
+                tw_ax_y.scatter(df[tw_x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker, zorder=4)
                 tw_ax_y.set_xlabel(pp.xlabels[1])
                 # Change color of the axis label on the twin axis
                 tw_ax_y.xaxis.label.set_color(tw_clr)
@@ -1626,8 +1628,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 if tw_clr == std_clr:
                     tw_clr = alt_std_clr
                 # Add backing x to distinguish from main axis
-                tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=mrk_size*10, marker='x')
-                tw_ax_x.scatter(df[x_key], df[tw_y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker)
+                tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=mrk_size*10, marker='x', zorder=3)
+                tw_ax_x.scatter(df[x_key], df[tw_y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker, zorder=4)
                 # Invert y-axis if specified
                 if tw_y_key in y_invert_vars:
                     tw_ax_x.invert_yaxis()
@@ -1652,6 +1654,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 add_std_legend(ax, df, x_key)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+            # Check whether to plot isopycnals
+            if pp.isopycnals:
+                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1679,7 +1684,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Drop duplicates
             df.drop_duplicates(subset=[x_key, y_key], keep='first', inplace=True)
             # Plot every point the same color, size, and marker
-            ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+            ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
             if plot_slopes:
                 # Find outliers
                 df = find_outliers(df, [x_key, y_key])
@@ -1728,6 +1733,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 add_std_legend(ax, df, x_key)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+            # Check whether to plot isopycnals
+            if pp.isopycnals:
+                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1758,7 +1766,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 if y_key in ['dt_start', 'dt_end']:
                     this_df[y_key] = mpl.dates.date2num(this_df[y_key])
                 # Plot every point from this df the same color, size, and marker
-                ax.scatter(this_df[x_key], this_df[y_key], color=my_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+                ax.scatter(this_df[x_key], this_df[y_key], color=my_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
                 i += 1
                 # Add legend to report the total number of points for this instrmt
                 lgnd_label = source+': '+str(len(this_df[x_key]))+' points'
@@ -1773,6 +1781,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Add legend with custom handles
             if pp.legend:
                 lgnd = ax.legend(handles=lgnd_hndls)
+            # Check whether to plot isopycnals
+            if pp.isopycnals:
+                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1794,7 +1805,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Decide on the color, don't go off the end of the array
                 my_clr = mpl_clrs[i%len(mpl_clrs)]
                 # Plot every point from this df the same color, size, and marker
-                ax.scatter(df[x_key], df[y_key], color=my_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+                ax.scatter(df[x_key], df[y_key], color=my_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
                 i += 1
                 # Add legend to report the total number of points for this instrmt
                 lgnd_label = s_instrmt+': '+str(len(df[x_key]))+' points'
@@ -1809,6 +1820,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 lgnd = ax.legend(handles=lgnd_hndls)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
+            # Check whether to plot isopycnals
+            if pp.isopycnals:
+                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1865,6 +1879,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
                     ax.legend(handles=[n_pts_patch, pixel_patch])
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
+            # Check whether to plot isopycnals
+            if pp.isopycnals:
+                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
@@ -1886,6 +1903,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
             plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
+            # Check whether to plot isopycnals
+            if pp.isopycnals:
+                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax
             #
         else:
@@ -2073,6 +2093,107 @@ def make_subplot(ax, a_group, fig, ax_pos):
 
 ################################################################################
 # Auxiliary plotting functions #################################################
+################################################################################
+
+def add_isopycnals(ax, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
+    """
+    Adds lines of constant density anomaly, if applicable
+
+    ax          The main axis on which to format
+    x_key       The string of the name for the x data on the main axis
+    y_key       The string of the name for the y data on the main axis
+    tw_x_key    The string of the name for the x data on the twin axis
+    tw_ax_y     The twin y axis on which to format
+    tw_y_key    The string of the name for the y data on the twin axis
+    tw_ax_x     The twin x axis on which to format
+    """
+    # Check whether to make isopycnals or not
+    intersect_arr = set([x_key, y_key, tw_x_key, tw_y_key]).intersection(['iT', 'CT', 'PT', 'SP', 'SA'])
+    if len(intersect_arr) == 0:
+        return
+    print('\t- Adding isopycnals')
+    # Get bounds of axes
+    x_bnds = ax.get_xbound()
+    y_bnds = ax.get_ybound()
+    # Number of points for the mesh grid in both directions
+    n_grid_pts = 100
+    # Make meshgrid
+    x_arr = np.arange(x_bnds[0], x_bnds[1], abs(x_bnds[1]-x_bnds[0])/n_grid_pts)
+    y_arr = np.arange(y_bnds[0], y_bnds[1], abs(y_bnds[1]-y_bnds[0])/n_grid_pts)
+    X, Y = np.meshgrid(x_arr, y_arr)
+    # Calculate the contours based on which variables are given
+    #   Note: gsw.sigma0(SA, CT), so make sure to convert if needed
+    if x_key == 'SA':
+        if y_key == 'CT':
+            Z = gsw.sigma0(X, Y)
+        elif y_key == 'PT':
+            Z = gsw.sigma0(X, gsw.CT_from_pt(X, Y))
+        elif y_key == 'iT':
+            # Make dummy values for pressure
+            p_arr = X*0         # Reference to the surface, 0 dbar
+            Z = gsw.sigma0(X, gsw.CT_from_t(X, Y, p_arr))
+        else:
+            return
+    elif x_key == 'SP':
+        # Make dummy values for pressure, longitude, and latitude
+        p_arr = X*0             # Reference to the surface, 0 dbar
+        lon_arr = X*0-137       # 137 W is about where ITP2 was
+        lat_arr = X*0+77        # 77 N is about where ITP2 was
+        # Calculate SA from SP and dummy values
+        SA_arr = gsw.SA_from_SP(X, p_arr, lon_arr, lat_arr)
+        if y_key == 'CT':
+            Z = gsw.sigma0(SA_arr, Y)
+        elif y_key == 'PT':
+            Z = gsw.sigma0(SA_arr, gsw.CT_from_pt(SA_arr, Y))
+        elif y_key == 'iT':
+            Z = gsw.sigma0(SA_arr, gsw.CT_from_t(SA_arr, Y, p_arr))
+        else:
+            return
+        #
+    elif x_key == 'CT':
+        if y_key == 'SA':
+            Z = gsw.sigma0(Y, X)
+        elif y_key == 'SP':
+            # Make dummy values for pressure, longitude, and latitude
+            p_arr = X*0             # Reference to the surface, 0 dbar
+            lon_arr = X*0-137       # 137 W is about where ITP2 was
+            lat_arr = X*0+77        # 77 N is about where ITP2 was
+            # Calculate SA from SP and dummy values
+            SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
+            Z = gsw.sigma0(SA_arr, X)
+        #
+    elif x_key == 'PT':
+        if y_key == 'SA':
+            Z = gsw.sigma0(Y, gsw.CT_from_pt(Y, X))
+        elif y_key == 'SP':
+            # Make dummy values for pressure, longitude, and latitude
+            p_arr = X*0             # Reference to the surface, 0 dbar
+            lon_arr = X*0-137       # 137 W is about where ITP2 was
+            lat_arr = X*0+77        # 77 N is about where ITP2 was
+            # Calculate SA from SP and dummy values
+            SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
+            Z = gsw.sigma0(SA_arr, gsw.CT_from_pt(SA_arr, X))
+        #
+    elif x_key == 'iT':
+        if y_key == 'SA':
+            # Make dummy values for pressure, longitude, and latitude
+            p_arr = X*0             # Reference to the surface, 0 dbar
+            Z = gsw.sigma0(Y, gsw.CT_from_t(Y, X, p_arr))
+        elif y_key == 'SP':
+            # Make dummy values for pressure, longitude, and latitude
+            p_arr = X*0             # Reference to the surface, 0 dbar
+            lon_arr = X*0-137       # 137 W is about where ITP2 was
+            lat_arr = X*0+77        # 77 N is about where ITP2 was
+            # Calculate SA from SP and dummy values
+            SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
+            Z = gsw.sigma0(SA_arr, gsw.CT_from_t(Y, X, p_arr))
+        #
+    #
+    # this_cmap = get_color_map('sigma')
+    this_cmap = plt.cm.get_cmap('winter').reversed()
+    CS = ax.contour(X, Y, Z, cmap=this_cmap, zorder=1)
+    ax.clabel(CS, inline=True, fontsize=10)
+
 ################################################################################
 
 def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None, txk=None, tay=None, tyk=None, tax=None):
