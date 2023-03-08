@@ -50,7 +50,7 @@ me_string = 'Mikhail Schee, University of Toronto'
 doi = 'No DOI yet'
 
 # Sizes of netcdf dimensions (because netcdfs can't do ragged arrays)
-max_ml_count = 200              # Maximum number of mixed layers stored
+max_l_count = 200       # Maximum number of detected layers that will be stored
 
 ################################################################################
 # Loading in data
@@ -195,7 +195,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
     # Make a blank array for each dimension
     Time_blank = [None]*len(list_of_datetimes_start)
     Vertical_blank = [[None]*max_vert_count]*len(list_of_datetimes_start)
-    Layer_blank = [[None]*max_ml_count]*len(list_of_datetimes_start)
+    Layer_blank = [[None]*max_l_count]*len(list_of_datetimes_start)
 
     # Define variables with data and attributes
     nc_vars = {
@@ -470,6 +470,24 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                             'label':'Moving average density anomaly (kg/m$^3$)',
                             'long_name':'Moving average density anomaly'
                         }
+                ),
+                'cluster':(
+                        ['Time','Vertical'],
+                        Vertical_blank,
+                        {
+                            'units':'N/A',
+                            'label':'Cluster label',
+                            'long_name':'Cluster label'
+                        }
+                ),
+                'clst_prob':(
+                        ['Time','Vertical'],
+                        Vertical_blank,
+                        {
+                            'units':'N/A',
+                            'label':'Cluster probability',
+                            'long_name':'Probability of being in the labeled cluster'
+                        }
                 )
     }
     #
@@ -495,10 +513,10 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                 ),
                'Layer':(
                         ['Layer'],
-                        np.arange(max_ml_count),
+                        np.arange(max_l_count),
                         {
                             'units':'N/A',
-                            'long_name':'An index for detected mixed/gradient layers',
+                            'long_name':'An index for detected layers',
                             'dtype':'int64'
                         }
                 )
@@ -520,7 +538,13 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                 'Original temperature measure':og_temp,
                 'Original salinity measure':og_salt,
                 'Sub-sample scheme':'None',
-                'Moving average window':'None'
+                'Moving average window':'None',
+                'Last clustered':'Never',
+                'Clustering x-axis':'None',
+                'Clustering y-axis':'None',
+                'Clustering m_pts':'None',
+                'Clustering filters':'None',
+                'Clustering DBCV':'None'
     }
 
     # Convert into a dataset
@@ -795,10 +819,10 @@ def find_geo_region(lon, lat):
 ################################################################################
 
 ## Read instrument makes a netcdf for just the given instrument
-read_instrmt('ITP', '1', science_data_file_path+'ITPs/itp1/itp1cormat', 'netcdfs/ITP_1.nc')
+# read_instrmt('ITP', '1', science_data_file_path+'ITPs/itp1/itp1cormat', 'netcdfs/ITP_1.nc')
 read_instrmt('ITP', '2', science_data_file_path+'ITPs/itp2/itp2cormat', 'netcdfs/ITP_2.nc')
-read_instrmt('ITP', '3', science_data_file_path+'ITPs/itp3/itp3cormat', 'netcdfs/ITP_3.nc')
-read_instrmt('ITP', '13', science_data_file_path+'ITPs/itp13/itp13cormat', 'netcdfs/ITP_13.nc')
+# read_instrmt('ITP', '3', science_data_file_path+'ITPs/itp3/itp3cormat', 'netcdfs/ITP_3.nc')
+# read_instrmt('ITP', '13', science_data_file_path+'ITPs/itp13/itp13cormat', 'netcdfs/ITP_13.nc')
 
 ## These will make all the netcdfs for a certain source (takes a long time)
 # make_all_ITP_netcdfs(science_data_file_path)
