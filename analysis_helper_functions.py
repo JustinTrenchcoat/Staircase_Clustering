@@ -60,7 +60,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = True
+dark_mode = False
 
 # Enable dark mode plotting
 if dark_mode:
@@ -455,11 +455,17 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
             vars_to_keep.append('lon')
             vars_to_keep.append('lat')
         # Add all the plotting variables
+        re_run_clstr = False
         plot_vars = pp.x_vars+pp.y_vars+[pp.clr_map]
         if not isinstance(pp.extra_args, type(None)):
             for key in pp.extra_args.keys():
                 if key in ['cl_x_var', 'cl_y_var']:
                     plot_vars.append(pp.extra_args[key])
+                    re_run_clstr = True
+                if key == 'z_var':
+                    if pp.extra_args[key] == 'maw_size':
+                        # Make sure the parameter sweeps run correctly 
+                        vars_to_keep.append('press')
         # print('plot_vars:',plot_vars)
         # print('vars_available:',vars_available)
         for var in plot_vars:
@@ -499,6 +505,8 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append('PT')
                 vars_to_keep.append('beta_PT')
                 vars_to_keep.append('SP')
+            elif var == 'maw_size':
+                vars_to_keep.append('press')
             # Check for variables that have underscores, ie. profile cluster
             #   average variables and local anomalies
             if '_' in var:
@@ -516,9 +524,12 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                     vars_to_keep.append(var_str)
                 #
             #
-        # Add vars for the colormap, if applicable
-        # if pp.clr_map in vars_available:
-        #     vars_to_keep.append(pp.clr_map)
+        # If re-running the clustering, remove 'cluster' from vars_to_keep
+        if re_run_clstr:
+            try:
+                vars_to_keep.remove('cluster')
+            except:
+                foo = 2
         # Add vars for the profile filters, if applicable
         scale = pp.plot_scale
         if scale == 'by_vert' or scale == 'by_layer':
@@ -990,7 +1001,8 @@ def get_axis_label(var_key, var_attr_dicts):
     if 'pca_' in var_key:
         # Take out the first 4 characters of the string to leave the original variable name
         var_str = var_key[4:]
-        return 'Profile cluster average of '+ var_attr_dicts[0][var_str]['label']
+        return 'PCA '+ var_attr_dicts[0][var_str]['label']
+        # return 'Profile cluster average of '+ var_attr_dicts[0][var_str]['label']
     # Check for profile cluster span variables
     if 'pcs_' in var_key:
         # Take out the first 4 characters of the string to leave the original variable name
@@ -1214,7 +1226,7 @@ def find_max_distance(groups_to_analyze):
 # Admin plotting functions #####################################################
 ################################################################################
 
-def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
+def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_axis=None):
     """
     Takes in a list of Analysis_Group objects, one for each subplot. Determines
     the needed arrangement of subplots, then passes one Analysis_Group object to
@@ -1226,35 +1238,54 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
     # Define number of rows and columns based on number of subplots
     #   key: number of subplots, value: (rows, cols, f_ratio, f_size)
     n_row_col_dict = {'1':[1,1, 0.8, 1.25], '2':[1,2, 0.5, 1.25], '2.5':[2,1, 0.8, 1.25],
-                      '3':[1,3, 0.3, 1.40], '4':[2,2, 0.7, 2.00],
+                      '3':[3,1, 0.3, 1.70], '4':[2,2, 0.7, 2.00],
                       '5':[2,3, 0.5, 2.00], '6':[2,3, 0.5, 2.00],
                       '7':[2,4, 0.4, 2.00], '8':[2,4, 0.4, 2.00],
                       '9':[3,3, 0.8, 2.00]}
     # Figure out what layout of subplots to make
     n_subplots = len(groups_to_plot)
+    x_keys = []
     y_keys = []
     for group in groups_to_plot:
         pp = group.plt_params
+        u_x_vars = np.unique(pp.x_vars)
+        u_x_vars = np.delete(u_x_vars, np.where(u_x_vars == None))
         u_y_vars = np.unique(pp.y_vars)
         u_y_vars = np.delete(u_y_vars, np.where(u_y_vars == None))
-        if len(u_y_vars) > 1:
+        if len(u_x_vars) > 0:
+            for var in u_x_vars:
+                x_keys.append(var)
+        if len(u_y_vars) > 0:
             for var in u_y_vars:
                 y_keys.append(var)
             #
         #
     #
+    if len(x_keys) > 1 and isinstance(use_same_x_axis, type(None)):
+        # If all the x_vars are the same, share the x axis between subplots
+        if all(x == x_keys[0] for x in x_keys):
+            use_same_x_axis = True
+            print('\t- Set share_x_axis to True')
+        else:
+            use_same_x_axis = False
+        #
+    else:
+        use_same_x_axis = False
     if len(y_keys) > 1 and isinstance(use_same_y_axis, type(None)):
         # If all the y_vars are the same, share the y axis between subplots
-        if all(x == y_keys[0] for x in y_keys):
+        if all(y == y_keys[0] for y in y_keys):
             use_same_y_axis = True
+            print('\t- Set share_y_axis to True')
         else:
             use_same_y_axis = False
         #
     else:
         use_same_y_axis = False
+    tight_layout_h_pad = None
+    tight_layout_w_pad = None
     if n_subplots == 1:
         fig, ax = set_fig_axes([1], [1], fig_ratio=0.8, fig_size=1.25)
-        xlabel, ylabel, plt_title, ax = make_subplot(ax, groups_to_plot[0], fig, 111)
+        xlabel, ylabel, plt_title, ax, invert_y_axis = make_subplot(ax, groups_to_plot[0], fig, 111)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         # If axes limits given, limit axes
@@ -1273,16 +1304,35 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
     elif n_subplots > 1 and n_subplots < 10:
         rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
         n_subplots = int(np.floor(n_subplots))
-        fig, axes = set_fig_axes([1]*rows, [1]*cols, fig_ratio=f_ratio, fig_size=f_size, share_y_axis=use_same_y_axis)
+        fig, axes = set_fig_axes([1]*rows, [1]*cols, fig_ratio=f_ratio, fig_size=f_size, share_x_axis=use_same_x_axis, share_y_axis=use_same_y_axis)
         for i in range(n_subplots):
             if rows > 1 and cols > 1:
                 i_ax = (i//cols,i%cols)
             else:
                 i_ax = i
             ax_pos = int(str(rows)+str(cols)+str(i+1))
-            xlabel, ylabel, plt_title, ax = make_subplot(axes[i_ax], groups_to_plot[i], fig, ax_pos)
-            ax.set_xlabel(xlabel)
-            ax.set_ylabel(ylabel)
+            xlabel, ylabel, plt_title, ax, invert_y_axis = make_subplot(axes[i_ax], groups_to_plot[i], fig, ax_pos)
+            if use_same_x_axis and cols == 1:
+                tight_layout_h_pad = -1
+                if i == 0:
+                    ax.set_title(plt_title)
+                if i == n_subplots-1:
+                    ax.set_xlabel(xlabel)
+            else:
+                ax.set_title(plt_title)
+                ax.set_xlabel(xlabel)
+            if use_same_y_axis and rows == 1:
+                tight_layout_w_pad = -1
+                if i == 0:
+                    ax.set_ylabel(ylabel)
+                    # Invert y-axis if specified
+                    if invert_y_axis:
+                        ax.invert_yaxis()
+            else:
+                ax.set_ylabel(ylabel)
+                # Invert y-axis if specified
+                if invert_y_axis:
+                    ax.invert_yaxis()
             # If axes limits given, limit axes
             this_ax_pp = groups_to_plot[i].plt_params
             if not isinstance(this_ax_pp.ax_lims, type(None)):
@@ -1296,7 +1346,7 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
                     print('\tSet y_lims to',this_ax_pp.ax_lims['y_lims'])
                 except:
                     foo = 2
-            ax.set_title(plt_title)
+                #
             # Label subplots a, b, c, ...
             ax.text(-0.1, 1.1, '('+string.ascii_lowercase[i]+')', transform=ax.transAxes, size=20)
         # Turn off unused axes
@@ -1307,7 +1357,7 @@ def make_figure(groups_to_plot, filename=None, use_same_y_axis=None):
         print('Too many subplots')
         exit(0)
     #
-    plt.tight_layout()
+    plt.tight_layout(h_pad=tight_layout_h_pad, w_pad=tight_layout_w_pad)
     #
     if filename != None:
         print('- Saving figure to outputs/'+filename)
@@ -1372,6 +1422,12 @@ def set_fig_axes(heights, widths, fig_ratio=0.5, fig_size=1, share_x_axis=None, 
             ax.ticklabel_format(style='sci', scilimits=sci_lims, useMathText=True)
     else:
         axes.ticklabel_format(style='sci', scilimits=sci_lims, useMathText=True)
+    # Turn off excess ticks if the axes are shared
+    if share_x_axis and cols == 1:
+        print('\t- Turning off excess x axes')
+        for ax in axes.flatten()[0:-2]:
+            plt.setp(ax.get_xticklabels(), visible=False)
+            # plt.setp(ax.get_xlabel(), visible=False)
     return fig, axes
 
 ################################################################################
@@ -1548,8 +1604,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
     clr_map   = pp.clr_map
     # Concatonate all the pandas data frames together
     df = pd.concat(a_group.data_frames)
-    # print('in make_subplot, df:')
-    # print(df)
+    # Set variable as to whether to invert the y axis
+    invert_y_axis = False
     # Decide on a plot type
     if plot_type == 'xy':
         ## Make a standard x vs. y scatter plot
@@ -1607,7 +1663,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker, zorder=5)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
-                ax.invert_yaxis()
+                invert_y_axis = True
             # Plot on twin axes, if specified
             if not isinstance(tw_x_key, type(None)):
                 tw_clr = get_var_color(tw_x_key)
@@ -1659,7 +1715,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
         elif clr_map == 'clr_all_same':
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
@@ -1707,7 +1763,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 ax.annotate('%.2f'%(m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
-                ax.invert_yaxis()
+                invert_y_axis = True
             # Plot on twin axes, if specified
             if not isinstance(tw_x_key, type(None)):
                 tw_clr = get_var_color(tw_x_key)
@@ -1738,7 +1794,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
         elif clr_map == 'clr_by_source':
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=pp.legend)
@@ -1771,6 +1827,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Add legend to report the total number of points for this instrmt
                 lgnd_label = source+': '+str(len(this_df[x_key]))+' points'
                 lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label))
+            # Invert y-axis if specified
+            if y_key in y_invert_vars:
+                invert_y_axis = True
             notes_string = ''.join(this_df.notes.unique())
             # Only add the notes_string if it contains something
             if len(notes_string) > 1:
@@ -1786,7 +1845,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
         elif clr_map == 'clr_by_instrmt':
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=pp.legend)
@@ -1811,6 +1870,9 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 lgnd_label = s_instrmt+': '+str(len(df[x_key]))+' points'
                 lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label))
                 notes_string = ''.join(df.notes.unique())
+            # Invert y-axis if specified
+            if y_key in y_invert_vars:
+                invert_y_axis = True
             # Only add the notes_string if it contains something
             if len(notes_string) > 1:
                 notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
@@ -1825,7 +1887,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
         elif clr_map == 'density_hist':
             if plot_hist:
                 print('Cannot use density_hist colormap with the `hist` variable')
@@ -1862,7 +1924,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             heatmap = ax.hist2d(df[x_key], df[y_key], bins=xy_bins, cmap=get_color_map(clr_map), vmin=clr_min, vmax=clr_max)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
-                ax.invert_yaxis()
+                invert_y_axis = True
             # `hist2d` returns a tuple, the index 3 of which is the mappable for a colorbar
             cbar = plt.colorbar(heatmap[3], ax=ax, extend=clr_ext)
             cbar.set_label('points per pixel')
@@ -1884,7 +1946,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
         elif clr_map == 'cluster':
             # Add a standard title
             plt_title = add_std_title(a_group)
@@ -1900,13 +1962,13 @@ def make_subplot(ax, a_group, fig, ax_pos):
             if y_key in ['dt_start', 'dt_end']:
                 df[y_key] = mpl.dates.date2num(df[y_key])
             m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
-            plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes)
+            invert_y_axis = plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, min_samp=min_s, box_and_whisker=b_a_w_plt, plot_slopes=plot_slopes)
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
             if pp.isopycnals:
                 add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
             #
         else:
             # Did not provide a valid clr_map
@@ -2109,7 +2171,7 @@ def add_isopycnals(ax, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=None,
     """
     # Check whether to make isopycnals or not
     intersect_arr = set([x_key, y_key, tw_x_key, tw_y_key]).intersection(['iT', 'CT', 'PT', 'SP', 'SA'])
-    if len(intersect_arr) == 0:
+    if len(intersect_arr) < 2:
         return
     print('\t- Adding isopycnals')
     # Get bounds of axes
@@ -2191,7 +2253,7 @@ def add_isopycnals(ax, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=None,
     #
     # this_cmap = get_color_map('sigma')
     this_cmap = plt.cm.get_cmap('winter').reversed()
-    CS = ax.contour(X, Y, Z, cmap=this_cmap, zorder=1)
+    CS = ax.contour(X, Y, Z, cmap=this_cmap, alpha=0.5, zorder=1)
     ax.clabel(CS, inline=True, fontsize=10)
 
 ################################################################################
@@ -2247,6 +2309,8 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
     if var_key in ['dt_start', 'dt_end']:
         print('Cannot make histogram with',var_key,'data')
         exit(0)
+    # Set variable as to whether to invert the y axis
+    invert_y_axis = False
     # Determine the color mapping to be used
     if clr_map == 'clr_all_same':
         # Get histogram parameters
@@ -2255,7 +2319,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         ax.hist(h_var, bins=res_bins, color=std_clr, orientation=orientation)
         # Invert y-axis if specified
         if y_key in y_invert_vars:
-            ax.invert_yaxis()
+            invert_y_axis = True
         # Check whether to plot lines for mean and standard deviation
         if plt_hist_lines:
             if orientation == 'vertical':
@@ -2320,7 +2384,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             ax.legend(handles=hndls+tw_hndls)
         # Add a standard title
         plt_title = add_std_title(a_group)
-        return x_label, y_label, plt_title, ax
+        return x_label, y_label, plt_title, ax, invert_y_axis
     elif clr_map == 'clr_by_source':
         # Can't make this type of plot for certain variables yet
         if var_key in clstr_vars:
@@ -2373,10 +2437,10 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         lgnd = ax.legend(handles=lgnd_hndls)
         # Invert y-axis if specified
         if y_key in y_invert_vars:
-            ax.invert_yaxis()
+            invert_y_axis = True
         # Add a standard title
         plt_title = add_std_title(a_group)
-        return x_label, y_label, plt_title, ax
+        return x_label, y_label, plt_title, ax, invert_y_axis
     elif clr_map == 'clr_by_instrmt':
         # Can't make this type of plot for certain variables yet
         if var_key in clstr_vars:
@@ -2420,10 +2484,10 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         lgnd = ax.legend(handles=lgnd_hndls)
         # Invert y-axis if specified
         if y_key in y_invert_vars:
-            ax.invert_yaxis()
+            invert_y_axis = True
         # Add a standard title
         plt_title = add_std_title(a_group)
-        return x_label, y_label, plt_title, ax
+        return x_label, y_label, plt_title, ax, invert_y_axis
     elif clr_map == 'cluster':
         # Run clustering algorithm
         m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
@@ -2486,10 +2550,10 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             ax.legend(handles=[n_pts_patch, m_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
         # Invert y-axis if specified
         if y_key in y_invert_vars:
-            ax.invert_yaxis()
+            invert_y_axis = True
         # Add a standard title
         plt_title = add_std_title(a_group)
-        return x_label, y_label, plt_title, ax
+        return x_label, y_label, plt_title, ax, invert_y_axis
     else:
         # Did not provide a valid clr_map
         print('Colormap',clr_map,'not valid')
@@ -2872,6 +2936,7 @@ def HDBSCAN_(df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[None]):
     min_samp    An integer, number of points in neighborhood for a core point
     extra_cl_vars   A list of extra variables to potentially calculate
     """
+    print('\t- Running HDBSCAN')
     # Set the parameters of the HDBSCAN algorithm
     #   Note: must set gen_min_span_tree=True or you can't get `relative_validity_`
     hdbscan_1 = hdbscan.HDBSCAN(gen_min_span_tree=True, min_cluster_size=m_pts, min_samples=min_samp, cluster_selection_method='leaf')
@@ -3027,9 +3092,13 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 # Find the mean and standard deviation of this var for this cluster
                 clstr_mean = np.mean(df_this_cluster[var].values)
                 clstr_stdv = np.std(df_this_cluster[var].values)
+                clstr_min = min(df_this_cluster[var].values)
+                clstr_max = max(df_this_cluster[var].values)
+                clstr_span = abs(clstr_max - clstr_min)
                 # Put those values into the cluster dataframe
                 clstr_df.loc[clstr_df['cluster']==i, 'clstr_mean'] = clstr_mean
                 clstr_df.loc[clstr_df['cluster']==i, 'clstr_stdv'] = clstr_stdv
+                clstr_df.loc[clstr_df['cluster']==i, 'clstr_span'] = clstr_span
             # Sort the cluster dataframe by the mean values
             sorted_clstr_df = clstr_df.sort_values(by='clstr_mean')
             # Find overlap ratio for the first cluster in sorted order
@@ -3039,11 +3108,6 @@ def calc_extra_cl_vars(df, new_cl_vars):
             clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
             clstr_diff = abs(clstr_mean_below - clstr_mean_here)
             this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_stdv'].values[0] / clstr_diff
-            # print('i: 0 sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
-            # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
-            # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
-            # print('\tclstr_dff(min):',clstr_diff)
-            # print('\tthis_cor:',this_cor)
             # Put that value back into the original dataframe
             df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
             # Loop over each middle cluster, finding the overlap ratios
@@ -3063,16 +3127,12 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_diff = min(diff_above, diff_below)
                 # clstr_diff = np.mean([diff_above, diff_below])
                 # Calculate the overlap ratio for this cluster
-                this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_stdv'].values[0] / clstr_diff
-                # print('i:',i,'sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
-                # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
-                # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
-                # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
-                # print('\tclstr_dff(min):',clstr_diff)
-                # print('\tthis_cor:',this_cor)
+                #   Using standard deviation
+                # this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_stdv'].values[0] / clstr_diff
+                #   Using span (max-min)
+                this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_span'].values[0] / clstr_diff
                 # Put that value back into the original dataframe
                 df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
-                # print('cluster:',i,'cor:',this_cor)
             # Find overlap ratio for the last cluster
             clstr_id_above  = sorted_clstr_df['cluster'].values[-2]
             clstr_id_here = sorted_clstr_df['cluster'].values[-1]
@@ -3080,11 +3140,6 @@ def calc_extra_cl_vars(df, new_cl_vars):
             clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
             clstr_diff = abs(clstr_mean_above - clstr_mean_here)
             this_cor = 4*sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_stdv'].values[0] / clstr_diff
-            # print('i:',str(n_clusters-1),'sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
-            # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
-            # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
-            # print('\tclstr_dff(min):',clstr_diff)
-            # print('\tthis_cor:',this_cor)
             # Put that value back into the original dataframe
             df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
             #
@@ -3117,11 +3172,6 @@ def calc_extra_cl_vars(df, new_cl_vars):
             clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
             clstr_diff = abs(clstr_mean_below - clstr_mean_here)
             this_cor = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_span'].values[0] / clstr_diff
-            # print('i: 0 sorted_clstr_id:',clstr_id_here,'this_cor:',this_cor)
-            # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
-            # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
-            # print('\tclstr_dff(min):',clstr_diff)
-            # print('\tthis_cor:',this_cor)
             # Put that value back into the original dataframe
             df.loc[df['cluster']==clstr_id_here, this_var] = this_cor
             # Loop over each middle cluster, finding the overlap ratios
@@ -3348,6 +3398,8 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
     # Check whether to change the marker size
     if 'pca_' in x_key or 'pca_' in y_key:
         m_size = layer_mrk_size
+    # Set variable as to whether to invert the y axis
+    invert_y_axis = False
     # Which colormap?
     if clr_map == 'cluster':
         # Make blank lists to record values
@@ -3389,7 +3441,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                     print('cluster:',i,'has outliers')
                     ax.scatter(x_data, y_data, edgecolors='r', s=m_size*3, marker='o', facecolors='none', zorder=2)
             else:
-                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
+                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=mrk_alpha, zorder=5)
             # Plot the centroid(?) of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
@@ -3449,8 +3501,9 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
         #
         # Invert y-axis if specified
         if y_key in y_invert_vars:
-            ax.invert_yaxis()
+            invert_y_axis = True
     #
+    return invert_y_axis
 
 ################################################################################
 
