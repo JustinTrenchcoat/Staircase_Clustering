@@ -36,7 +36,8 @@ def orthoregress(x, y):
 	y: y data
 	
 	Returns:
-	[m, c, nan, nan, nan]
+	# [m, c, nan, nan, nan]
+	[m, c, sd_m, sd_c]
 	
 	Uses standard ordinary least squares to estimate the starting parameters
 	then uses the scipy.odr interface to the ODRPACK Fortran code to do the
@@ -48,7 +49,8 @@ def orthoregress(x, y):
 	od = ODR(dat, mod, beta0=linreg[0:2])
 	out = od.run()
 	
-	return list(out.beta) + [np.nan, np.nan, np.nan]
+	# return list(out.beta) + [np.nan, np.nan, np.nan]
+	return list(out.beta) + list(out.sd_beta) 
 	
 	
 def f(p, x):

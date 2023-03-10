@@ -1300,6 +1300,9 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 print('\tSet y_lims to',pp.ax_lims['y_lims'])
             except:
                 foo = 2
+        # Invert y-axis if specified
+        if invert_y_axis:
+            ax.invert_yaxis()
         ax.set_title(plt_title)
     elif n_subplots > 1 and n_subplots < 10:
         rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
@@ -1637,7 +1640,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 plt_title = add_std_title(a_group)
                 # Plot the parameter sweep
                 xlabel, ylabel = plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title)
-                return xlabel, ylabel, plt_title, ax
+                return xlabel, ylabel, plt_title, ax, invert_y_axis
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
             if pp.plot_scale == 'by_pf':
@@ -1722,7 +1725,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Check for cluster-based variables
             if x_key in clstr_vars or y_key in clstr_vars:
                 m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
-                df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, m_pts, min_samp=min_s, extra_cl_vars=[x_key,y_key])
+                df, rel_val = HDBSCAN_(df, cl_x_var, cl_y_var, m_pts, min_samp=min_s, extra_cl_vars=[x_key,y_key, 'cor_SP'])
             else:
                 # Check whether to plot slopes
                 try:
@@ -1742,16 +1745,15 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Plot every point the same color, size, and marker
             ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
             if plot_slopes:
-                # Find outliers
-                df = find_outliers(df, [x_key, y_key])
+                # Mark outliers
+                mark_outliers(ax, df, x_key, y_key)
                 # Get data without outliers
                 x_data = np.array(df[df['out_'+x_key]==False][x_key].values, dtype=np.float64)
                 y_data = np.array(df[df['out_'+x_key]==False][y_key].values, dtype=np.float64)
-                print('len(x_data):',len(x_data))
                 # Find the slope of the ordinary least-squares of the points for this cluster
                 # m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
                 # Find the slope of the total least-squares of the points for this cluster
-                m = orthoregress(x_data, y_data)[0]
+                m, c, sd_m, sd_c = orthoregress(x_data, y_data)
                 # Find mean and standard deviation of x and y data
                 x_mean = df.loc[:,x_key].mean()
                 y_mean = df.loc[:,y_key].mean()
@@ -1760,7 +1762,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Plot the least-squares fit line for this cluster through the centroid
                 ax.axline((x_mean, y_mean), slope=m, color=alt_std_clr, zorder=3)
                 # Add annotation to say what the slope is
-                ax.annotate('%.2f'%(m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
+                ax.annotate(r'%.2f$\pm$%.2f'%(m,sd_m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
                 invert_y_axis = True
@@ -2054,7 +2056,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             add_std_legend(ax, df, 'lon')
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, False
         if clr_map == 'clr_all_same':
             # Concatonate all the pandas data frames together
             df = pd.concat(a_group.data_frames)
@@ -2069,7 +2071,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             add_std_legend(ax, df, 'lon')
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, False
         elif clr_map == 'clr_by_source':
             # Find the list of sources
             sources_list = []
@@ -2109,7 +2111,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, False
         elif clr_map == 'clr_by_instrmt':
             i = 0
             lgnd_hndls = []
@@ -2140,7 +2142,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
             plt_title = add_std_title(a_group)
-            return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+            return pp.xlabels[0], pp.ylabels[0], plt_title, ax, False
     elif plot_type == 'profiles':
         # Check for clustering
         # Call profile plotting function
@@ -2151,7 +2153,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
         exit(0)
     #
     print('ERROR: Should not have gotten here')
-    return a_group.xlabel, a_group.ylabel, plt_title, ax
+    return a_group.xlabel, a_group.ylabel, plt_title, ax, False
 
 ################################################################################
 # Auxiliary plotting functions #################################################
@@ -2635,7 +2637,14 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     except:
         tw_y_key = None
         tw_ax_x  = None
-    #
+    # Invert y-axis if specified
+    if y_key in y_invert_vars:
+        invert_y_axis = True
+    if not isinstance(tw_y_key, type(None)):
+        if tw_y_key in y_invert_vars:
+            invert_tw_y_axis = True
+        else:
+            invert_tw_y_axis = False
     # Get extra args dictionary, if it exists
     try:
         extra_args = pp.extra_args
@@ -2730,7 +2739,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         print('No profiles loaded')
         # Add a standard title
         plt_title = add_std_title(a_group)
-        return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+        return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
     # Plot each profile
     for i in range(n_pfs):
         # Pull the dataframe for this profile
@@ -2856,8 +2865,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     # Adjust bounds on axes
     ax.set_xlim([left_bound, xvar_high])
     # Invert y-axis if specified
-    if y_key in y_invert_vars or tw_x_key in y_invert_vars:
-        ax.invert_yaxis()
+    # if y_key in y_invert_vars or tw_x_key in y_invert_vars:
+    #     ax.invert_yaxis()
     if tw_x_key:
         tw_ax_y.set_xlim([tw_left_bound, twin_high])
     # Plot on twin axes, if specified
@@ -2867,6 +2876,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         tw_ax_y.xaxis.label.set_color(tw_clr)
         # Change color of the ticks on the twin axis
         tw_ax_y.tick_params(axis='x', colors=tw_clr)
+        if invert_tw_y_axis:
+            tw_ax_y.invert_y_axis()
     # Add legend
     if legend:
         lgnd = ax.legend()
@@ -2882,7 +2893,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         #
     # Add a standard title
     plt_title = add_std_title(a_group)
-    return pp.xlabels[0], pp.ylabels[0], plt_title, ax
+    return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
 
 ################################################################################
 
@@ -3233,7 +3244,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 # Find the slope of this cluster in aT-BS space
                 # m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
                 # Find the slope of the total least-squares of the points for this cluster
-                m = orthoregress(BSs, aTs)[0]
+                m, c, sd_m, sd_c = orthoregress(BSs, aTs)
                 # The lateral density ratio is the inverse of the slope
                 this_cRL = 1/m
                 # print('cluster:',i,'cRL:',this_cRL)
@@ -3258,7 +3269,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 # Find the slope of this cluster in aT-BS space
                 # m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
                 # Find the slope of the total least-squares of the points for this cluster
-                m = orthoregress(BSs, aTs)[0]
+                m, c, sd_m, sd_c = orthoregress(BSs, aTs)
                 # The lateral density ratio is the inverse of the slope
                 this_cRl = 1/m
                 # Put those values back into the original dataframe
@@ -3296,6 +3307,35 @@ def find_outliers(df, var_keys, threshold=2):
     # print(df)
     # exit(0)
     return df
+
+################################################################################
+
+def mark_outliers(ax, df, x_key, y_key, threshold=2, mrk_clr='r'):
+    """
+    Finds and marks outliers in the dataframe with respect to the x and y keys
+    on the provided axis
+
+    ax              The axis on which to plot the outlier markers
+    df              A pandas data frame
+    x_key           A string of the variable from df to use on the x axis
+    y_key           A string of the variable from df to use on the y axis
+    threshold       The threshold zscore for which to consider an outlier
+    mrk_clr         The color in which to mark the outliers
+    """
+    # Find outliers
+    df = find_outliers(df, [x_key, y_key], threshold)
+    # If finding outliers in cor or R_L, find outliers in the other as well
+    if x_key == 'cRL':
+        df = find_outliers(df, ['cor_SP', y_key], threshold)
+        df.loc[df['out_cor_SP']==True, 'out_'+x_key] = True
+    # Get data with outliers
+    x_data = np.array(df[df['out_'+x_key]==True][x_key].values, dtype=np.float64)
+    y_data = np.array(df[df['out_'+x_key]==True][y_key].values, dtype=np.float64)
+    # Mark outliers
+    ax.scatter(x_data, y_data, edgecolors=mrk_clr, s=mrk_size*3, marker='o', facecolors='none', zorder=2)
+    # Run it again
+    if mrk_clr == 'r':
+        mark_outliers(ax, df.loc[df['out_'+x_key]==False], x_key, y_key, threshold, mrk_clr='b')
 
 ################################################################################
 
@@ -3414,7 +3454,6 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
             # Decide on the color and symbol, don't go off the end of the arrays
             my_clr = mpl_clrs[i%len(mpl_clrs)]
             my_mkr = mpl_mrks[i%len(mpl_mrks)]
-            # print('\tCluster',i,'my_clr:',my_clr,'my_mkr',my_mkr)
             # Find the data from this cluster
             df_this_cluster = df[df['cluster']==i]
             # print(df_this_cluster)
@@ -3436,9 +3475,10 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
             elif 'cor' in x_key or 'cRL' in x_key or 'cRl' in x_key:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
+                print(i,x_data[0],y_data[0],df_this_cluster['out_'+x_key].values[0])
                 # Plotting outliers
                 if df_this_cluster['out_'+x_key].all() == True:
-                    print('cluster:',i,'has outliers')
+                    # print('cluster:',i,'has outliers')
                     ax.scatter(x_data, y_data, edgecolors='r', s=m_size*3, marker='o', facecolors='none', zorder=2)
             else:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=mrk_alpha, zorder=5)
@@ -3452,7 +3492,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                 # Find the slope of the ordinary least-squares of the points for this cluster
                 # m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
                 # Find the slope of the total least-squares of the points for this cluster
-                m = orthoregress(x_data, y_data)[0]
+                m, c, sd_m, sd_c = orthoregress(x_data, y_data)
                 # Plot the least-squares fit line for this cluster through the centroid
                 ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
                 # Add annotation to say what the slope is
