@@ -60,7 +60,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = False
+dark_mode = True
 
 # Enable dark mode plotting
 if dark_mode:
@@ -3310,7 +3310,7 @@ def find_outliers(df, var_keys, threshold=2):
 
 ################################################################################
 
-def mark_outliers(ax, df, x_key, y_key, threshold=2, mrk_clr='r'):
+def mark_outliers(ax, df, x_key, y_key, find_all=False, threshold=2, mrk_clr='r', mk_size=mrk_size):
     """
     Finds and marks outliers in the dataframe with respect to the x and y keys
     on the provided axis
@@ -3319,23 +3319,29 @@ def mark_outliers(ax, df, x_key, y_key, threshold=2, mrk_clr='r'):
     df              A pandas data frame
     x_key           A string of the variable from df to use on the x axis
     y_key           A string of the variable from df to use on the y axis
+    find_all        True/False as whether to find outliers in both cRL and cor_SP
     threshold       The threshold zscore for which to consider an outlier
     mrk_clr         The color in which to mark the outliers
     """
+    print('\t- Marking outliers')
+    # print(df)
     # Find outliers
     df = find_outliers(df, [x_key, y_key], threshold)
     # If finding outliers in cor or R_L, find outliers in the other as well
-    if x_key == 'cRL':
+    if x_key == 'cRL' and find_all == True:
         df = find_outliers(df, ['cor_SP', y_key], threshold)
         df.loc[df['out_cor_SP']==True, 'out_'+x_key] = True
     # Get data with outliers
     x_data = np.array(df[df['out_'+x_key]==True][x_key].values, dtype=np.float64)
     y_data = np.array(df[df['out_'+x_key]==True][y_key].values, dtype=np.float64)
+    print('found outliers:')
+    print(x_data)
+    print(y_data)
     # Mark outliers
-    ax.scatter(x_data, y_data, edgecolors=mrk_clr, s=mrk_size*3, marker='o', facecolors='none', zorder=2)
+    ax.scatter(x_data, y_data, edgecolors=mrk_clr, s=mk_size*5, marker='o', facecolors='none', zorder=2)
     # Run it again
     if mrk_clr == 'r':
-        mark_outliers(ax, df.loc[df['out_'+x_key]==False], x_key, y_key, threshold, mrk_clr='b')
+        mark_outliers(ax, df.loc[df['out_'+x_key]==False], x_key, y_key, find_all, threshold, mrk_clr='b', mk_size=mk_size)
 
 ################################################################################
 
@@ -3435,9 +3441,14 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
         y_key = 'cmm_mid'
         plot_centroid = False
         plot_slopes = False
+    # Look for outliers
+    if 'cor' in x_key or 'cRL' in x_key or 'cRl' in x_key:
+        mrk_outliers = True
+    else:
+        mrk_outliers = False
     # Check whether to change the marker size
-    if 'pca_' in x_key or 'pca_' in y_key:
-        m_size = layer_mrk_size
+    # if 'pca_' in x_key or 'pca_' in y_key:
+    #     m_size = layer_mrk_size
     # Set variable as to whether to invert the y axis
     invert_y_axis = False
     # Which colormap?
@@ -3446,9 +3457,6 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
         pts_per_cluster = []
         clstr_means = []
         clstr_stdvs = []
-        # Look for outliers
-        if 'cor' in x_key or 'cRL' in x_key or 'cRl' in x_key:
-            df = find_outliers(df, [x_key, y_key])
         # Loop through each cluster
         for i in range(n_clusters):
             # Decide on the color and symbol, don't go off the end of the arrays
@@ -3475,14 +3483,9 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
             elif 'cor' in x_key or 'cRL' in x_key or 'cRl' in x_key:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
-                print(i,x_data[0],y_data[0],df_this_cluster['out_'+x_key].values[0])
-                # Plotting outliers
-                if df_this_cluster['out_'+x_key].all() == True:
-                    # print('cluster:',i,'has outliers')
-                    ax.scatter(x_data, y_data, edgecolors='r', s=m_size*3, marker='o', facecolors='none', zorder=2)
             else:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=mrk_alpha, zorder=5)
-            # Plot the centroid(?) of this cluster
+            # Plot the centroid of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
                 ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=my_mkr, zorder=10)
@@ -3503,20 +3506,9 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
             # Record mean and standard deviation to calculate overlap ratio
             clstr_means.append(y_mean)
             clstr_stdvs.append(y_stdv)
-        ## Calculate the average Overlap Ratio and Coefficient of Variation
-        # Take first difference of sorted y_means
-        mean_diffs = np.diff(np.sort(np.array(clstr_means)))
-        # Get average of those first differences
-        avg_mean_diff = np.mean(mean_diffs)
-        # Get average of the standard deviations
-        avg_stdev = np.mean(clstr_stdvs)
-        # Find the coefficients of variation for each cluster
-        clstr_covars = [i / j for i, j in zip(clstr_stdvs, clstr_means)]
-        # print('For',y_key)
-        # print('\tOverlap Ratio (4*avg_stdev / avg_mean_diff):')
-        # print('\t\t',4*avg_stdev / avg_mean_diff)
-        # print('\tCoefficient of Variation avg(stdvs / means):')
-        # print('\t\t',np.mean(clstr_covars))
+        # Mark outliers, if specified
+        if mrk_outliers:
+            mark_outliers(ax, df, x_key, y_key, mk_size=m_size)
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
         m_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(m_pts))
