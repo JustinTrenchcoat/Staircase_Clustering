@@ -7,7 +7,7 @@ I specifically made this to do parameter sweeps that take too long to plot
 with the functions I made in `analysis_helper_functions.py`
 
 Usage:
-    plot_from_csv.py CSV
+    plot_cs_from_csv.py CSV
 
 Options:
     CSV             # filepath of the csv to plot
