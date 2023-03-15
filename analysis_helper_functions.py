@@ -1051,8 +1051,8 @@ def get_axis_label(var_key, var_attr_dicts):
     ax_labels = {
                  'hist':r'Occurrences',
                  'aiT':r'$\alpha T$',
-                 'aCT':r'$\alpha \theta$',
-                 'aPT':r'$\alpha \theta_{PT}$',
+                 'aCT':r'$\alpha \Theta$',
+                 'aPT':r'$\alpha \theta$',
                  'BSP':r'$\beta S_P$',
                  'BSt':r'$\beta_{PT} S_P$',
                  'BSA':r'$\beta S_A$',
@@ -2640,6 +2640,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     # Invert y-axis if specified
     if y_key in y_invert_vars:
         invert_y_axis = True
+    else:
+        invert_y_axis = False
     if not isinstance(tw_y_key, type(None)):
         if tw_y_key in y_invert_vars:
             invert_tw_y_axis = True
@@ -3324,13 +3326,16 @@ def mark_outliers(ax, df, x_key, y_key, find_all=False, threshold=2, mrk_clr='r'
     mrk_clr         The color in which to mark the outliers
     """
     print('\t- Marking outliers')
-    # print(df)
     # Find outliers
     df = find_outliers(df, [x_key, y_key], threshold)
     # If finding outliers in cor or R_L, find outliers in the other as well
     if x_key == 'cRL' and find_all == True:
         df = find_outliers(df, ['cor_SP', y_key], threshold)
         df.loc[df['out_cor_SP']==True, 'out_'+x_key] = True
+    #
+    # for i in range(len(df)):
+    #     this_row = df.loc[df['cluster']==i]
+    #     print(this_row['cluster'].values[0], this_row[x_key].values[0], this_row['out_'+x_key].values[0], this_row[y_key].values[0], this_row['out_'+y_key].values[0])#.sort_values('cluster'))
     # Get data with outliers
     x_data = np.array(df[df['out_'+x_key]==True][x_key].values, dtype=np.float64)
     y_data = np.array(df[df['out_'+x_key]==True][y_key].values, dtype=np.float64)
@@ -3442,7 +3447,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
         plot_centroid = False
         plot_slopes = False
     # Look for outliers
-    if 'cor' in x_key or 'cRL' in x_key or 'cRl' in x_key:
+    if 'cor' in x_key or 'cRL' in x_key or 'ca' in x_key:
         mrk_outliers = True
     else:
         mrk_outliers = False
@@ -3508,7 +3513,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
             clstr_stdvs.append(y_stdv)
         # Mark outliers, if specified
         if mrk_outliers:
-            mark_outliers(ax, df, x_key, y_key, mk_size=m_size)
+            mark_outliers(ax, df, x_key, y_key, mk_size=m_size, mrk_clr='r')
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
         m_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(m_pts))
@@ -3578,7 +3583,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
         z_key = None
         z_list = [0]
     # Open a text file to record values from the parameter sweep
-    sweep_txt_file = 'outputs/ps_x_'+x_key+'_z_'+z_key+'.txt'
+    sweep_txt_file = 'outputs/ps_x_'+x_key+'_z_'+str(z_key)+'.txt'
     f = open(sweep_txt_file,'w')
     f.write('Parameter Sweep for '+plt_title+'\n')
     f.write(datetime.now().strftime("%I:%M%p on %B %d, %Y"))
@@ -3687,11 +3692,14 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
             if z_key:
                 f.write('\n m_pts: '+str(m_pts)+' '+str(x_key)+': '+str(x)+' '+str(z_key)+': '+str(z_list[i])+' n_clstrs: '+str(new_df['cluster'].max()+1)+' DBCV: '+str(rel_val))
             else:
-                f.write('\n m_pts: '+str(m_pts)+' '+str(x_key)+': '+str(x)+' n_clstrs: '+str(new_df['cluster'].max()+1+' DBCV: '+str(rel_val)))
+                f.write('\n m_pts: '+str(m_pts)+' '+str(x_key)+': '+str(x)+' n_clstrs: '+str(new_df['cluster'].max()+1)+' DBCV: '+str(rel_val))
             f.close()
         ax.plot(x_var_array, y_var_array, color=std_clr, linestyle=l_styles[i], label=zlabel)
         if tw_y_key:
-            tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
+            if z_key:
+                tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
+            else: # If not plotting multiple z values, make the twin axis line a different linestyle
+                tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i+1])
             tw_ax_x.set_ylabel(tw_ylabel)
             # Change color of the axis label on the twin axis
             tw_ax_x.yaxis.label.set_color(alt_std_clr)
