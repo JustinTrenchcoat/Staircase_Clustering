@@ -62,28 +62,36 @@ available_variables_list = []
 ################################################################################
 dark_mode = True
 
+# Colorblind-friendly palette 
+#   https://jacksonlab.agronomy.wisc.edu/2016/05/23/15-level-colorblind-friendly-palette/
+jackson_clr = np.array(["#000000","#004949","#009292","#ff6db6","#ffb6db","#490092","#006ddb","#b66dff","#6db6ff","#b6dbff","#920000","#924900","#db6d00","#24ff24","#ffff6d"])
+
 # Enable dark mode plotting
 if dark_mode:
     plt.style.use('dark_background')
     std_clr = 'w'
     alt_std_clr = 'yellow'
+    cnt_clr = 'r'
     clr_ocean = 'k'
     clr_land  = 'grey'
     clr_lines = 'w'
+    clstr_clrs = jackson_clr[[2,14,4,6,7,12,13]]
 else:
     std_clr = 'k'
     alt_std_clr = 'olive'
+    cnt_clr = 'r'
     clr_ocean = 'w'
     clr_land  = 'grey'
     clr_lines = 'k'
+    clstr_clrs = jackson_clr[[1,3,5,6,7,12,13]]
 # Other colors
 clr_ml = 'tab:green'
 clr_gl = 'tab:orange'
 
 # Set some plotting styles
 mrk_size      = 0.5
-mrk_alpha     = 0.4 #0.05
-noise_alpha   = 0.1 #0.01
+mrk_alpha     = 0.4
+noise_alpha   = 0.2
 pf_alpha      = 0.5
 lgnd_mrk_size = 60
 map_mrk_size  = 7
@@ -102,6 +110,16 @@ sci_lims = (-2,3)
 
 #   Get list of standard colors
 mpl_clrs = plt.rcParams['axes.prop_cycle'].by_key()['color']
+#   Color-blind friendly color schemes by Paul Tol
+#       See: https://personal.sron.nl/~pault/#sec:qualitative
+#   Vibrant qualitative color scheme
+ptc_bright = ['#4477AA','#66CCEE','#228833','#CCBB44','#EE6677','#AA3377']
+#   Vibrant qualitative color scheme
+ptc_vibrnt = ['#0077BB','#33BBEE','#009988','#EE7733','#CC3311','#EE3377']
+#   Muted qualitative color scheme
+ptc_muted  = ['#332288','#88CCEE','#44AA99','#117733','#999933','#DDCC77','#CC6677','#882255','#AA4499']
+
+mpl_clrs = clstr_clrs
 #   Make list of marker styles
 mpl_mrks = ['o', 'x', 'd', '*', '<', '>','+']
 # Define array of linestyles to cycle through
@@ -1292,17 +1310,18 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
         if not isinstance(pp.ax_lims, type(None)):
             try:
                 ax.set_xlim(pp.ax_lims['x_lims'])
-                print('\tSet x_lims to',pp.ax_lims['x_lims'])
+                print('\t- Set x_lims to',pp.ax_lims['x_lims'])
             except:
                 foo = 2
             try:
                 ax.set_ylim(pp.ax_lims['y_lims'])
-                print('\tSet y_lims to',pp.ax_lims['y_lims'])
+                print('\t- Set y_lims to',pp.ax_lims['y_lims'])
             except:
                 foo = 2
         # Invert y-axis if specified
         if invert_y_axis:
             ax.invert_yaxis()
+            print('\t- Inverting y-axis')
         ax.set_title(plt_title)
     elif n_subplots > 1 and n_subplots < 10:
         rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
@@ -1315,38 +1334,43 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 i_ax = i
             ax_pos = int(str(rows)+str(cols)+str(i+1))
             xlabel, ylabel, plt_title, ax, invert_y_axis = make_subplot(axes[i_ax], groups_to_plot[i], fig, ax_pos)
-            if use_same_x_axis and cols == 1:
-                tight_layout_h_pad = -1
-                if i == 0:
+            if use_same_x_axis:
+                # If on the top row
+                if i < cols == 0:
+                    tight_layout_h_pad = -1
                     ax.set_title(plt_title)
-                if i == n_subplots-1:
+                # If in the bottom row
+                elif i >= n_subplots-cols:
                     ax.set_xlabel(xlabel)
             else:
                 ax.set_title(plt_title)
                 ax.set_xlabel(xlabel)
-            if use_same_y_axis and rows == 1:
-                tight_layout_w_pad = -1
-                if i == 0:
+            if use_same_y_axis:
+                # If in the far left column
+                if i%cols == 0:
+                    tight_layout_w_pad = -1
                     ax.set_ylabel(ylabel)
-                    # Invert y-axis if specified
-                    if invert_y_axis:
-                        ax.invert_yaxis()
+                # Invert y-axis if specified
+                if i == 0 and invert_y_axis:
+                    ax.invert_yaxis()
+                    print('\t- Inverting y-axis')
             else:
                 ax.set_ylabel(ylabel)
                 # Invert y-axis if specified
                 if invert_y_axis:
                     ax.invert_yaxis()
+                    print('\t- Inverting y-axis-')
             # If axes limits given, limit axes
             this_ax_pp = groups_to_plot[i].plt_params
             if not isinstance(this_ax_pp.ax_lims, type(None)):
                 try:
                     ax.set_xlim(this_ax_pp.ax_lims['x_lims'])
-                    print('\tSet x_lims to',this_ax_pp.ax_lims['x_lims'])
+                    print('\t- Set x_lims to',this_ax_pp.ax_lims['x_lims'])
                 except:
                     foo = 2
                 try:
                     ax.set_ylim(this_ax_pp.ax_lims['y_lims'])
-                    print('\tSet y_lims to',this_ax_pp.ax_lims['y_lims'])
+                    print('\t- Set y_lims to',this_ax_pp.ax_lims['y_lims'])
                 except:
                     foo = 2
                 #
@@ -2525,7 +2549,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
                 ax.scatter(bin_h_max, h_max, color=my_clr, s=cent_mrk_size, marker=my_mkr, zorder=1)
             elif orientation == 'horizontal':
                 ax.scatter(h_max, bin_h_max, color=my_clr, s=cent_mrk_size, marker=my_mkr, zorder=1)
-                # ax.scatter(h_max, bin_h_max, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
+                # ax.scatter(h_max, bin_h_max, color=my_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             #
         # Noise points are labeled as -1
         # Plot noise points
@@ -2545,7 +2569,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[var_key]))+' points')
         m_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(m_pts))
-        n_clstr_patch = mpl.lines.Line2D([],[],color='r', label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
+        n_clstr_patch = mpl.lines.Line2D([],[],color=cnt_clr, label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
         n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
         rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
         if legend:
@@ -2647,6 +2671,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             invert_tw_y_axis = True
         else:
             invert_tw_y_axis = False
+    else:
+        invert_tw_y_axis = False
     # Get extra args dictionary, if it exists
     try:
         extra_args = pp.extra_args
@@ -2707,7 +2733,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             plt_noise = True
     # Find the unique profiles for this instrmt
     pfs_in_this_df = np.unique(np.array(df['prof_no']))
-    print('\tpfs_in_this_df:',pfs_in_this_df)
+    print('\t- Profiles to plot:',pfs_in_this_df)
     # Make sure you're not trying to plot too many profiles
     # if len(pfs_in_this_df) > 15:
     #     print('You are trying to plot',len(pfs_in_this_df),'profiles')
@@ -2854,7 +2880,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
                 y_data = df_clstrs[df_clstrs.cluster == i][y_key]
                 alphas = df_clstrs[df_clstrs.cluster == i]['clst_prob']
                 # Plot the points for this cluster with the specified color, marker, and alpha value
-                # ax.scatter(x_data, -y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=alphas, zorder=5)
+                # ax.scatter(x_data, y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=alphas, zorder=5)
                 ax.scatter(x_data, y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=pf_alpha, zorder=5)
                 # Plot on twin axes, if specified
                 if not isinstance(tw_x_key, type(None)):
@@ -2863,12 +2889,9 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         #
     #
     # Compensate for shifting the twin axis by adjusting the max xvar
-    xvar_high = xvar_high + xv_span/5
+    # xvar_high = xvar_high + xv_span/5
     # Adjust bounds on axes
     ax.set_xlim([left_bound, xvar_high])
-    # Invert y-axis if specified
-    # if y_key in y_invert_vars or tw_x_key in y_invert_vars:
-    #     ax.invert_yaxis()
     if tw_x_key:
         tw_ax_y.set_xlim([tw_left_bound, twin_high])
     # Plot on twin axes, if specified
@@ -2879,7 +2902,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         # Change color of the ticks on the twin axis
         tw_ax_y.tick_params(axis='x', colors=tw_clr)
         if invert_tw_y_axis:
-            tw_ax_y.invert_y_axis()
+            tw_ax_y.invert_yaxis()
+            print('\t- Inverting twin y axis')
     # Add legend
     if legend:
         lgnd = ax.legend()
@@ -3493,9 +3517,9 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
             # Plot the centroid of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
-                ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=my_mkr, zorder=10)
+                ax.scatter(x_mean, y_mean, color=cnt_clr, s=cent_mrk_size, marker=my_mkr, zorder=10)
                 # This will plot the cluster number at the centroid
-                # ax.scatter(x_mean, y_mean, color='r', s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
+                # ax.scatter(x_mean, y_mean, color=cnt_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
             if plot_slopes:
                 # Find the slope of the ordinary least-squares of the points for this cluster
                 # m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
@@ -3504,7 +3528,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                 # Plot the least-squares fit line for this cluster through the centroid
                 ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
                 # Add annotation to say what the slope is
-                ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color='r', weight='bold', zorder=12)
+                ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=cnt_clr, weight='bold', zorder=12)
             #
             # Record the number of points in this cluster
             pts_per_cluster.append(len(x_data))
@@ -3517,7 +3541,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
         m_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(m_pts))
-        n_clstr_patch = mpl.lines.Line2D([],[],color='r', label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
+        n_clstr_patch = mpl.lines.Line2D([],[],color=cnt_clr, label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
         n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
         rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
         if legend:

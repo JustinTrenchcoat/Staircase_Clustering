@@ -33,9 +33,9 @@ T2008_fig6a_ax_lims = {'x_lims':[0.026838,0.026878], 'y_lims':[-13e-6,3e-6]}
 # A list of many profiles to plot from ITP2
 start_pf = 1
 import numpy as np
-n_pfs_to_plot = 25
+n_pfs_to_plot = 15
 ITP2_some_pfs = list(np.arange(start_pf, start_pf+(n_pfs_to_plot*2), 2))
-ITP2_some_pfs_ax_lims = {'y_lims':[290,270]}
+ITP2_some_pfs_ax_lims = {'y_lims':[270,290]}
 
 ### Filters for reproducing plots from Lu et al. 2022
 Lu2022_p_range = [200,355]
@@ -88,8 +88,13 @@ ds_ITP3_all = ahf.Data_Set(ITP3_all, dfs0)
 print('- Creating profile filtering objects')
 ################################################################################
 
-pfs_f0 = ahf.Profile_Filters()
-# pfs_T2008  = ahf.Profile_Filters(p_range=ITP2_p_range)
+pfs_0 = ahf.Profile_Filters()
+
+test_p_range = [200,400]
+pfs_maw_10  = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=10)
+pfs_maw_50  = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=50)
+pfs_maw_100 = ahf.Profile_Filters(p_range=test_p_range)
+pfs_maw_150 = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=150)
 
 pfs_T2008  = ahf.Profile_Filters(SP_range=ITP2_S_range)
 pfs_Lu2022 = ahf.Profile_Filters(SP_range=Lu2022_S_range)
@@ -114,6 +119,14 @@ pp_pfs = ahf.Plot_Parameters(x_vars=['CT'], y_vars=['press'], plot_type='profile
 ## Test Figures
 # The actual clustering done for reproducing figures from Timmermans et al. 2008
 pp_Lu2022_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':Lu2022_m_pts}, legend=True)
+
+## Testing impact of maw_size
+pp_CT_SP  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='clr_all_same', legend=False, isopycnals=False)
+pp_CT_pfs = ahf.Plot_Parameters(x_vars=['CT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':T2008_fig4_pfs})
+pp_ma_CT_SP  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['ma_CT'], clr_map='clr_all_same', legend=False)
+pp_ma_CT_pfs = ahf.Plot_Parameters(x_vars=['ma_CT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':T2008_fig4_pfs})
+#
+pp_CT_and_ma_CT_pfs = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':T2008_fig4_pfs})
 
 ### Figures for paper
 ## Map of ITP drifts
@@ -152,7 +165,7 @@ pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='clus
 pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, ax_lims=T2008_fig6a_ax_lims, legend=False)
 
 ## Tracking clusters across a subset of profiles
-pp_ITP2_some_pfs  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':ITP2_some_pfs, 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, legend=True, ax_lims=ITP2_some_pfs_ax_lims)
+pp_ITP2_some_pfs  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':ITP2_some_pfs, 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, legend=False, ax_lims=ITP2_some_pfs_ax_lims)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 # Tracking clusters across profiles
@@ -171,8 +184,8 @@ print('- Creating analysis group objects')
 # my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_test0)
 # my_group1 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_test1)
 # my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_test0)
-# my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_f0, pp_test0)
-# my_group0 = ahf.Analysis_Group(ds_ITP1_all, pfs_f0, pp_map)
+# my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_0, pp_test0)
+# my_group0 = ahf.Analysis_Group(ds_ITP1_all, pfs_0, pp_map)
 # my_group1 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_T2008, pp_test0)
 
 ## Test figures
@@ -186,10 +199,21 @@ print('- Creating analysis group objects')
 # group_maw_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008_maw_100, pp_test0, plot_title=r'ITP2 $\ell_{maw}=100$ dbar')
 # group_maw_200 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008_maw_200, pp_test0, plot_title=r'ITP2 $\ell_{maw}=200$ dbar')
 
+## Testing impact of maw_size
+# group_CT_SP  = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_100, pp_CT_SP)
+# group_CT_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_100, pp_CT_pfs)
+# group_ma_CT_SP  = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_100, pp_ma_CT_SP)
+# group_ma_CT_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_100, pp_ma_CT_pfs)
+# # 
+# group_CT_and_ma_CT_pfs__10 = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_10, pp_CT_and_ma_CT_pfs, plot_title=r'ITP2 $\ell_{maw}=10$ dbar')
+# group_CT_and_ma_CT_pfs__50 = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_50, pp_CT_and_ma_CT_pfs, plot_title=r'ITP2 $\ell_{maw}=50$ dbar')
+# group_CT_and_ma_CT_pfs_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_100, pp_CT_and_ma_CT_pfs, plot_title=r'ITP2 $\ell_{maw}=100$ dbar')
+# group_CT_and_ma_CT_pfs_150 = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_150, pp_CT_and_ma_CT_pfs, plot_title=r'ITP2 $\ell_{maw}=150$ dbar')
+
 ### Figures for paper
 
 ## Map of ITP drifts
-# group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_f0, pp_ITP_map, plot_title='Profile locations')
+# group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map, plot_title='Profile locations')
 
 ## Parameter sweeps
 ## ITP2, Timmermans et al. 2008
@@ -220,13 +244,13 @@ print('- Creating analysis group objects')
 # group_salt_R_L = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_salt_R_L)
 
 ## Reproducing figures from Timmermans et al. 2008
-# group_T2008_clstr = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_clstr)
+group_T2008_clstr = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_clstr)
 group_T2008_fig4  = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig4)
-# group_T2008_fig5a = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig5a)
-# group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig6a)
+group_T2008_fig5a = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig5a)
+group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig6a)
 
 ## Tracking clusters across a subset of profiles
-group_ITP2_some_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_some_pfs)
+# group_ITP2_some_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_some_pfs)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 # group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_Lu2022_fig3a)
@@ -260,6 +284,10 @@ print('- Creating outputs')
 # ahf.make_figure([group_T2008_clstr, group_salt_hist, group_salt_cor, group_salt_R_L])#, filename='ITP2_cor_vs_press_all_var.pickle')
 # ahf.make_figure([group_maw_001, group_maw_005, group_maw_010, group_maw_050, group_maw_100, group_maw_200], filename='ITP2_maw_size_tests.png')
 
+## Testing impact of maw_size
+# ahf.make_figure([group_CT_SP, group_ma_CT_SP, group_CT_pfs, group_ma_CT_pfs])
+# ahf.make_figure([group_CT_and_ma_CT_pfs__10, group_CT_and_ma_CT_pfs__50, group_CT_and_ma_CT_pfs_100, group_CT_and_ma_CT_pfs_150])
+
 ### Figures for paper
 
 ## Map of ITP drifts
@@ -276,11 +304,11 @@ print('- Creating outputs')
 # ahf.make_figure([group_press_cor, group_temp_cor], filename='cor_vs_press.pickle')
 
 ## Reproducing figures from Timmermans et al. 2008
-# ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a])#, filename='T2008.png')
-ahf.make_figure([group_T2008_fig4])
+ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a])#, filename='T2008.png')
+# ahf.make_figure([group_T2008_clstr])
 
 ## Tracking clusters across a subset of profiles
-# ahf.make_figure([group_ITP2_some_pfs])
+# ahf.make_figure([group_ITP2_some_pfs], use_same_x_axis=False, use_same_y_axis=False)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 # ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c], filename='Lu2022_f3.pickle')
