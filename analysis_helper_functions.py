@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 # For making insets in plots
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+# For getting different marker styles
+from matplotlib.markers import MarkerStyle as mplms
 # For storing figure objects in files (can use `pickle` instead if need be)
 import dill as pl
 # For formatting data into dataframes
@@ -64,18 +66,34 @@ dark_mode = True
 
 # Colorblind-friendly palette 
 #   https://jacksonlab.agronomy.wisc.edu/2016/05/23/15-level-colorblind-friendly-palette/
-jackson_clr = np.array(["#000000","#004949","#009292","#ff6db6","#ffb6db","#490092","#006ddb","#b66dff","#6db6ff","#b6dbff","#920000","#924900","#db6d00","#24ff24","#ffff6d"])
+jackson_clr = np.array(["#000000",  #  0 black
+                        "#004949",  #  1 dark olive
+                        "#009292",  #  2 teal
+                        "#ff6db6",  #  3 hot pink
+                        "#ffb6db",  #  4 light pink
+                        "#490092",  #  5 dark purple
+                        "#006ddb",  #  6 royal blue
+                        "#b66dff",  #  7 violet
+                        "#6db6ff",  #  8 sky blue
+                        "#b6dbff",  #  9 pale blue
+                        "#920000",  # 10 dark red
+                        "#924900",  # 11 brown
+                        "#db6d00",  # 12 dark orange
+                        "#24ff24",  # 13 neon green
+                        "#ffff6d"]) # 14 yellow
 
 # Enable dark mode plotting
 if dark_mode:
     plt.style.use('dark_background')
     std_clr = 'w'
     alt_std_clr = 'yellow'
-    cnt_clr = 'r'
+    cnt_clr = '#db6d00'#'r'
     clr_ocean = 'k'
     clr_land  = 'grey'
     clr_lines = 'w'
-    clstr_clrs = jackson_clr[[2,14,4,6,7,12,13]]
+    clstr_clrs = jackson_clr[[2,14,4,6,7,9,13]]
+    # clstr_clrs = jackson_clr[[2,14,4,6,7,12,13]]
+    noise_clr = '#D7642C'
 else:
     std_clr = 'k'
     alt_std_clr = 'olive'
@@ -94,9 +112,10 @@ mrk_alpha     = 0.4
 noise_alpha   = 0.2
 pf_alpha      = 0.5
 lgnd_mrk_size = 60
-map_mrk_size  = 7
+map_mrk_size  = 25
 big_map_mrkr  = 80
-cent_mrk_size = 30
+sml_map_mrkr  = 5
+cent_mrk_size = 50
 pf_mrk_size   = 15
 layer_mrk_size= 10
 std_marker = '.'
@@ -120,8 +139,8 @@ ptc_vibrnt = ['#0077BB','#33BBEE','#009988','#EE7733','#CC3311','#EE3377']
 ptc_muted  = ['#332288','#88CCEE','#44AA99','#117733','#999933','#DDCC77','#CC6677','#882255','#AA4499']
 
 mpl_clrs = clstr_clrs
-#   Make list of marker styles
-mpl_mrks = ['o', 'x', 'd', '*', '<', '>','+']
+#   Make list of marker and fill styles
+mpl_mrks = [mplms('o',fillstyle='left'), mplms('o',fillstyle='right'), 'X', 'd', '*', '<', '>','P']
 # Define array of linestyles to cycle through
 l_styles = ['-', '--', '-.', ':']
 
@@ -1306,6 +1325,10 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
         xlabel, ylabel, plt_title, ax, invert_y_axis = make_subplot(ax, groups_to_plot[0], fig, 111)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
+        # Invert y-axis if specified
+        if invert_y_axis:
+            ax.invert_yaxis()
+            print('\t- Inverting y-axis')
         # If axes limits given, limit axes
         if not isinstance(pp.ax_lims, type(None)):
             try:
@@ -1318,10 +1341,6 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 print('\t- Set y_lims to',pp.ax_lims['y_lims'])
             except:
                 foo = 2
-        # Invert y-axis if specified
-        if invert_y_axis:
-            ax.invert_yaxis()
-            print('\t- Inverting y-axis')
         ax.set_title(plt_title)
     elif n_subplots > 1 and n_subplots < 10:
         rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
@@ -1389,7 +1408,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
     if filename != None:
         print('- Saving figure to outputs/'+filename)
         if '.png' in filename:
-            plt.savefig('outputs/'+filename, dpi=400)
+            plt.savefig('outputs/'+filename, dpi=1000)
         elif '.pickle' in filename:
             pl.dump(fig, open('outputs/'+filename, 'wb'))
         else:
@@ -2144,15 +2163,29 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 df['source-instrmt'] = df['source']+' '+df['instrmt']
                 # If not plotting very many points, increase the marker size
                 if len(df) < 10:
-                    mrk_s = big_map_mrkr
+                    if map_extent == 'Canada_Basin':
+                        mrk_s = big_map_mrkr
+                    else:
+                        mrk_s = map_mrk_size
                 else:
-                    mrk_s = map_mrk_size
+                    if map_extent == 'Canada_Basin':
+                        mrk_s = map_mrk_size
+                    else:
+                        mrk_s = sml_map_mrkr
                 # Get instrument name
                 s_instrmt = np.unique(df['source-instrmt'])[0]
                 # Decide on the color, don't go off the end of the array
                 my_clr = mpl_clrs[i%len(mpl_clrs)]
                 # Plot every point from this df the same color, size, and marker
                 ax.scatter(df['lon'], df['lat'], color=my_clr, s=mrk_s, marker=map_marker, alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
+                # Find first and last profile, based on entry
+                entries = df['entry'].values
+                first_pf_df = df[df['entry']==min(entries)]
+                last_pf_df  = df[df['entry']==max(entries)]
+                # Plot first and last profiles on map
+                ax.scatter(first_pf_df['lon'], first_pf_df['lat'], color=my_clr, s=mrk_s*5, marker='>', alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
+                ax.scatter(last_pf_df['lon'], last_pf_df['lat'], color=my_clr, s=mrk_s*5, marker='s', alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
+                # Increase i to get next color in the array
                 i += 1
                 # Add legend to report the total number of points for this instrmt
                 lgnd_label = s_instrmt+': '+str(len(df['lon']))+' points'
@@ -2162,8 +2195,13 @@ def make_subplot(ax, a_group, fig, ax_pos):
             if len(notes_string) > 1:
                 notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
                 lgnd_hndls.append(notes_patch)
+            # Add legend entries for stopping and starting locations
+            lgnd_hndls.append(mpl.lines.Line2D([],[],color=std_clr, label='Start', marker='>', linewidth=0))
+            lgnd_hndls.append(mpl.lines.Line2D([],[],color=std_clr, label='Stop', marker='s', linewidth=0))
             # Add legend with custom handles
-            lgnd = ax.legend(handles=lgnd_hndls)
+            # Add a standard legend
+            if pp.legend:
+                lgnd = ax.legend(handles=lgnd_hndls)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, False
@@ -2638,6 +2676,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     x_key = pp.x_vars[0]
     y_key = pp.y_vars[0]
     var_clr = get_var_color(x_key)
+    var_clr = std_clr
     # Check for histogram
     if x_key == 'hist' or y_key == 'hist':
         print('Cannot plot histograms with profiles plot type')
@@ -2854,7 +2893,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             #
         if clr_map == 'cluster':
             # Plot a background line for each profile
-            ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, label=pf_label, zorder=1)
+            ax.plot(xvar, pf_df[y_key], color=var_clr, linestyle=l_style, alpha=0.5, label=pf_label, zorder=1)
             # Make a dataframe with adjusted xvar and tvar
             df_clstrs = pd.DataFrame({x_key:xvar, tw_x_key:tvar, y_key:pf_df[y_key], 'cluster':pf_df['cluster'], 'clst_prob':pf_df['clst_prob']})
             # Get a list of unique cluster numbers, but delete the noise point label "-1"
@@ -2863,12 +2902,13 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # print('\tcluster_numbers:',cluster_numbers)
             # Plot noise points first
             if plt_noise:
-                ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
+                ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=noise_clr, s=pf_mrk_size, marker=std_marker, alpha=1, zorder=2)
+                #ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
             # Plot on twin axes, if specified
             if not isinstance(tw_x_key, type(None)):
                 tw_ax_y.plot(tvar, pf_df[y_key], color=tw_clr, linestyle=l_style, label=pf_label, zorder=1)
                 if plt_noise:
-                    tw_ax_y.scatter(df_clstrs[df_clstrs.cluster==-1][tw_x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
+                    tw_ax_y.scatter(df_clstrs[df_clstrs.cluster==-1][tw_x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=2)
             # Loop through each cluster
             for i in cluster_numbers:
                 # Decide on the color and symbol, don't go off the end of the arrays
@@ -3528,7 +3568,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                 # Plot the least-squares fit line for this cluster through the centroid
                 ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
                 # Add annotation to say what the slope is
-                ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=cnt_clr, weight='bold', zorder=12)
+                ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=std_clr, weight='bold', zorder=12)
             #
             # Record the number of points in this cluster
             pts_per_cluster.append(len(x_data))
@@ -3537,7 +3577,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
             clstr_stdvs.append(y_stdv)
         # Mark outliers, if specified
         if mrk_outliers:
-            mark_outliers(ax, df, x_key, y_key, mk_size=m_size, mrk_clr='r')
+            mark_outliers(ax, df, x_key, y_key, mk_size=m_size, mrk_clr='red')
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
         m_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(m_pts))

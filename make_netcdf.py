@@ -287,8 +287,8 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         Time_blank,
                         {
                             'units':'N/A',
-                            'label':'$R_\\rho$ Density Ratio',
-                            'long_name':'Density ratio (defined how?)'
+                            'label':'$Density Ratio R_\\rho$',
+                            'long_name':'Density ratio'
                         }
                 ),
                 'press':(
@@ -323,7 +323,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         list_of_CT_arrs,
                         {
                             'units':'degrees Celcius',
-                            'label':'Conservative Temperature ($^\circ$C)',
+                            'label':'$\Theta$ ($^\circ$C)',
                             'long_name':'Conservative Temperature'
                         }
                 ),
@@ -332,7 +332,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         list_of_PT_arrs,
                         {
                             'units':'degrees Celcius',
-                            'label':'Potential Temperature ($^\circ$C)',
+                            'label':'$\theta$ ($^\circ$C)',
                             'long_name':'Potential Temperature'
                         }
                 ),
@@ -341,7 +341,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         list_of_SP_arrs,
                         {
                             'units':'g/kg',
-                            'label':'Practical Salinity (g/kg)',
+                            'label':'$S_P$ (g/kg)',
                             'long_name':'Practical Salinity'
                         }
                 ),
@@ -350,7 +350,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         list_of_SA_arrs,
                         {
                             'units':'g/kg',
-                            'label':'Absolute Salinity (g/kg)',
+                            'label':'$S_A$ (g/kg)',
                             'long_name':'Absolute Salinity'
                         }
                 ),
@@ -359,7 +359,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         gsw.sigma1(list_of_SA_arrs, list_of_CT_arrs),
                         {
                             'units':'kg/m^3',
-                            'label':'Density anomaly (kg/m$^3$)',
+                            'label':'$\\sigma_1$ (kg/m$^3$)',
                             'long_name':'Density anomaly referenced to 1000 dbar'
                         }
                 ),
@@ -431,7 +431,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         Vertical_blank,
                         {
                             'units':'degrees Celcius',
-                            'label':'Moving average conservative temperature ($^\circ$C)',
+                            'label':'Moving average $\Theta$ ($^\circ$C)',
                             'long_name':'Moving average conservative temperature'
                         }
                 ),
@@ -440,7 +440,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         Vertical_blank,
                         {
                             'units':'degrees Celcius',
-                            'label':'Moving average potential temperature ($^\circ$C)',
+                            'label':'Moving average $\theta$ ($^\circ$C)',
                             'long_name':'Moving average potential temperature'
                         }
                 ),
@@ -449,7 +449,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         Vertical_blank,
                         {
                             'units':'g/kg',
-                            'label':'Moving average practical salinity (g/kg)',
+                            'label':'Moving average $S_P$ (g/kg)',
                             'long_name':'Moving average practical salinity'
                         }
                 ),
@@ -458,7 +458,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         Vertical_blank,
                         {
                             'units':'g/kg',
-                            'label':'Moving average absolute salinity (g/kg)',
+                            'label':'Moving average $S_A$ (g/kg)',
                             'long_name':'Moving average absolute salinity'
                         }
                 ),
@@ -467,7 +467,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         Vertical_blank,
                         {
                             'units':'kg/m^3',
-                            'label':'Moving average density anomaly (kg/m$^3$)',
+                            'label':'Moving average $\\sigma_1$ (kg/m$^3$)',
                             'long_name':'Moving average density anomaly'
                         }
                 ),
@@ -477,7 +477,7 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         {
                             'units':'N/A',
                             'label':'Cluster label',
-                            'long_name':'Cluster label'
+                            'long_name':'Cluster label (-1 means noise points)'
                         }
                 ),
                 'clst_prob':(
@@ -821,7 +821,7 @@ def find_geo_region(lon, lat):
 ## Read instrument makes a netcdf for just the given instrument
 # read_instrmt('ITP', '1', science_data_file_path+'ITPs/itp1/itp1cormat', 'netcdfs/ITP_1.nc')
 read_instrmt('ITP', '2', science_data_file_path+'ITPs/itp2/itp2cormat', 'netcdfs/ITP_2.nc')
-# read_instrmt('ITP', '3', science_data_file_path+'ITPs/itp3/itp3cormat', 'netcdfs/ITP_3.nc')
+read_instrmt('ITP', '3', science_data_file_path+'ITPs/itp3/itp3cormat', 'netcdfs/ITP_3.nc')
 # read_instrmt('ITP', '13', science_data_file_path+'ITPs/itp13/itp13cormat', 'netcdfs/ITP_13.nc')
 
 ## These will make all the netcdfs for a certain source (takes a long time)

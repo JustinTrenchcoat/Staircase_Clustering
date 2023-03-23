@@ -17,7 +17,7 @@ import scipy.ndimage as ndimage
 from scipy import interpolate
 
 # Import the Thermodynamic Equation of Seawater 2010 (TEOS-10) from GSW
-# For converting from depth to pressure
+# For calculating density anomaly
 import gsw
 
 # The moving average window in dbar

@@ -42,7 +42,7 @@ except:
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = False
+dark_mode = True
 
 # Enable dark mode plotting
 if dark_mode:
@@ -182,7 +182,7 @@ def plot_comparison(ax, Lu2022_df, my_df, pp):
     else:
         invert_y_axis = False
     # Plot every point the same color, size, and marker for Lu et al. 2022
-    ax.scatter(Lu2022_df[x_key], Lu2022_df[y_key], color='g', s=Lu_mrk_size, marker=std_marker, zorder=5, label='Lu et al. 2022')
+    ax.scatter(Lu2022_df[x_key], Lu2022_df[y_key], color='#db6d00', s=Lu_mrk_size, marker=std_marker, zorder=5, label='Lu et al. 2022')
     # Plot my clusters, selecting color and marker shape by cluster id
     for i in my_df['cluster'].values:
         # Decide on the color and symbol, don't go off the end of the arrays
