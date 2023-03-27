@@ -31,11 +31,16 @@ T2008_fig6a_ax_lims = {'x_lims':[0.027002,0.027042], 'y_lims':[-13e-6,3e-6]}
 T2008_fig6a_ax_lims = {'x_lims':[0.026838,0.026878], 'y_lims':[-13e-6,3e-6]}
 
 # A list of many profiles to plot from ITP2
-start_pf = 1
+start_pf = 85
 import numpy as np
 n_pfs_to_plot = 15
 ITP2_some_pfs = list(np.arange(start_pf, start_pf+(n_pfs_to_plot*2), 2))
-ITP2_some_pfs_ax_lims = {'y_lims':[270,290]}
+# For showing one layer split into multiple clusters
+ITP2_some_pfs = [67, 69, 73, 75, 81, 83, 91, 93, 97, 99]
+ITP2_some_pfs_ax_lims = {'y_lims':[300,270]}
+# For showing multiple layers grouped into one cluster
+# ITP2_some_pfs = [87, 89, 95, 97, 99, 101, 103, 105, 109, 111]
+# ITP2_some_pfs_ax_lims = {'y_lims':[240,220]}
 
 ### Filters for reproducing plots from Lu et al. 2022
 Lu2022_p_range = [200,355]
@@ -167,6 +172,8 @@ pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cl
 
 ## Tracking clusters across a subset of profiles
 pp_ITP2_some_pfs  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':ITP2_some_pfs, 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, legend=False, ax_lims=ITP2_some_pfs_ax_lims)
+# pp_ITP2_some_pfs  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':ITP2_some_pfs, 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, legend=False, ax_lims=ITP2_some_pfs_ax_lims)
+pp_ITP2_T2008_fig4 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, legend=True, ax_lims=T2008_fig4_y_lims)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 # Tracking clusters across profiles
@@ -214,8 +221,8 @@ print('- Creating analysis group objects')
 ### Figures for paper
 
 ## Map of ITP drifts
-# group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map, plot_title='Profile locations')
-# group_ITP_map_full_Arctic = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map_full_Arctic, plot_title='Profile locations')
+group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map, plot_title='Profile locations')
+group_ITP_map_full_Arctic = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map_full_Arctic, plot_title='Profile locations')
 
 ## Parameter sweeps
 ## ITP2, Timmermans et al. 2008
@@ -230,7 +237,7 @@ print('- Creating analysis group objects')
 ## Evaluating clusterings with the overlap ratio and lateral density ratio
 # For the reproduction of Timmermans et al. 2008
 # group_clstr_ST = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_clstr_ST)
-group_salt_hist= ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_hist)
+# group_salt_hist= ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_hist)
 # group_press_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_press_cor)
 # group_temp_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_temp_cor)
 # group_salt_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_cor)
@@ -253,6 +260,7 @@ group_salt_hist= ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_hist)
 
 ## Tracking clusters across a subset of profiles
 # group_ITP2_some_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_some_pfs)
+# group_ITP2_T2008_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_T2008_fig4)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 # group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_Lu2022_fig3a)
@@ -294,7 +302,8 @@ print('- Creating outputs')
 ### Figures for paper
 
 ## Map of ITP drifts
-# ahf.make_figure([group_ITP_map, group_ITP_map_full_Arctic], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
+# ahf.make_figure([group_ITP_map], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
+ahf.make_figure([group_ITP_map, group_ITP_map_full_Arctic], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
 # ahf.find_max_distance([group_ITP_map])
 
 ## Parameter sweeps
@@ -302,7 +311,7 @@ print('- Creating outputs')
 # ahf.make_figure([group_ps_m_pts], filename='ITP2_test_sweep.pickle')
 
 ## Evaluating clusterings with the overlap ratio and lateral density ratio
-ahf.make_figure([group_salt_hist])
+# ahf.make_figure([group_salt_hist])
 # ahf.make_figure([group_salt_cor, group_salt_R_L])#, filename='cor_R_L_vs_SP.pickle')
 # ahf.make_figure([group_salt_cor], filename='cor_vs_press.pickle')
 # ahf.make_figure([group_press_cor, group_temp_cor], filename='cor_vs_press.pickle')
@@ -316,6 +325,7 @@ ahf.make_figure([group_salt_hist])
 
 ## Tracking clusters across a subset of profiles
 # ahf.make_figure([group_ITP2_some_pfs], use_same_x_axis=False, use_same_y_axis=False)
+# ahf.make_figure([group_ITP2_T2008_pfs], use_same_x_axis=False, use_same_y_axis=False)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
 # ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3d, group_Lu2022_fig3b, group_Lu2022_fig3c], filename='Lu2022_f3.pickle')

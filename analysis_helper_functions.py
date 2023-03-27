@@ -93,7 +93,8 @@ if dark_mode:
     clr_lines = 'w'
     clstr_clrs = jackson_clr[[2,14,4,6,7,9,13]]
     # clstr_clrs = jackson_clr[[2,14,4,6,7,12,13]]
-    noise_clr = '#D7642C'
+    noise_clr = 'w'#D7642C'
+    bathy_clrs = ['#000040','k']
 else:
     std_clr = 'k'
     alt_std_clr = 'olive'
@@ -102,15 +103,23 @@ else:
     clr_land  = 'grey'
     clr_lines = 'k'
     clstr_clrs = jackson_clr[[1,3,5,6,7,12,13]]
-# Other colors
-clr_ml = 'tab:green'
-clr_gl = 'tab:orange'
+    bathy_clrs = ['b','k']
+# Define bathymetry colors
+cm1 = mpl.colors.LinearSegmentedColormap.from_list("Custom", bathy_clrs, N=5)
+# Initialize colormap to get ._lut attribute
+cm1._init()
+# There are 3 extra colors at the end for some weird reason, so eliminate them
+rgbas = cm1._lut[0:-3]
+# Convert to a list of hex values in strings
+bathy_clrs = [mpl.colors.rgb2hex(x) for x in rgbas]
+print('bathy_clrs:',bathy_clrs)
 
 # Set some plotting styles
 mrk_size      = 0.5
 mrk_alpha     = 0.4
 noise_alpha   = 0.2
 pf_alpha      = 0.5
+map_alpha     = 0.7
 lgnd_mrk_size = 60
 map_mrk_size  = 25
 big_map_mrkr  = 80
@@ -2057,16 +2066,54 @@ def make_subplot(ax, a_group, fig, ax_pos):
         ax = fig.add_subplot(ax_pos, projection=ccrs.NorthPolarStereo(central_longitude=cent_lon))
         ax.set_extent([ex_E, ex_W, ex_S, ex_N], ccrs.PlateCarree())
         #   Add ocean first, then land. Otherwise the ocean covers the land shapes
-        # ax.add_feature(cartopy.feature.OCEAN, color=clr_ocean)
+        ax.add_feature(cartopy.feature.OCEAN, color=bathy_clrs[0])
         ax.add_feature(cartopy.feature.LAND, color=clr_land, alpha=0.5)
+        # Make bathymetry features
+        bathy_0200 = cartopy.feature.NaturalEarthFeature(category='physical',name='bathymetry_K_200',scale='10m')
+        bathy_1000 = cartopy.feature.NaturalEarthFeature(category='physical',name='bathymetry_J_1000',scale='10m')
+        bathy_2000 = cartopy.feature.NaturalEarthFeature(category='physical',name='bathymetry_I_2000',scale='10m')
+        bathy_3000 = cartopy.feature.NaturalEarthFeature(category='physical',name='bathymetry_H_3000',scale='10m')
+        bathy_4000 = cartopy.feature.NaturalEarthFeature(category='physical',name='bathymetry_G_4000',scale='10m')
+        bathy_5000 = cartopy.feature.NaturalEarthFeature(category='physical',name='bathymetry_F_5000',scale='10m')
+        # Add bathymetry lines
+        ax.add_feature(bathy_0200, facecolor=bathy_clrs[1], zorder=1)
+        ax.add_feature(bathy_1000, facecolor=bathy_clrs[2], zorder=2)
+        ax.add_feature(bathy_2000, facecolor=bathy_clrs[3], zorder=3)
+        ax.add_feature(bathy_3000, facecolor=bathy_clrs[4], zorder=4)
+        # ax.add_feature(bathy_4000, facecolor=bathy_clrs[5], zorder=5)
+        # ax.add_feature(bathy_5000, facecolor=bathy_clrs[6], zorder=6)
         #   Add gridlines to show longitude and latitude
-        gl = ax.gridlines(draw_labels=True, color=clr_lines, alpha=0.3, linestyle='--')
+        gl = ax.gridlines(draw_labels=True, color=clr_lines, alpha=0.3, linestyle='--', zorder=7)
         #       x is actually all labels around the edge
-        gl.xlabel_style = {'size':6, 'color':clr_lines}
+        gl.xlabel_style = {'size':8, 'color':clr_lines, 'zorder':7}
         #       y is actually all labels within map
-        gl.ylabel_style = {'size':6, 'color':clr_lines}
+        gl.ylabel_style = {'size':8, 'color':clr_lines, 'zorder':7}
         #   Plotting the coastlines takes a really long time
         # ax.coastlines()
+        # Add bounding box for Canada Basin
+        #   Don't plot outside the extent chosen
+        if map_extent == 'Canada_Basin':
+            # Only the Eastern boundary appears in this extent
+            ax.plot([-130,-130], [73.7, 78.15], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Eastern boundary
+            # Add bathymetry lines
+            ax.add_feature(bathy_0200, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=1)
+            ax.add_feature(bathy_1000, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=2)
+            ax.add_feature(bathy_2000, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=3)
+            ax.add_feature(bathy_3000, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=4)
+            # ax.add_feature(bathy_4000, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=5)
+            # ax.add_feature(bathy_5000, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=6)
+        elif map_extent == 'Western_Arctic':
+            cent_lon = -140
+            ex_N = 80
+            ex_S = 69
+            ex_E = -165
+            ex_W = -124
+        else:
+            CB_lons = np.linspace(-130, -155, 50)
+            ax.plot(CB_lons, 84*np.ones(len(CB_lons)), color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Northern boundary
+            ax.plot(CB_lons, 72*np.ones(len(CB_lons)), color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Southern boundary
+            ax.plot([-130,-130], [72, 84], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Eastern boundary
+            ax.plot([-155,-155], [72, 84], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Western boundary
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
             # Make sure it isn't a vertical variable
@@ -2086,7 +2133,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             else:
                 cmap_data = df[clr_map]
             # The color of each point corresponds to the number of the profile it came from
-            heatmap = ax.scatter(df['lon'], df['lat'], c=cmap_data, cmap=get_color_map(clr_map), s=mrk_s, marker=map_marker, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
+            heatmap = ax.scatter(df['lon'], df['lat'], c=cmap_data, cmap=get_color_map(clr_map), s=mrk_s, marker=map_marker, linewidths=map_ln_wid, transform=ccrs.PlateCarree(), zorder=10)
             # Create the colorbar
             cbar = plt.colorbar(heatmap, ax=ax)
             # Format the colorbar ticks, if necessary
@@ -2109,7 +2156,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             else:
                 mrk_s = map_mrk_size
             # Plot every point the same color, size, and marker
-            ax.scatter(df['lon'], df['lat'], color=std_clr, s=mrk_s, marker=map_marker, alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
+            ax.scatter(df['lon'], df['lat'], color=std_clr, s=mrk_s, marker=map_marker, alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree(), zorder=10)
             # Add a standard legend
             add_std_legend(ax, df, 'lon')
             # Add a standard title
@@ -2140,7 +2187,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 else:
                     mrk_s = map_mrk_size
                 # Plot every point from this df the same color, size, and marker
-                ax.scatter(this_df['lon'], this_df['lat'], color=my_clr, s=mrk_s, marker=map_marker, alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
+                ax.scatter(this_df['lon'], this_df['lat'], color=my_clr, s=mrk_s, marker=map_marker, alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree(), zorder=10)
                 i += 1
                 # Add legend to report the total number of points for this instrmt
                 lgnd_label = source+': '+str(len(this_df['lon']))+' points'
@@ -2177,14 +2224,14 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Decide on the color, don't go off the end of the array
                 my_clr = mpl_clrs[i%len(mpl_clrs)]
                 # Plot every point from this df the same color, size, and marker
-                ax.scatter(df['lon'], df['lat'], color=my_clr, s=mrk_s, marker=map_marker, alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
+                ax.scatter(df['lon'], df['lat'], color=my_clr, s=mrk_s, marker=map_marker, alpha=map_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree(), zorder=10)
                 # Find first and last profile, based on entry
                 entries = df['entry'].values
                 first_pf_df = df[df['entry']==min(entries)]
                 last_pf_df  = df[df['entry']==max(entries)]
                 # Plot first and last profiles on map
-                ax.scatter(first_pf_df['lon'], first_pf_df['lat'], color=my_clr, s=mrk_s*5, marker='>', alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
-                ax.scatter(last_pf_df['lon'], last_pf_df['lat'], color=my_clr, s=mrk_s*5, marker='s', alpha=mrk_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree())
+                ax.scatter(first_pf_df['lon'], first_pf_df['lat'], color=my_clr, s=mrk_s*5, marker='>', alpha=map_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree(), zorder=11)
+                ax.scatter(last_pf_df['lon'], last_pf_df['lat'], color=my_clr, s=mrk_s*5, marker='s', alpha=map_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree(), zorder=11)
                 # Increase i to get next color in the array
                 i += 1
                 # Add legend to report the total number of points for this instrmt
@@ -2839,15 +2886,15 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             #
         # Adjust the starting points of each subsequent profile
         elif i > 0:
-            # Find array of data
-            xvar = pf_df[x_key] - min(pf_df[x_key]) + xvar_low + xv_span/(n_pfs**0.8)
+            # Find array of data and shift it over a bit
+            xvar = pf_df[x_key] - min(pf_df[x_key]) + xvar_low + xv_span*0.45
             # Find new upper and lower bounds of profile
             xvar_high = max(xvar)
             xvar_low  = min(xvar)
             # Find span of this profile
             xv_span = abs(xvar_high - xvar_low)
             if tw_x_key:
-                tvar = pf_df[tw_x_key] - min(pf_df[tw_x_key]) + twin_low + tw_span/(n_pfs**0.8)
+                tvar = pf_df[tw_x_key] - min(pf_df[tw_x_key]) + twin_low + tw_span*0.45
                 twin_high = max(tvar)
                 twin_low  = min(tvar)
                 tw_span   = abs(twin_high - twin_low)
@@ -2902,7 +2949,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # print('\tcluster_numbers:',cluster_numbers)
             # Plot noise points first
             if plt_noise:
-                ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=noise_clr, s=pf_mrk_size, marker=std_marker, alpha=1, zorder=2)
+                ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=noise_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=2)
                 #ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
             # Plot on twin axes, if specified
             if not isinstance(tw_x_key, type(None)):
