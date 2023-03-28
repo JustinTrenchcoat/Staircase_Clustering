@@ -62,7 +62,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = True
+dark_mode = False
 
 # Colorblind-friendly palette 
 #   https://jacksonlab.agronomy.wisc.edu/2016/05/23/15-level-colorblind-friendly-palette/
@@ -87,36 +87,43 @@ if dark_mode:
     plt.style.use('dark_background')
     std_clr = 'w'
     alt_std_clr = 'yellow'
+    noise_clr = 'w'#D7642C'
     cnt_clr = '#db6d00'#'r'
     clr_ocean = 'k'
     clr_land  = 'grey'
     clr_lines = 'w'
     clstr_clrs = jackson_clr[[2,14,4,6,7,9,13]]
     # clstr_clrs = jackson_clr[[2,14,4,6,7,12,13]]
-    noise_clr = 'w'#D7642C'
     bathy_clrs = ['#000040','k']
 else:
     std_clr = 'k'
     alt_std_clr = 'olive'
-    cnt_clr = 'r'
+    noise_clr = 'k'#D7642C'
+    cnt_clr = "#ffff6d"#'k'
     clr_ocean = 'w'
     clr_land  = 'grey'
     clr_lines = 'k'
-    clstr_clrs = jackson_clr[[1,3,5,6,7,12,13]]
-    bathy_clrs = ['b','k']
+    clstr_clrs = jackson_clr[[1,12,10,6,5,2,13]]
+    bathy_clrs = ['w','#b6dbff']
 # Define bathymetry colors
-cm1 = mpl.colors.LinearSegmentedColormap.from_list("Custom", bathy_clrs, N=5)
+n_bathy = 5
+cm0 = mpl.colors.LinearSegmentedColormap.from_list("Custom", bathy_clrs, N=n_bathy)
+cm1 = mpl.colors.LinearSegmentedColormap.from_list("Custom", bathy_clrs[::-1], N=n_bathy)
 # Initialize colormap to get ._lut attribute
+cm0._init()
 cm1._init()
 # There are 3 extra colors at the end for some weird reason, so eliminate them
-rgbas = cm1._lut[0:-3]
+rgbas0 = cm0._lut[0:-3]
 # Convert to a list of hex values in strings
-bathy_clrs = [mpl.colors.rgb2hex(x) for x in rgbas]
+bathy_clrs = [mpl.colors.rgb2hex(x) for x in rgbas0]
+# Make an object for color bars
+bathy_smap = plt.cm.ScalarMappable(cmap=cm1)
+bathy_smap.set_array([])
 print('bathy_clrs:',bathy_clrs)
 
 # Set some plotting styles
 mrk_size      = 0.5
-mrk_alpha     = 0.4
+mrk_alpha     = 0.6
 noise_alpha   = 0.2
 pf_alpha      = 0.5
 map_alpha     = 0.7
@@ -149,7 +156,9 @@ ptc_muted  = ['#332288','#88CCEE','#44AA99','#117733','#999933','#DDCC77','#CC66
 
 mpl_clrs = clstr_clrs
 #   Make list of marker and fill styles
-mpl_mrks = [mplms('o',fillstyle='left'), mplms('o',fillstyle='right'), 'X', 'd', '*', '<', '>','P']
+unit_star_3 = mpl.path.Path.unit_regular_star(3)
+unit_star_4 = mpl.path.Path.unit_regular_star(4)
+mpl_mrks = [mplms('o',fillstyle='left'), mplms('o',fillstyle='right'), 'x', unit_star_4, '*', unit_star_3, '1','+']
 # Define array of linestyles to cycle through
 l_styles = ['-', '--', '-.', ':']
 
@@ -1083,7 +1092,7 @@ def get_axis_label(var_key, var_attr_dicts):
     elif 'cor_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[4:]
-        return 'Cluster overlap of '+ var_attr_dicts[0][var_str]['label']
+        return r'$OR$ '+ var_attr_dicts[0][var_str]['label']
     elif 'com_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[4:]
@@ -1109,7 +1118,7 @@ def get_axis_label(var_key, var_attr_dicts):
                  'm_pts':r'Minimum density threshold $m_{pts}$',
                  'DBCV':'Relative validity measure (DBCV)',
                  'n_clusters':'Number of clusters',
-                 'cRL':r'Lateral density ratio $R_L$ with CT',
+                 'cRL':r'Lateral density ratio $R_L$',
                  'cRl':r'Lateral density ratio $R_L$ with PT'
                 }
     if var_key in ax_labels.keys():
@@ -2055,7 +2064,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             ex_E = -165
             ex_W = -124
         else:
-            cent_lon = 0
+            cent_lon = -120
             ex_N = 90
             ex_S = 70
             ex_E = -180
@@ -2103,17 +2112,18 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # ax.add_feature(bathy_4000, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=5)
             # ax.add_feature(bathy_5000, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=6)
         elif map_extent == 'Western_Arctic':
-            cent_lon = -140
-            ex_N = 80
-            ex_S = 69
-            ex_E = -165
-            ex_W = -124
+            CB_lons = np.linspace(-130, -155, 50)
+            # Northern boundary does not appear
+            ax.plot(CB_lons, 72*np.ones(len(CB_lons)), color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Southern boundary
+            ax.plot([-130,-130], [72, 80.5], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Eastern boundary
+            ax.plot([-155,-155], [72, 80.5], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Western boundary
         else:
             CB_lons = np.linspace(-130, -155, 50)
             ax.plot(CB_lons, 84*np.ones(len(CB_lons)), color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Northern boundary
             ax.plot(CB_lons, 72*np.ones(len(CB_lons)), color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Southern boundary
             ax.plot([-130,-130], [72, 84], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Eastern boundary
-            ax.plot([-155,-155], [72, 84], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Western boundary
+            ax.plot([-155,-155], [72, 84], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Western boundary# Only the Eastern boundary appears in this extent
+            ax.plot([-130,-130], [73.7, 78.15], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Eastern boundary
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep:
             # Make sure it isn't a vertical variable
@@ -2235,7 +2245,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Increase i to get next color in the array
                 i += 1
                 # Add legend to report the total number of points for this instrmt
-                lgnd_label = s_instrmt+': '+str(len(df['lon']))+' points'
+                lgnd_label = s_instrmt+': '+str(len(df['lon']))+' profiles'
                 lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label))
                 notes_string = ''.join(df.notes.unique())
             # Only add the notes_string if it contains something
@@ -2249,6 +2259,14 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Add a standard legend
             if pp.legend:
                 lgnd = ax.legend(handles=lgnd_hndls)
+            # Create the colorbar for the bathymetry
+            if map_extent == 'Full_Arctic':
+                cbar = plt.colorbar(bathy_smap, ax=ax, extend='min')
+                # Fixing ticks
+                ticks_loc = cbar.ax.get_yticks().tolist()
+                cbar.ax.yaxis.set_major_locator(mpl.ticker.FixedLocator(ticks_loc))
+                cbar.ax.set_yticklabels(['','3000','2000','1000','200','0'])
+                cbar.set_label('Bathymetry (m)')
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, False
@@ -3492,6 +3510,8 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
     # Decide whether to plot the centroid or not
     if x_key in pf_vars or y_key in pf_vars:
         plot_centroid = False
+    elif y_key == 'CT':
+        plot_centroid = False
     else:
         plot_centroid = True
     # Run the HDBSCAN algorithm on the provided dataframe
@@ -3604,6 +3624,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
             # Plot the centroid of this cluster
             if plot_centroid:
                 # This will plot a marker at the centroid
+                ax.scatter(x_mean, y_mean, color=std_clr, s=cent_mrk_size*1.1, marker='o', zorder=9)
                 ax.scatter(x_mean, y_mean, color=cnt_clr, s=cent_mrk_size, marker=my_mkr, zorder=10)
                 # This will plot the cluster number at the centroid
                 # ax.scatter(x_mean, y_mean, color=cnt_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)

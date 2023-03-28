@@ -221,8 +221,8 @@ print('- Creating analysis group objects')
 ### Figures for paper
 
 ## Map of ITP drifts
-group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map, plot_title='Profile locations')
-group_ITP_map_full_Arctic = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map_full_Arctic, plot_title='Profile locations')
+# group_ITP_map = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map, plot_title='Profile locations')
+# group_ITP_map_full_Arctic = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map_full_Arctic, plot_title='Profile locations')
 
 ## Parameter sweeps
 ## ITP2, Timmermans et al. 2008
@@ -240,9 +240,8 @@ group_ITP_map_full_Arctic = ahf.Analysis_Group(ds_all_ITPs, pfs_0, pp_ITP_map_fu
 # group_salt_hist= ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_hist)
 # group_press_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_press_cor)
 # group_temp_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_temp_cor)
-# group_salt_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_cor)
-# group_salt_com = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_com)
-# group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_R_L)
+group_salt_cor = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_cor)
+group_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_salt_R_L)
 # For the reproduction of Lu et al. 2022
 # group_clstr_ST = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_clstr_ST)
 # group_salt_hist= ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_salt_hist)
@@ -303,7 +302,8 @@ print('- Creating outputs')
 
 ## Map of ITP drifts
 # ahf.make_figure([group_ITP_map], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
-ahf.make_figure([group_ITP_map, group_ITP_map_full_Arctic], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
+# ahf.make_figure([group_ITP_map_full_Arctic], use_same_x_axis=False, use_same_y_axis=False)
+# ahf.make_figure([group_ITP_map_full_Arctic, group_ITP_map], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
 # ahf.find_max_distance([group_ITP_map])
 
 ## Parameter sweeps
@@ -312,12 +312,12 @@ ahf.make_figure([group_ITP_map, group_ITP_map_full_Arctic], use_same_x_axis=Fals
 
 ## Evaluating clusterings with the overlap ratio and lateral density ratio
 # ahf.make_figure([group_salt_hist])
-# ahf.make_figure([group_salt_cor, group_salt_R_L])#, filename='cor_R_L_vs_SP.pickle')
+ahf.make_figure([group_salt_cor, group_salt_R_L])#, filename='cor_R_L_vs_SP.pickle')
 # ahf.make_figure([group_salt_cor], filename='cor_vs_press.pickle')
 # ahf.make_figure([group_press_cor, group_temp_cor], filename='cor_vs_press.pickle')
 
 ## Reproducing figures from Timmermans et al. 2008
-# ahf.make_figure([group_T2008_clstr, group_T2008_fig4, group_T2008_fig5a, group_T2008_fig6a], filename='T2008.png')
+# ahf.make_figure([group_T2008_fig5a, group_T2008_fig4, group_T2008_clstr, group_T2008_fig6a], filename='T2008.png')
 # ahf.make_figure([group_T2008_clstr])
 # ahf.make_figure([group_T2008_fig4])
 # ahf.make_figure([group_T2008_fig5a])
