@@ -64,7 +64,8 @@ available_variables_list = []
 ################################################################################
 dark_mode = False
 
-# Colorblind-friendly palette 
+# Colorblind-friendly palette by Krzywinski et al. (http://mkweb.bcgsc.ca/biovis2012/)
+#   See the link below for a helpful color wheel:
 #   https://jacksonlab.agronomy.wisc.edu/2016/05/23/15-level-colorblind-friendly-palette/
 jackson_clr = np.array(["#000000",  #  0 black
                         "#004949",  #  1 dark olive
@@ -103,7 +104,7 @@ else:
     clr_ocean = 'w'
     clr_land  = 'grey'
     clr_lines = 'k'
-    clstr_clrs = jackson_clr[[1,12,10,6,5,2,13]]
+    clstr_clrs = jackson_clr[[12,1,10,6,5,2,13]]
     bathy_clrs = ['w','#b6dbff']
 # Define bathymetry colors
 n_bathy = 5
@@ -119,11 +120,15 @@ bathy_clrs = [mpl.colors.rgb2hex(x) for x in rgbas0]
 # Make an object for color bars
 bathy_smap = plt.cm.ScalarMappable(cmap=cm1)
 bathy_smap.set_array([])
-print('bathy_clrs:',bathy_clrs)
 
 # Set some plotting styles
+mpl.rcParams['font.size'] = 12
+mpl.rcParams['axes.labelsize'] = 14
+mpl.rcParams['xtick.labelsize'] = 11
+mpl.rcParams['ytick.labelsize'] = 11
+mpl.rcParams['legend.fontsize'] = 10
 mrk_size      = 0.5
-mrk_alpha     = 0.6
+mrk_alpha     = 0.3
 noise_alpha   = 0.2
 pf_alpha      = 0.5
 map_alpha     = 0.7
@@ -198,8 +203,6 @@ clstr_ps_ind_vars = ['m_pts', 'n_pfs', 'maw_size']
 #   Dependent variables
 clstr_ps_dep_vars = ['DBCV', 'n_clusters']
 clstr_ps_vars = clstr_ps_ind_vars + clstr_ps_dep_vars
-# mc_prefix = 'mc_'
-# mc_vars   = [ f'{mc_prefix}{var}' for var in vertical_vars]
 
 ################################################################################
 # Declare classes for custom objects
@@ -1072,7 +1075,8 @@ def get_axis_label(var_key, var_attr_dicts):
     elif 'la_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[3:]
-        return 'Local anomaly of '+ var_attr_dicts[0][var_str]['label']
+        return r'$\Theta_{LA}$ ($^\circ$C)' 
+        # return 'Local anomaly of '+ var_attr_dicts[0][var_str]['label']
     # Check for cluster average variables
     elif 'ca_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
@@ -1092,7 +1096,8 @@ def get_axis_label(var_key, var_attr_dicts):
     elif 'cor_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[4:]
-        return r'$OR$ '+ var_attr_dicts[0][var_str]['label']
+        return r'Overlap Ratio $OR_{S_P}$'
+        # return r'Overlap Ratio of '+ var_attr_dicts[0][var_str]['label']
     elif 'com_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[4:]
@@ -1336,8 +1341,8 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
         #
     else:
         use_same_y_axis = False
-    tight_layout_h_pad = None
-    tight_layout_w_pad = None
+    tight_layout_h_pad = 1.0 #None
+    tight_layout_w_pad = 1.0 #None
     if n_subplots == 1:
         fig, ax = set_fig_axes([1], [1], fig_ratio=0.8, fig_size=1.25)
         xlabel, ylabel, plt_title, ax, invert_y_axis = make_subplot(ax, groups_to_plot[0], fig, 111)
@@ -1359,7 +1364,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 print('\t- Set y_lims to',pp.ax_lims['y_lims'])
             except:
                 foo = 2
-        ax.set_title(plt_title)
+        # ax.set_title(plt_title)
     elif n_subplots > 1 and n_subplots < 10:
         rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
         n_subplots = int(np.floor(n_subplots))
@@ -1375,12 +1380,12 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 # If on the top row
                 if i < cols == 0:
                     tight_layout_h_pad = -1
-                    ax.set_title(plt_title)
+                    # ax.set_title(plt_title)
                 # If in the bottom row
                 elif i >= n_subplots-cols:
                     ax.set_xlabel(xlabel)
             else:
-                ax.set_title(plt_title)
+                # ax.set_title(plt_title)
                 ax.set_xlabel(xlabel)
             if use_same_y_axis:
                 # If in the far left column
@@ -1412,7 +1417,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                     foo = 2
                 #
             # Label subplots a, b, c, ...
-            ax.text(-0.1, 1.1, '('+string.ascii_lowercase[i]+')', transform=ax.transAxes, size=20)
+            ax.text(-0.1, -0.1, '('+string.ascii_lowercase[i]+')', transform=ax.transAxes, size=mpl.rcParams['axes.labelsize'], fontweight='bold')
         # Turn off unused axes
         if n_subplots < (rows*cols):
             for i in range(rows*cols-1, n_subplots-1, -1):
@@ -1421,7 +1426,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
         print('Too many subplots')
         exit(0)
     #
-    plt.tight_layout(h_pad=tight_layout_h_pad, w_pad=tight_layout_w_pad)
+    plt.tight_layout(pad=0.4, h_pad=tight_layout_h_pad, w_pad=tight_layout_w_pad)
     #
     if filename != None:
         print('- Saving figure to outputs/'+filename)
@@ -2103,7 +2108,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
         #   Don't plot outside the extent chosen
         if map_extent == 'Canada_Basin':
             # Only the Eastern boundary appears in this extent
-            ax.plot([-130,-130], [73.7, 78.15], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Eastern boundary
+            # ax.plot([-130,-130], [73.7, 78.15], color='red', linewidth=1, linestyle='-', transform=ccrs.Geodetic(), zorder=8) # Eastern boundary
             # Add bathymetry lines
             ax.add_feature(bathy_0200, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=1)
             ax.add_feature(bathy_1000, facecolor='none', edgecolor=std_clr, linestyle='-.', alpha=0.3, zorder=2)
@@ -3618,7 +3623,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                 yerrs = df[df.cluster == i]['bar_len']
                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
             elif 'cor' in x_key or 'cRL' in x_key or 'cRl' in x_key:
-                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=0.9, zorder=5)
+                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=1, zorder=5)
             else:
                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=mrk_alpha, zorder=5)
             # Plot the centroid of this cluster
@@ -3760,14 +3765,14 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
                 a_group.profile_filters.m_avg_win = x
                 new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
                 this_df = pd.concat(new_a_group.data_frames)
-                xlabel = r'Moving average window $\ell_{maw}$ (dbar)'
+                xlabel = r'Moving average window $\ell$ (dbar)'
             if z_key == 'maw_size':
                 # Need to apply moving average window to original data, before
                 #   the data filters were applied, so make a new Analysis_Group
                 a_group.profile_filters.m_avg_win = z_list[i]
                 new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
                 this_df = pd.concat(new_a_group.data_frames)
-                zlabel = r'$\ell_{maw}=$'+str(z_list[i])+' dbar'
+                zlabel = r'$\ell=$'+str(z_list[i])+' dbar'
             if x_key == 'n_pfs':
                 this_df = this_df[this_df['prof_no'] <= pf_nos[x-1]].copy()
                 xlabel = 'Number of profiles included'
