@@ -369,7 +369,7 @@ class Plot_Parameters:
                         Optional: {'z_var':'m_pts', 'z_list':[90,120,240]} where
                         z_var can be any variable that var0 can be
     """
-    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, isopycnals=True, ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
+    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, isopycnals=False, ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
         # Add all the input parameters to the object
         self.plot_type = plot_type
         self.plot_scale = plot_scale
@@ -577,7 +577,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 if var in clstr_vars:
                     vars_to_keep.append(var_str)
                 # Add very specific variables directly to the list, including prefixes
-                if prefix in ['la', 'mc']:
+                if prefix in ['la']:
                     vars_to_keep.append(var)
                     vars_to_keep.append(var_str)
                 #
@@ -588,6 +588,15 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.remove('cluster')
             except:
                 foo = 2
+        # If adding isopycnals, make sure to keep press, SA, and iT to use with the 
+        #   function gsw.pot_rho_t_exact(SA,t,p,p_ref)
+        if pp.isopycnals == True:
+            if not 'press' in vars_to_keep:
+                vars_to_keep.append('press')
+            if not 'SA' in vars_to_keep:
+                vars_to_keep.append('SA')
+            if not 'iT' in vars_to_keep:
+                vars_to_keep.append('iT')
         # Add vars for the profile filters, if applicable
         scale = pp.plot_scale
         if scale == 'by_vert' or scale == 'by_layer':
@@ -645,9 +654,12 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
     # What's the plot scale?
     if plot_scale == 'by_vert':
         for ds in arr_of_ds:
+            # Find extra variables, if applicable
             ds = calc_extra_vars(ds, vars_to_keep)
             # Convert to a pandas data frame
             df = ds[vars_to_keep].to_dataframe()
+            # Find average variables, if applicable
+            # df = calc_avg_vars(df, vars_to_keep)
             # Add a notes column
             df['notes'] = ''
             #   If the m_avg_win is not None, take the moving average of the data
@@ -968,6 +980,81 @@ def calc_extra_vars(ds, vars_to_keep):
 
 ################################################################################
 
+# def calc_avg_vars(df, vars_to_keep, eps=0.25):
+#     """
+#     Takes in a pandas data frame and a list of variables and, if there are average 
+#     variables to calculate, it will add those to the data frame
+# 
+#     df                  A pandas data frame of the data to plot
+#     vars_to_keep        A list of variables to keep for the analysis
+#     eps                 The step size of the interpolation grid
+#     """
+#     # Check for variables to calculate
+#     avg_vars = []
+#     for this_var in vars_to_keep:
+#         if 'avg_' in this_var:
+#             # Split the prefix from the original variable (assumes an underscore split)
+#             split_var = this_var.split('_', 1)
+#             prefix = split_var[0]
+#             try:
+#                 var = split_var[1]
+#             except:
+#                 var = None
+#             print('prefix:',prefix,'- var:',var)
+#             if not isinstance(var, type(None)):
+#                 # Add this variable to the list
+#                 avg_vars.append(var)
+#             #
+#         #
+#     #
+#     # If there are variables to find the average profile of, continue
+#     if len(avg_vars) > 0:
+#         # Find the interpolation grid
+#         v_min = min(df[v_key].values)
+#         v_max = max(df[v_key].values)
+#         v_int_grid = np.arange(v_min, v_max, eps)
+#         print(v_int_grid)
+#         # Make a new blank column in the data frame for this variable
+#         interp_pfs = []
+#         # Find the unique profiles for this instrmt
+#         pfs_in_this_df = np.unique(np.array(df['prof_no']))
+#         # Loop through each profile to create a list of dataframes
+#         for pf_no in pfs_in_this_df:
+#                     # print('')
+#                     # print('profile:',pf_no)
+#                     # Get just the part of the dataframe for this profile
+#                     pf_df = df[df['prof_no']==pf_no]
+#                     # Drop `Layer` dimension to reduce size of data arrays
+#                     #   (need to make the index `Vertical` a column first)
+#                     pf_df_v = pf_df.reset_index(level=['Vertical'])
+#                     pf_df_v.drop_duplicates(inplace=True, subset=['Vertical'])
+#                     # Find bounds of the vertical extent
+#                     v_min = min(pf_df_v[v_key].values)
+#                     v_max = max(pf_df_v[v_key].values)
+#                     # Make a new vertical to interpolate onto
+#                     v_int_grid = np.arange(v_min, v_max, eps)
+#                     print(v_int_grid)
+#                     # exit(0)
+#                     # Find vars
+#                     temp0 = pf_df_v['CT']
+#                     salt0 = pf_df_v['SP']
+#                     # Define interpolated functions
+#                     temp1 = interpolate.interp1d(pf_df_v[v_key],temp0)
+#                     salt1 = interpolate.interp1d(pf_df_v[v_key],salt0)
+#                     # Interpolate temp and salt on new p axis
+#                     t_new = temp1(v_int_grid)
+#                     s_new = salt1(v_int_grid)
+#                     plt.plot(t_new, v_int_grid)
+#                     plt.show()
+#                     exit(0)
+#                     interp_pfs.append(pf_df_v)
+#                 # Make a dataframe with adjusted xvar and tvar
+#         df_clstrs = pd.DataFrame({x_key:xvar, tw_x_key:tvar, y_key:pf_df[y_key], 'cluster':pf_df['cluster'], 'clst_prob':pf_df['clst_prob']})
+#     # 
+#     return df
+
+################################################################################
+
 def get_axis_labels(pp, var_attr_dicts):
     """
     Using the dictionaries of variable attributes, this adds the xlabel and ylabel
@@ -1075,7 +1162,7 @@ def get_axis_label(var_key, var_attr_dicts):
     elif 'la_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[3:]
-        return r'$\Theta_{LA}$ ($^\circ$C)' 
+        return r"$\Theta'$ ($^\circ$C)"
         # return 'Local anomaly of '+ var_attr_dicts[0][var_str]['label']
     # Check for cluster average variables
     elif 'ca_' in var_key:
@@ -1096,7 +1183,7 @@ def get_axis_label(var_key, var_attr_dicts):
     elif 'cor_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
         var_str = var_key[4:]
-        return r'Overlap Ratio $OR_{S_P}$'
+        return r'Normalized inter-cluster range $IR_{S_P}$'
         # return r'Overlap Ratio of '+ var_attr_dicts[0][var_str]['label']
     elif 'com_' in var_key:
         # Take out the first 3 characters of the string to leave the original variable name
@@ -1364,7 +1451,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 print('\t- Set y_lims to',pp.ax_lims['y_lims'])
             except:
                 foo = 2
-        # ax.set_title(plt_title)
+        ax.set_title(plt_title)
     elif n_subplots > 1 and n_subplots < 10:
         rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
         n_subplots = int(np.floor(n_subplots))
@@ -1380,13 +1467,14 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 # If on the top row
                 if i < cols == 0:
                     tight_layout_h_pad = -1
-                    # ax.set_title(plt_title)
+                    ax.set_title(plt_title)
                 # If in the bottom row
                 elif i >= n_subplots-cols:
                     ax.set_xlabel(xlabel)
             else:
-                # ax.set_title(plt_title)
+                ax.set_title(plt_title)
                 ax.set_xlabel(xlabel)
+            ax.set_title(plt_title)
             if use_same_y_axis:
                 # If in the far left column
                 if i%cols == 0:
@@ -1781,7 +1869,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Check whether to plot isopycnals
             if pp.isopycnals:
-                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -1859,7 +1947,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Check whether to plot isopycnals
             if pp.isopycnals:
-                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -1910,7 +1998,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 lgnd = ax.legend(handles=lgnd_hndls)
             # Check whether to plot isopycnals
             if pp.isopycnals:
-                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -1952,7 +2040,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
             if pp.isopycnals:
-                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2011,7 +2099,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
             if pp.isopycnals:
-                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2035,7 +2123,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
             if pp.isopycnals:
-                add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
             #
         else:
@@ -2291,11 +2379,12 @@ def make_subplot(ax, a_group, fig, ax_pos):
 # Auxiliary plotting functions #################################################
 ################################################################################
 
-def add_isopycnals(ax, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
+def add_isopycnals(ax, df, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
     """
     Adds lines of constant density anomaly, if applicable
 
     ax          The main axis on which to format
+    df          Pandas dataframe of the data these isopycnals will be plotted under
     x_key       The string of the name for the x data on the main axis
     y_key       The string of the name for the y data on the main axis
     tw_x_key    The string of the name for the x data on the twin axis
@@ -2306,89 +2395,168 @@ def add_isopycnals(ax, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=None,
     # Check whether to make isopycnals or not
     intersect_arr = set([x_key, y_key, tw_x_key, tw_y_key]).intersection(['iT', 'CT', 'PT', 'SP', 'SA'])
     if len(intersect_arr) < 2:
-        return
+        intersect_arr = set([x_key, y_key, tw_x_key, tw_y_key]).intersection(['aiT','aCT','aPT','BSP','BSt','BSA'])
+        if len(intersect_arr) < 2:
+            return
+        else:
+            ## Plot lines of slope -1 all across the domain
+            # Get bounds of axes
+            x_bnds = ax.get_xbound()
+            y_bnds = ax.get_ybound()
+            print('x_bnds:',x_bnds)
+            print('y_bnds:',y_bnds)
+            x_arr = np.linspace(x_bnds[0], x_bnds[1], 50)
+            y_arr = [(y_bnds[1]-y_bnds[0])/2]*len(x_arr)
+            # Plot the least-squares fit line for this cluster through the centroid
+            for i in range(len(x_arr)):
+                ax.axline((x_arr[i], y_arr[i]), slope=-1, color=std_clr, alpha=0.2, linestyle='--', zorder=1)
+            # Set offset on axis, incredibly specific for making a nice plot for the paper
+            ax.ticklabel_format(axis='x', style='sci', scilimits=sci_lims, useMathText=True, useOffset=0.0268)
+            return
     print('\t- Adding isopycnals')
+    # Zoom in on data so there's no border space
+    x_var_s = df.loc[:,x_key]
+    x_var_min = x_var_s.min()
+    x_var_max = x_var_s.max()
+    ax.set_xlim([x_var_min, x_var_max])
+    y_var_s = df.loc[:,y_key]
+    y_var_min = y_var_s.min()
+    y_var_max = y_var_s.max()
+    ax.set_ylim([y_var_min, y_var_max])
     # Get bounds of axes
     x_bnds = ax.get_xbound()
     y_bnds = ax.get_ybound()
+    print('x_bnds:',x_bnds)
+    print('y_bnds:',y_bnds)
+    # Figure out which orientation to make the grid
+    if x_key in ['iT','CT','PT']:
+        iso_x_key = 'iT'
+    elif x_key in ['SP','SA']:
+        iso_x_key = 'SA'
+    if y_key in ['iT','CT','PT']:
+        iso_y_key = 'iT'
+    elif y_key in ['SP','SA']:
+        iso_y_key = 'SA'
+    #
+    # Find the pressure bounds of the data
+    # for var in ['press', 'SP', 'SA', 'CT', 'iT']:
+    #     var_s = df.loc[:, var]
+    #     print(var,'mean:',var_s.mean())
+    #     print(var,'median:',var_s.median())
+    #     print(var,'min:',var_s.min())
+    #     print(var,'max:',var_s.max())
+    #     print('')
+    press_s = df.loc[:, 'press']
+    p_ref = press_s.median()
+    print('p_ref:',p_ref)
+    p_min = press_s.min()
+    p_max = press_s.max()
+    print('iso_x_key:',iso_x_key)
+    # Get bounds of iso keys that fit within axes bounds
+    iso_x_min = df[(df[x_key] == x_var_min)].loc[:,iso_x_key].min()
+    iso_x_max = df[(df[x_key] == x_var_max)].loc[:,iso_x_key].max()
+    print('iso_x min and max:',iso_x_min, iso_x_max)
+    print('iso_y_key:',iso_y_key)
+    iso_y_min = df[(df[y_key] == y_var_min)].loc[:,iso_y_key].min()
+    iso_y_max = df[(df[y_key] == y_var_max)].loc[:,iso_y_key].max()
+    print('iso_y min and max:',iso_y_min, iso_y_max)
     # Number of points for the mesh grid in both directions
     n_grid_pts = 100
-    # Make meshgrid
-    x_arr = np.arange(x_bnds[0], x_bnds[1], abs(x_bnds[1]-x_bnds[0])/n_grid_pts)
-    y_arr = np.arange(y_bnds[0], y_bnds[1], abs(y_bnds[1]-y_bnds[0])/n_grid_pts)
+    # Make meshgrid for calculating
+    iso_x_arr = np.arange(iso_x_min, iso_x_max, abs(iso_x_max-iso_x_min)/n_grid_pts)
+    iso_y_arr = np.arange(iso_y_min, iso_y_max, abs(iso_y_max-iso_y_min)/n_grid_pts)
+    iso_X, iso_Y = np.meshgrid(iso_x_arr, iso_y_arr)
+    # Make grid of pressure values
+    P = iso_X*0+p_ref
+    # Calculate potential density referenced to p_ref
+    if iso_x_key == 'SA' and iso_y_key == 'iT':
+        Z = gsw.pot_rho_t_exact(iso_X, iso_Y, P, p_ref)-1000
+        Z0 = gsw.pot_rho_t_exact(iso_X, iso_Y, iso_X*0+p_min, p_min)-1000
+        Z1 = gsw.pot_rho_t_exact(iso_X, iso_Y, iso_X*0+p_max, p_max)-1000
+    # Make meshgrid for plotting
+    x_arr = np.arange(x_var_min, x_var_max, abs(x_var_max-x_var_min)/n_grid_pts)
+    y_arr = np.arange(y_var_min, y_var_max, abs(y_var_max-y_var_min)/n_grid_pts)
     X, Y = np.meshgrid(x_arr, y_arr)
+    ## Attempting to interpolate the pressure field
+    # Create class instance on the original pressure data
+    # press_interp_inst = interpolate.RBFInterpolator()
     # Calculate the contours based on which variables are given
     #   Note: gsw.sigma0(SA, CT), so make sure to convert if needed
-    if x_key == 'SA':
-        if y_key == 'CT':
-            Z = gsw.sigma0(X, Y)
-        elif y_key == 'PT':
-            Z = gsw.sigma0(X, gsw.CT_from_pt(X, Y))
-        elif y_key == 'iT':
-            # Make dummy values for pressure
-            p_arr = X*0         # Reference to the surface, 0 dbar
-            Z = gsw.sigma0(X, gsw.CT_from_t(X, Y, p_arr))
-        else:
-            return
-    elif x_key == 'SP':
-        # Make dummy values for pressure, longitude, and latitude
-        p_arr = X*0             # Reference to the surface, 0 dbar
-        lon_arr = X*0-137       # 137 W is about where ITP2 was
-        lat_arr = X*0+77        # 77 N is about where ITP2 was
-        # Calculate SA from SP and dummy values
-        SA_arr = gsw.SA_from_SP(X, p_arr, lon_arr, lat_arr)
-        if y_key == 'CT':
-            Z = gsw.sigma0(SA_arr, Y)
-        elif y_key == 'PT':
-            Z = gsw.sigma0(SA_arr, gsw.CT_from_pt(SA_arr, Y))
-        elif y_key == 'iT':
-            Z = gsw.sigma0(SA_arr, gsw.CT_from_t(SA_arr, Y, p_arr))
-        else:
-            return
-        #
-    elif x_key == 'CT':
-        if y_key == 'SA':
-            Z = gsw.sigma0(Y, X)
-        elif y_key == 'SP':
-            # Make dummy values for pressure, longitude, and latitude
-            p_arr = X*0             # Reference to the surface, 0 dbar
-            lon_arr = X*0-137       # 137 W is about where ITP2 was
-            lat_arr = X*0+77        # 77 N is about where ITP2 was
-            # Calculate SA from SP and dummy values
-            SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
-            Z = gsw.sigma0(SA_arr, X)
-        #
-    elif x_key == 'PT':
-        if y_key == 'SA':
-            Z = gsw.sigma0(Y, gsw.CT_from_pt(Y, X))
-        elif y_key == 'SP':
-            # Make dummy values for pressure, longitude, and latitude
-            p_arr = X*0             # Reference to the surface, 0 dbar
-            lon_arr = X*0-137       # 137 W is about where ITP2 was
-            lat_arr = X*0+77        # 77 N is about where ITP2 was
-            # Calculate SA from SP and dummy values
-            SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
-            Z = gsw.sigma0(SA_arr, gsw.CT_from_pt(SA_arr, X))
-        #
-    elif x_key == 'iT':
-        if y_key == 'SA':
-            # Make dummy values for pressure, longitude, and latitude
-            p_arr = X*0             # Reference to the surface, 0 dbar
-            Z = gsw.sigma0(Y, gsw.CT_from_t(Y, X, p_arr))
-        elif y_key == 'SP':
-            # Make dummy values for pressure, longitude, and latitude
-            p_arr = X*0             # Reference to the surface, 0 dbar
-            lon_arr = X*0-137       # 137 W is about where ITP2 was
-            lat_arr = X*0+77        # 77 N is about where ITP2 was
-            # Calculate SA from SP and dummy values
-            SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
-            Z = gsw.sigma0(SA_arr, gsw.CT_from_t(Y, X, p_arr))
+    # if x_key == 'SA':
+    #     if y_key == 'CT':
+    #         Z = gsw.sigma0(X, Y)
+    #     elif y_key == 'PT':
+    #         Z = gsw.sigma0(X, gsw.CT_from_pt(X, Y))
+    #     elif y_key == 'iT':
+    #         # Make dummy values for pressure
+    #         p_arr = X*0         # Reference to the surface, 0 dbar
+    #         Z = gsw.sigma0(X, gsw.CT_from_t(X, Y, p_arr))
+    #     else:
+    #         return
+    # elif x_key == 'SP':
+    #     # Make dummy values for pressure, longitude, and latitude
+    #     p_arr = X*0             # Reference to the surface, 0 dbar
+    #     lon_arr = X*0-137       # 137 W is about where ITP2 was
+    #     lat_arr = X*0+77        # 77 N is about where ITP2 was
+    #     # Calculate SA from SP and dummy values
+    #     SA_arr = gsw.SA_from_SP(X, p_arr, lon_arr, lat_arr)
+    #     if y_key == 'CT':
+    #         Z = gsw.sigma0(SA_arr, Y)
+    #     elif y_key == 'PT':
+    #         Z = gsw.sigma0(SA_arr, gsw.CT_from_pt(SA_arr, Y))
+    #     elif y_key == 'iT':
+    #         Z = gsw.sigma0(SA_arr, gsw.CT_from_t(SA_arr, Y, p_arr))
+    #     else:
+    #         return
+    #     #
+    # elif x_key == 'CT':
+    #     if y_key == 'SA':
+    #         Z = gsw.sigma0(Y, X)
+    #     elif y_key == 'SP':
+    #         # Make dummy values for pressure, longitude, and latitude
+    #         p_arr = X*0             # Reference to the surface, 0 dbar
+    #         lon_arr = X*0-137       # 137 W is about where ITP2 was
+    #         lat_arr = X*0+77        # 77 N is about where ITP2 was
+    #         # Calculate SA from SP and dummy values
+    #         SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
+    #         Z = gsw.sigma0(SA_arr, X)
+    #     #
+    # elif x_key == 'PT':
+    #     if y_key == 'SA':
+    #         Z = gsw.sigma0(Y, gsw.CT_from_pt(Y, X))
+    #     elif y_key == 'SP':
+    #         # Make dummy values for pressure, longitude, and latitude
+    #         p_arr = X*0             # Reference to the surface, 0 dbar
+    #         lon_arr = X*0-137       # 137 W is about where ITP2 was
+    #         lat_arr = X*0+77        # 77 N is about where ITP2 was
+    #         # Calculate SA from SP and dummy values
+    #         SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
+    #         Z = gsw.sigma0(SA_arr, gsw.CT_from_pt(SA_arr, X))
+    #     #
+    # elif x_key == 'iT':
+    #     if y_key == 'SA':
+    #         # Make dummy values for pressure, longitude, and latitude
+    #         p_arr = X*0             # Reference to the surface, 0 dbar
+    #         Z = gsw.sigma0(Y, gsw.CT_from_t(Y, X, p_arr))
+    #     elif y_key == 'SP':
+    #         # Make dummy values for pressure, longitude, and latitude
+    #         p_arr = X*0             # Reference to the surface, 0 dbar
+    #         lon_arr = X*0-137       # 137 W is about where ITP2 was
+    #         lat_arr = X*0+77        # 77 N is about where ITP2 was
+    #         # Calculate SA from SP and dummy values
+    #         SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
+    #         Z = gsw.sigma0(SA_arr, gsw.CT_from_t(Y, X, p_arr))
         #
     #
     # this_cmap = get_color_map('sigma')
     this_cmap = plt.cm.get_cmap('winter').reversed()
-    CS = ax.contour(X, Y, Z, cmap=this_cmap, alpha=0.5, zorder=1)
+    # CS = ax.contour(X, Y, Z, cmap=this_cmap, alpha=0.5, zorder=1)
+    CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.5, zorder=1)
     ax.clabel(CS, inline=True, fontsize=10)
+    CS0 = ax.contour(X, Y, Z0, colors=std_clr, alpha=0.5, zorder=1, linestyles='dotted')
+    ax.clabel(CS0, inline=True, fontsize=10)
+    CS1 = ax.contour(X, Y, Z1, colors=std_clr, alpha=0.5, zorder=1, linestyles='dashed')
+    ax.clabel(CS1, inline=True, fontsize=10)
 
 ################################################################################
 
@@ -3651,6 +3819,42 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
         # Mark outliers, if specified
         if mrk_outliers:
             mark_outliers(ax, df, x_key, y_key, mk_size=m_size, mrk_clr='red')
+        # Add some lines if plotting cRL
+        if 'cRL' in [x_key, y_key]:
+            # Get bounds of axes
+            x_bnds = ax.get_xbound()
+            y_bnds = ax.get_ybound()
+            x_span = abs(x_bnds[1] - x_bnds[0])
+            y_span = abs(y_bnds[1] - y_bnds[0])
+            if x_key == 'cRL':
+                # Add line at R_L = -1
+                ax.axvline(-1, color=std_clr, alpha=0.2, linestyle='--')
+                ax.annotate(r'$R_L=-1$', xy=(-1+x_span/15,y_bnds[0]+y_span/6), xycoords='data', color=std_clr, weight='bold', alpha=0.2, zorder=12)
+                # Plot exponential fit line
+                if True:
+                    # Get the data without the outliers
+                    x_data = df[df['out_'+x_key] == False][x_key].astype('float')
+                    y_data = df[df['out_'+x_key] == False][y_key].astype('float')
+                    # Get the means and standard deviations
+                    x_mean = np.mean(x_data)
+                    x_stdv = np.std(x_data)
+                    y_mean = np.mean(y_data)
+                    y_stdv = np.std(y_data)
+                    # Make an array of values to plot log fit line (needs to be all negative values)
+                    x_arr = np.linspace(x_bnds[0], 0, 25)
+                    # Find the slope of the total least-squares of the points in semilogx
+                    m, c, sd_m, sd_c = orthoregress(np.log(-1*x_data), y_data)
+                    print('sd_m:',sd_m,'sd_c:',sd_c)
+                    # Plot the semilogx least-squares fit on the non-semilogx axes
+                    ax.plot(x_arr, m*np.log(-1*x_arr)+c, color=alt_std_clr)
+                    # Add annotation to say what the line is
+                    # line_label = "$%.2f\\ln(-R_L)+%.2f $"%(m,c)
+                    line_label = "$R_L = -\exp( %.2f - p/ %.2f )$"%(c/abs(m),abs(m))
+                    ax.annotate(line_label, xy=(x_mean+2*x_stdv,y_mean+y_stdv), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
+                    # Limit the y axis
+                    ax.set_ylim(y_bnds)
+                #
+            #
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
         m_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(m_pts))
