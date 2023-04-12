@@ -2551,12 +2551,12 @@ def add_isopycnals(ax, df, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=N
     # this_cmap = get_color_map('sigma')
     this_cmap = plt.cm.get_cmap('winter').reversed()
     # CS = ax.contour(X, Y, Z, cmap=this_cmap, alpha=0.5, zorder=1)
-    CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.5, zorder=1)
+    CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.2, zorder=1, linestyles='dashed')
     ax.clabel(CS, inline=True, fontsize=10)
-    CS0 = ax.contour(X, Y, Z0, colors=std_clr, alpha=0.5, zorder=1, linestyles='dotted')
-    ax.clabel(CS0, inline=True, fontsize=10)
-    CS1 = ax.contour(X, Y, Z1, colors=std_clr, alpha=0.5, zorder=1, linestyles='dashed')
-    ax.clabel(CS1, inline=True, fontsize=10)
+    # CS0 = ax.contour(X, Y, Z0, colors=std_clr, alpha=0.5, zorder=1, linestyles='dotted')
+    # ax.clabel(CS0, inline=True, fontsize=10)
+    # CS1 = ax.contour(X, Y, Z1, colors=std_clr, alpha=0.5, zorder=1, linestyles='solid')
+    # ax.clabel(CS1, inline=True, fontsize=10)
 
 ################################################################################
 
@@ -3819,6 +3819,15 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
         # Mark outliers, if specified
         if mrk_outliers:
             mark_outliers(ax, df, x_key, y_key, mk_size=m_size, mrk_clr='red')
+        if 'cor_' in x_key:
+            # Get bounds of axes
+            x_bnds = ax.get_xbound()
+            y_bnds = ax.get_ybound()
+            x_span = abs(x_bnds[1] - x_bnds[0])
+            y_span = abs(y_bnds[1] - y_bnds[0])
+            # Add line at R_L = -1
+            ax.axvline(1, color=std_clr, alpha=0.5, linestyle='--')
+            ax.annotate(r'$IR_{S_P}=1$', xy=(1+x_span/10,y_bnds[0]+y_span/6), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
         # Add some lines if plotting cRL
         if 'cRL' in [x_key, y_key]:
             # Get bounds of axes
@@ -3828,8 +3837,8 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
             y_span = abs(y_bnds[1] - y_bnds[0])
             if x_key == 'cRL':
                 # Add line at R_L = -1
-                ax.axvline(-1, color=std_clr, alpha=0.2, linestyle='--')
-                ax.annotate(r'$R_L=-1$', xy=(-1+x_span/15,y_bnds[0]+y_span/6), xycoords='data', color=std_clr, weight='bold', alpha=0.2, zorder=12)
+                ax.axvline(-1, color=std_clr, alpha=0.5, linestyle='--')
+                ax.annotate(r'$R_L=-1$', xy=(-1+x_span/15,y_bnds[0]+y_span/6), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
                 # Plot exponential fit line
                 if True:
                     # Get the data without the outliers
@@ -3852,7 +3861,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                     line_label = "$R_L = -\exp( %.2f - p/ %.2f )$"%(c/abs(m),abs(m))
                     ax.annotate(line_label, xy=(x_mean+2*x_stdv,y_mean+y_stdv), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
                     # Limit the y axis
-                    ax.set_ylim(y_bnds)
+                    ax.set_ylim((y_bnds[1],y_bnds[0]))
                 #
             #
         # Add legend to report the total number of points and notes on the data
