@@ -182,7 +182,7 @@ def plot_comparison(ax, Lu2022_df, my_df, pp):
     else:
         invert_y_axis = False
     # Plot every point the same color, size, and marker for Lu et al. 2022
-    ax.scatter(Lu2022_df[x_key], Lu2022_df[y_key], color='#db6d00', s=Lu_mrk_size, marker=std_marker, zorder=5, label='Lu et al. 2022')
+    ax.scatter(Lu2022_df[x_key], Lu2022_df[y_key], color=std_clr, s=Lu_mrk_size, marker=std_marker, zorder=5, label='Lu et al. 2022')
     # Plot my clusters, selecting color and marker shape by cluster id
     for i in my_df['cluster'].values:
         # Decide on the color and symbol, don't go off the end of the arrays
@@ -192,84 +192,18 @@ def plot_comparison(ax, Lu2022_df, my_df, pp):
         df_this_cluster = my_df[my_df['cluster']==i]
         ax.scatter(df_this_cluster[x_key], df_this_cluster[y_key], color=my_clr, s=my_mrk_size, marker=my_mkr, zorder=3)
         # Mark outliers
-        if df_this_cluster['out_1st'].values[0]:
-            ax.scatter(df_this_cluster[x_key], df_this_cluster[y_key], edgecolors='r', s=my_mrk_size*5, marker='o', facecolors='none', zorder=2)
+        # if df_this_cluster['out_1st'].values[0]:
+        #     ax.scatter(df_this_cluster[x_key], df_this_cluster[y_key], edgecolors='r', s=my_mrk_size*5, marker='o', facecolors='none', zorder=2)
         # if df_this_cluster['out_2nd'].values[0]:
         #     ax.scatter(df_this_cluster[x_key], df_this_cluster[y_key], edgecolors='b', s=my_mrk_size*5, marker='o', facecolors='none', zorder=2)
+        if df_this_cluster['out_nir_SP'].values[0] or df_this_cluster['out_cRL'].values[0]:
+            ax.scatter(df_this_cluster[x_key], df_this_cluster[y_key], edgecolors='r', s=my_mrk_size*5, marker='o', facecolors='none', zorder=2)
     # Add a standard legend
     ax.legend()
     # Check whether to plot isopycnals
     # if pp.isopycnals:
     #     add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
     return xlabel, ylabel, invert_y_axis
-
-################################################################################
-
-def plot_clstr_param_sweep(ax, tw_ax_x, df, pp, plt_title=None):
-    """
-    Plots the number of clusters found by HDBSCAN vs. the number of profiles
-    included in the data set
-
-    ax              The axis on which to make the plot
-    df              A pandas DataFrame
-    pp              A custom Plot Parameters object
-    """
-    # Get the dictionary stored in extra_args
-    cluster_plt_dict = pp.extra_args
-    # Set the main x and y data keys
-    x_key = pp.x_vars[0]
-    y_key = pp.y_vars[0]
-    # Check for twin axis data key
-    try:
-        tw_y_key = pp.y_vars[1]
-    except:
-        tw_y_key = None
-    # Check for a z variable
-    try:
-        z_key = cluster_plt_dict['z_var']
-        z_list = cluster_plt_dict['z_list']
-    except:
-        z_key = None
-        z_list = [0]
-    # Get a list of the column headings from the dataframe
-    # Check to make sure the x, y, and z keys are in the dataframe
-    # Set x and y labels
-    if x_key == 'maw_size':
-        xlabel = r'Moving average window $\ell_{maw}$ (dbar)'
-    elif x_key == 'm_pts':
-        xlabel = r'Minimum density threshold $m_{pts}$'
-    if y_key == 'DBCV':
-        ylabel = 'DBCV'
-    elif y_key == 'n_clusters':
-        ylabel = 'Number of clusters'
-    if tw_y_key:
-        if tw_y_key == 'DBCV':
-            tw_ylabel = 'DBCV'
-        elif tw_y_key == 'n_clusters':
-            tw_ylabel = 'Number of clusters'
-        #
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    # Loop through the different z values in the list
-    for i in range(len(z_list)):
-        # Set z label
-        if z_key == 'maw_size':
-            zlabel = r'$\ell_{maw}=$'+str(z_list[i])+' dbar'
-        elif z_key == 'm_pts':
-            zlabel = r'$m_{pts}=$: '+str(m_pts)
-        # Plot main axis
-        ax.plot(df[x_key], df[y_key], color=std_clr, linestyle=l_styles[i], label=zlabel)
-        if tw_y_key:
-            # Plot twin axis
-            tw_ax_x.plot(df[x_key], df[tw_y_key], color=alt_std_clr, linestyle=l_styles[i])
-            tw_ax_x.set_ylabel(tw_ylabel)
-            # Change color of the axis label on the twin axis
-            tw_ax_x.yaxis.label.set_color(alt_std_clr)
-            # Change color of the ticks on the twin axis
-            tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
-    if z_key:
-        ax.legend()
-    return xlabel, ylabel
 
 ################################################################################
 
