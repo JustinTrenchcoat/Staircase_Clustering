@@ -94,6 +94,7 @@ print('- Creating profile filtering objects')
 ################################################################################
 
 pfs_0 = ahf.Profile_Filters()
+pfs_1 = ahf.Profile_Filters(p_range=T2008_p_range)
 
 test_p_range = [200,400]
 pfs_maw_10  = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=10)
@@ -112,21 +113,25 @@ print('- Creating plotting parameter objects')
 
 ### Test plots
 pp_xy_default = ahf.Plot_Parameters()
-pp_test0 = ahf.Plot_Parameters(x_vars=['alpha'], y_vars=['beta'], clr_map='clr_all_same', legend=True, isopycnals=False, extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':100})
+pp_test0 = ahf.Plot_Parameters(x_vars=['alpha'], y_vars=['beta'], clr_map='clr_all_same', legend=True, extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':100})
 pp_og_ma_la_pf = ahf.Plot_Parameters(x_vars=['CT', 'ma_CT'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':[185], 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':210}, ax_lims=T2008_fig4_y_lims)
 pp_test1 = ahf.Plot_Parameters(x_vars=['cRL'], y_vars=['ca_press'], clr_map='clr_all_same', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts, 'plot_slopes':True}, legend=True)
 # pp_test1 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['hist'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':90})
 # pp_test1 = ahf.Plot_Parameters(x_vars=['pcs_press'], y_vars=['pca_press'], clr_map='density_hist', legend=True, extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':90, 'clr_min':0, 'clr_max':15, 'clr_ext':'max', 'xy_bins':250})
 # pp_test0 = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['lat'], clr_map='clr_all_same')
 pp_map = ahf.Plot_Parameters(plot_type='map', clr_map='dt_start')
-pp_pfs = ahf.Plot_Parameters(x_vars=['CT'], y_vars=['press'], first_dfs=[True,True], plot_type='profiles')
+
+pp_pfs0 = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['depth'], plot_type='profiles')
+pp_pfs1 = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['depth'], first_dfs=[True], plot_type='profiles')
+pp_pfs2 = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['depth'], finit_dfs=[True], plot_type='profiles')
+pp_pfs3 = ahf.Plot_Parameters(x_vars=['sigma','ma_sigma'], y_vars=['depth'], finit_dfs=[True], plot_type='profiles')
 
 ## Test Figures
 # The actual clustering done for reproducing figures from Timmermans et al. 2008
 pp_Lu2022_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':Lu2022_m_pts}, legend=True)
 
 ## Testing impact of maw_size
-pp_CT_SP  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='clr_all_same', legend=False, isopycnals=False)
+pp_CT_SP  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='clr_all_same', legend=False)
 pp_CT_pfs = ahf.Plot_Parameters(x_vars=['CT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':T2008_fig4_pfs})
 pp_ma_CT_SP  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['ma_CT'], clr_map='clr_all_same', legend=False)
 pp_ma_CT_pfs = ahf.Plot_Parameters(x_vars=['ma_CT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':T2008_fig4_pfs})
@@ -153,7 +158,7 @@ pp_ITP3_ps_n_pfs  = ahf.Plot_Parameters(x_vars=['n_pfs'], y_vars=['n_clusters','
 
 ## Evaluating clusterings with the overlap ratio and lateral density ratio
 # Choose the value of m_pts depending on which ITP to evaluate the clustering of
-# eval_m_pts = T2008_m_pts
+eval_m_pts = T2008_m_pts
 eval_m_pts = Lu2022_m_pts
 pp_press_nir   = ahf.Plot_Parameters(x_vars=['nir_press'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':eval_m_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=True)
 pp_temp_nir   = ahf.Plot_Parameters(x_vars=['nir_CT'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':eval_m_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=True)
@@ -168,11 +173,9 @@ pp_T2008_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='c
 ## Reproducing Timmermans et al. 2008 Figure 4, with cluster coloring and 2 extra profiles
 pp_T2008_fig4  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, legend=True, ax_lims=T2008_fig4_y_lims)
 ## Reproducing Timmermans et al. 2008 Figure 5a, but with cluster coloring
-pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, ax_lims=T2008_fig5a_ax_lims, legend=False, isopycnals=True)
-# pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, ax_lims=None, legend=False, isopycnals=True)
+pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, ax_lims=T2008_fig5a_ax_lims, legend=False)
 ## Reproducing Timmermans et al. 2008 Figure 6a, but with cluster coloring
-pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, ax_lims=T2008_fig6a_ax_lims, legend=False, isopycnals=True)
-# pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, ax_lims=None, legend=False, isopycnals=True)
+pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'isopycnals':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, ax_lims=T2008_fig6a_ax_lims, legend=False)
 
 ## Tracking clusters across a subset of profiles
 pp_ITP2_some_pfs_0  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':ITP2_some_pfs_0, 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts}, legend=False, ax_lims=ITP2_some_pfs_ax_lims_0)
@@ -196,7 +199,12 @@ print('- Creating analysis group objects')
 # my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_test0)
 # my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_0, pp_test0)
 # my_group0 = ahf.Analysis_Group(ds_ITP1_all, pfs_0, pp_map)
-my_group0 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_0, pp_pfs)
+
+# Finding the typical gradients of example profile
+# pf_test0 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_1, pp_pfs0, plot_title='')
+# pf_test1 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_1, pp_pfs1, plot_title='')
+# pf_test2 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_1, pp_pfs2, plot_title='')
+# pf_test3 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_1, pp_pfs3, plot_title='')
 
 ## Test figures
 ## Viewing example profiles with original, moving average, and local anomaly 
@@ -258,7 +266,7 @@ my_group0 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_0, pp_pfs)
 # group_T2008_clstr = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_clstr, plot_title='')
 # group_T2008_clstr2 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_clstr2, plot_title='stretched')
 # group_T2008_fig4  = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig4, plot_title='')
-# group_T2008_fig5a = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig5a, plot_title='')
+group_T2008_fig5a = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig5a, plot_title='')
 # group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig6a, plot_title='')
 
 ## Tracking clusters across a subset of profiles
@@ -281,9 +289,11 @@ print('- Creating outputs')
 # ahf.make_figure([group_T2008_fig4])#, filename='test.pickle')
 # ahf.make_figure([group_salt_nir])
 # ahf.make_figure([group_ps_n_pfs])
-ahf.make_figure([my_group0])#, filename='test.pickle')
+# ahf.make_figure([my_group0])#, filename='test.pickle')
 # ahf.make_figure([my_group0, my_group1])
 # ahf.make_figure([group_T2008_clstr])
+
+# ahf.make_figure([pf_test0, pf_test1, pf_test2, pf_test3])
 
 ## Test Figures
 # ahf.make_figure([group_press_hist, group_press_nir, group_sigma_hist, group_sigma_nir, group_temp_hist, group_temp_nir, group_salt_hist, group_salt_nir], filename='ITP2_nir_vs_press_all_var.pickle')
@@ -324,7 +334,7 @@ ahf.make_figure([my_group0])#, filename='test.pickle')
 # ahf.make_figure([group_T2008_clstr])
 # ahf.make_figure([group_T2008_clstr, group_T2008_clstr2], use_same_y_axis=False, use_same_x_axis=False)
 # ahf.make_figure([group_T2008_fig4])
-# ahf.make_figure([group_T2008_fig5a, group_T2008_fig6a])
+ahf.make_figure([group_T2008_fig5a])
 # ahf.make_figure([group_T2008_fig6a])
 
 ## Tracking clusters across a subset of profiles

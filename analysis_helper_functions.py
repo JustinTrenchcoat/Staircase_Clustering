@@ -171,7 +171,7 @@ l_styles = ['-', '--', '-.', ':']
 rand_seq = np.random.RandomState(1234567)
 
 # A list of variables for which the y-axis should be inverted so the surface is up
-y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'depth', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_PT', 'ca_PT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
+y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_PT', 'ca_PT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
 # A list of the variables on the `Layer` dimension
 layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
@@ -323,13 +323,16 @@ class Plot_Parameters:
                       'la_PT', 'la_SA','la_sigma'
                     Accepted 'by_layer' vars: ???
     legend          True/False whether to add a legend on this plot. Default:True
-    isopycnals      True/False whether to add isopycnal contour lines. Default:True
     ax_lims         An optional dictionary of the limits on the axes for the final plot
                       Ex: {'x_lims':[x_min,x_max], 'y_lims':[y_min,y_max]}
     first_dfs       A list of booleans of whether to take the first differences
                       of the plot_vars before analysis. Defaults to all False
-                    'xy' expects a list of 2, ex: [True, False]
-                    'map' and 'profiles' ignore this parameter
+                    'xy' and 'profiles' expect a list of 2, ex: [True, False]
+                    'map' and ignores this parameter
+    finit_dfs       A list of booleans of whether to take the finite differences
+                      of the plot_vars before analysis. Defaults to all False
+                    'xy' and 'profiles' expect a list of 2, ex: [True, False]
+                    'map' and ignores this parameter
     clr_map         A string to determine what color map to use in the plot
                     'xy' can use 'clr_all_same', 'clr_by_source',
                       'clr_by_instrmt', 'density_hist', 'cluster', or any
@@ -366,8 +369,11 @@ class Plot_Parameters:
                         'n_pfs' or 'maw_size', and yvar(s) must be 'DBCV' or 'n_clusters'
                         Optional: {'z_var':'m_pts', 'z_list':[90,120,240]} where
                         z_var can be any variable that var0 can be
+                    To plot isopycnal contour lines add {'isopycnals':X} where X is the 
+                        value in dbar to which the isopycnals are referenced or True 
+                        which will set the reference to the median pressure
     """
-    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, isopycnals=False, ax_lims=None, first_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
+    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, ax_lims=None, first_dfs=[False, False], finit_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
         # Add all the input parameters to the object
         self.plot_type = plot_type
         self.plot_scale = plot_scale
@@ -376,9 +382,9 @@ class Plot_Parameters:
         self.xlabels = [None,None]
         self.ylabels = [None,None]
         self.legend = legend
-        self.isopycnals = isopycnals
         self.ax_lims = ax_lims
         self.first_dfs = first_dfs
+        self.finit_dfs = finit_dfs
         self.clr_map = clr_map
         self.clabel = None
         # If trying to plot a map, make sure x and y vars are None
@@ -513,6 +519,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
         # Add all the plotting variables
         re_run_clstr = False
         plot_vars = pp.x_vars+pp.y_vars+[pp.clr_map]
+        # Check the extra arguments
         if not isinstance(pp.extra_args, type(None)):
             for key in pp.extra_args.keys():
                 if key in ['cl_x_var', 'cl_y_var']:
@@ -522,6 +529,21 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                     if pp.extra_args[key] == 'maw_size':
                         # Make sure the parameter sweeps run correctly 
                         vars_to_keep.append('press')
+                # If adding isopycnals, make sure to keep press, SA, and iT to use with the 
+                #   function gsw.pot_rho_t_exact(SA,t,p,p_ref)
+                if key == 'isopycnals':
+                    if not isinstance(pp.extra_args[key], type(None)):
+                        print('gonna add isopycnals')
+                        if not 'press' in vars_to_keep:
+                            vars_to_keep.append('press')
+                        if not 'SA' in vars_to_keep:
+                            vars_to_keep.append('SA')
+                        if not 'iT' in vars_to_keep:
+                            vars_to_keep.append('iT')
+                        #
+                    #
+                #
+            #
         # print('plot_vars:',plot_vars)
         # print('vars_available:',vars_available)
         for var in plot_vars:
@@ -586,15 +608,6 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.remove('cluster')
             except:
                 foo = 2
-        # If adding isopycnals, make sure to keep press, SA, and iT to use with the 
-        #   function gsw.pot_rho_t_exact(SA,t,p,p_ref)
-        if pp.isopycnals == True:
-            if not 'press' in vars_to_keep:
-                vars_to_keep.append('press')
-            if not 'SA' in vars_to_keep:
-                vars_to_keep.append('SA')
-            if not 'iT' in vars_to_keep:
-                vars_to_keep.append('iT')
         # Add vars for the profile filters, if applicable
         scale = pp.plot_scale
         if scale == 'by_vert' or scale == 'by_layer':
@@ -714,35 +727,98 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
                         for var in pp.x_vars:
                             # Replace the plot variable names
                             dvar = 'd_'+var
-                            # Make the given variable into first difference
+                            # Make the given variable into first differences
                             data_pf[dvar] = data_pf[var].diff()
-                            # Remove rows with null values (one per profile because of diff())
-                            data_pf = data_pf[data_pf[dvar].notnull()]
                         new_dfs.append(data_pf)
+                    # Re-form the dataframe
+                    df = pd.concat(new_dfs)
                     # Replace the plot variable names
                     for i in range(len(pp.x_vars)):
-                        pp.x_vars[i] = 'd_'+var
-                    df = pd.concat(new_dfs)
-                # Take first differences in y variables
+                        dvar = 'd_'+pp.x_vars[i]
+                        pp.x_vars[i] = dvar
+                        # Remove rows with null values (one per profile because of diff())
+                        df = df[df[dvar].notnull()]
+                    #
+                # Take finite differences in y variables
                 if len(first_dfs)==2 and first_dfs[1]:
                     # Loop across each profile
                     new_dfs = []
                     for pf in pfs:
                         # Find the data for just that profile
                         data_pf = df[df['prof_no'] == pf]
-                        # Loop across all x variables
+                        # Loop across all y variables
                         for var in pp.y_vars:
                             # Replace the plot variable names
                             dvar = 'd_'+var
-                            # Make the given variable into first difference
+                            # Make the given variable into first differences
                             data_pf[dvar] = data_pf[var].diff()
-                            # Remove rows with null values (one per profile because of diff())
-                            data_pf = data_pf[data_pf[dvar].notnull()]
                         new_dfs.append(data_pf)
-                    # Replace the plot variable names
-                    for i in range(len(pp.y_vars)):
-                        pp.y_vars[i] = 'd_'+var
+                    # Re-form the dataframe
                     df = pd.concat(new_dfs)
+                    # Repalce the plot varaible names
+                    for i in range(len(pp.y_vars)):
+                        dvar = 'd_'+pp.y_vars[i]
+                        pp.y_vars[i] = dvar
+                        # Remove rows with null values (one per profile because of diff())
+                        df = df[df[dvar].notnull()]
+                    #
+                # 
+            #
+            # Check whether or not to take finite differences
+            finit_dfs = pp.finit_dfs
+            if any(finit_dfs):
+                # Get list of profiles
+                pfs = np.unique(np.array(df['prof_no']))
+                # Take finite differences in x variables
+                if finit_dfs[0]:
+                    # Find y variable
+                    y_var = pp.y_vars[0]
+                    # Loop across each profile
+                    new_dfs = []
+                    for pf in pfs:
+                        # Find the data for just that profile
+                        data_pf = df[df['prof_no'] == pf]
+                        # Loop across all x variables
+                        for var in pp.x_vars:
+                            # Replace the plot variable names
+                            dvar = 'd_'+var
+                            # Make the given variable into finite difference
+                            data_pf[dvar] = data_pf[var].diff() / data_pf[y_var].diff()
+                        new_dfs.append(data_pf)
+                    # Re-form the dataframe
+                    df = pd.concat(new_dfs)
+                    # Replace the plot variable names
+                    for i in range(len(pp.x_vars)):
+                        dvar = 'd_'+pp.x_vars[i]
+                        pp.x_vars[i] = dvar
+                        # Remove rows with null values (one per profile because of diff())
+                        df = df[df[dvar].notnull()]
+                    #
+                # Take finite differences in y variables
+                if len(finit_dfs)==2 and finit_dfs[1]:
+                    # Find x variable
+                    x_var = pp.x_vars[0]
+                    # Loop across each profile
+                    new_dfs = []
+                    for pf in pfs:
+                        # Find the data for just that profile
+                        data_pf = df[df['prof_no'] == pf]
+                        # Loop across all y variables
+                        for var in pp.y_vars:
+                            # Replace the plot variable names
+                            dvar = 'd_'+var
+                            # Make the given variable into finite difference
+                            data_pf[dvar] = data_pf[var].diff() / data_pf[x_var].diff()
+                        new_dfs.append(data_pf)
+                    # Re-form the dataframe
+                    df = pd.concat(new_dfs)
+                    # Repalce the plot varaible names
+                    for i in range(len(pp.y_vars)):
+                        dvar = 'd_'+pp.y_vars[i]
+                        pp.y_vars[i] = dvar
+                        # Remove rows with null values (one per profile because of diff())
+                        df = df[df[dvar].notnull()]
+                    #
                 # 
             #
             # Append the filtered dataframe to the list
@@ -977,81 +1053,6 @@ def calc_extra_vars(ds, vars_to_keep):
 
 ################################################################################
 
-# def calc_avg_vars(df, vars_to_keep, eps=0.25):
-#     """
-#     Takes in a pandas data frame and a list of variables and, if there are average 
-#     variables to calculate, it will add those to the data frame
-# 
-#     df                  A pandas data frame of the data to plot
-#     vars_to_keep        A list of variables to keep for the analysis
-#     eps                 The step size of the interpolation grid
-#     """
-#     # Check for variables to calculate
-#     avg_vars = []
-#     for this_var in vars_to_keep:
-#         if 'avg_' in this_var:
-#             # Split the prefix from the original variable (assumes an underscore split)
-#             split_var = this_var.split('_', 1)
-#             prefix = split_var[0]
-#             try:
-#                 var = split_var[1]
-#             except:
-#                 var = None
-#             print('prefix:',prefix,'- var:',var)
-#             if not isinstance(var, type(None)):
-#                 # Add this variable to the list
-#                 avg_vars.append(var)
-#             #
-#         #
-#     #
-#     # If there are variables to find the average profile of, continue
-#     if len(avg_vars) > 0:
-#         # Find the interpolation grid
-#         v_min = min(df[v_key].values)
-#         v_max = max(df[v_key].values)
-#         v_int_grid = np.arange(v_min, v_max, eps)
-#         print(v_int_grid)
-#         # Make a new blank column in the data frame for this variable
-#         interp_pfs = []
-#         # Find the unique profiles for this instrmt
-#         pfs_in_this_df = np.unique(np.array(df['prof_no']))
-#         # Loop through each profile to create a list of dataframes
-#         for pf_no in pfs_in_this_df:
-#                     # print('')
-#                     # print('profile:',pf_no)
-#                     # Get just the part of the dataframe for this profile
-#                     pf_df = df[df['prof_no']==pf_no]
-#                     # Drop `Layer` dimension to reduce size of data arrays
-#                     #   (need to make the index `Vertical` a column first)
-#                     pf_df_v = pf_df.reset_index(level=['Vertical'])
-#                     pf_df_v.drop_duplicates(inplace=True, subset=['Vertical'])
-#                     # Find bounds of the vertical extent
-#                     v_min = min(pf_df_v[v_key].values)
-#                     v_max = max(pf_df_v[v_key].values)
-#                     # Make a new vertical to interpolate onto
-#                     v_int_grid = np.arange(v_min, v_max, eps)
-#                     print(v_int_grid)
-#                     # exit(0)
-#                     # Find vars
-#                     temp0 = pf_df_v['CT']
-#                     salt0 = pf_df_v['SP']
-#                     # Define interpolated functions
-#                     temp1 = interpolate.interp1d(pf_df_v[v_key],temp0)
-#                     salt1 = interpolate.interp1d(pf_df_v[v_key],salt0)
-#                     # Interpolate temp and salt on new p axis
-#                     t_new = temp1(v_int_grid)
-#                     s_new = salt1(v_int_grid)
-#                     plt.plot(t_new, v_int_grid)
-#                     plt.show()
-#                     exit(0)
-#                     interp_pfs.append(pf_df_v)
-#                 # Make a dataframe with adjusted xvar and tvar
-#         df_clstrs = pd.DataFrame({x_key:xvar, tw_x_key:tvar, y_key:pf_df[y_key], 'cluster':pf_df['cluster'], 'clst_prob':pf_df['clst_prob']})
-#     # 
-#     return df
-
-################################################################################
-
 def get_axis_labels(pp, var_attr_dicts):
     """
     Using the dictionaries of variable attributes, this adds the xlabel and ylabel
@@ -1119,6 +1120,17 @@ def get_axis_labels(pp, var_attr_dicts):
                 pp.ylabels[0] = 'First difference in '+pp.ylabels[0]
             if not isinstance(pp.ylabels[1], type(None)):
                 pp.ylabels[1] = 'First difference in '+pp.ylabels[1]
+    if any(pp.finit_dfs):
+        if pp.finit_dfs[0]:
+            if not isinstance(pp.xlabels[0], type(None)):
+                pp.xlabels[0] = r'Finite difference $\Delta$'+pp.xlabels[0]+'('+pp.ylabels[0]+')'
+            if not isinstance(pp.xlabels[1], type(None)):
+                pp.xlabels[1] = r'Finite difference $\Delta$'+pp.xlabels[1]+'('+pp.ylabels[0]+')'
+        if len(pp.finit_dfs)==2 and pp.finit_dfs[1]:
+            if not isinstance(pp.ylabels[0], type(None)):
+                pp.ylabels[0] = r'First difference $\Delta$'+pp.ylabels[0]+'('+pp.xlabels[0]+')'
+            if not isinstance(pp.ylabels[1], type(None)):
+                pp.ylabels[1] = r'First difference $\Delta$'+pp.ylabels[1]+'('+pp.xlabels[0]+')'
     if pp.plot_type == 'map':
         pp.plot_scale = 'by_pf'
         pp.x_vars  = ['lon']
@@ -1648,6 +1660,9 @@ def get_var_color(var):
 
     var         A string of the variable name to get the color for
     """
+    # Check whether taking first or finite differences
+    if 'd_' in var:
+        var = var[2:]
     # Build dictionary of available colors
     vars = {
             'aiT':'salmon',
@@ -1757,6 +1772,16 @@ def make_subplot(ax, a_group, fig, ax_pos):
     pp = a_group.plt_params
     plot_type = pp.plot_type
     clr_map   = pp.clr_map
+    # Check the extra arguments
+    add_isos = False
+    if not isinstance(pp.extra_args, type(None)):
+        extra_args = pp.extra_args
+        if 'isopycnals' in extra_args.keys():
+            isopycnals = extra_args['isopycnals']
+            if not isinstance(isopycnals, type(None)):
+                add_isos = True
+    else:
+        extra_args = False
     # Concatonate all the pandas data frames together
     df = pd.concat(a_group.data_frames)
     # Set variable as to whether to invert the y axis
@@ -1866,8 +1891,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Check whether to plot isopycnals
-            if pp.isopycnals:
-                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+            if add_isos:
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -1944,8 +1969,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Check whether to plot isopycnals
-            if pp.isopycnals:
-                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+            if add_isos:
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -1995,8 +2020,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             if pp.legend:
                 lgnd = ax.legend(handles=lgnd_hndls)
             # Check whether to plot isopycnals
-            if pp.isopycnals:
-                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+            if add_isos:
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2037,8 +2062,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
-            if pp.isopycnals:
-                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+            if add_isos:
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2096,8 +2121,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
-            if pp.isopycnals:
-                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+            if add_isos:
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2120,8 +2145,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Format the axes for datetimes, if necessary
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
-            if pp.isopycnals:
-                add_isopycnals(ax, df, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+            if add_isos:
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
             #
         else:
@@ -2377,7 +2402,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
 # Auxiliary plotting functions #################################################
 ################################################################################
 
-def add_isopycnals(ax, df, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
+def add_isopycnals(ax, df, x_key, y_key, p_ref=None, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
     """
     Adds lines of constant density anomaly, if applicable
 
@@ -2385,6 +2410,7 @@ def add_isopycnals(ax, df, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=N
     df          Pandas dataframe of the data these isopycnals will be plotted under
     x_key       The string of the name for the x data on the main axis
     y_key       The string of the name for the y data on the main axis
+    p_ref       Value of pressure to reference the isopycnals to. Default is surface (0 dbar)
     tw_x_key    The string of the name for the x data on the twin axis
     tw_ax_y     The twin y axis on which to format
     tw_y_key    The string of the name for the y data on the twin axis
@@ -2411,7 +2437,6 @@ def add_isopycnals(ax, df, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=N
             # Set offset on axis, incredibly specific for making a nice plot for the paper
             ax.ticklabel_format(axis='x', style='sci', scilimits=sci_lims, useMathText=True, useOffset=0.0268)
             return
-    print('\t- Adding isopycnals')
     # Zoom in on data so there's no border space
     x_var_s = df.loc[:,x_key]
     x_var_min = x_var_s.min()
@@ -2435,29 +2460,16 @@ def add_isopycnals(ax, df, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=N
         iso_y_key = 'iT'
     elif y_key in ['SP','SA']:
         iso_y_key = 'SA'
-    #
-    # Find the pressure bounds of the data
-    # for var in ['press', 'SP', 'SA', 'CT', 'iT']:
-    #     var_s = df.loc[:, var]
-    #     print(var,'mean:',var_s.mean())
-    #     print(var,'median:',var_s.median())
-    #     print(var,'min:',var_s.min())
-    #     print(var,'max:',var_s.max())
-    #     print('')
-    press_s = df.loc[:, 'press']
-    p_ref = press_s.median()
-    print('p_ref:',p_ref)
-    p_min = press_s.min()
-    p_max = press_s.max()
-    print('iso_x_key:',iso_x_key)
+    # If no reference pressure is given, take p_ref to be the median pressure
+    if p_ref==True:
+        press_s = df.loc[:, 'press']
+        p_ref = press_s.median()
+    print('\t- Adding isopycnals referenced to:',p_ref,'dbar')
     # Get bounds of iso keys that fit within axes bounds
     iso_x_min = df[(df[x_key] == x_var_min)].loc[:,iso_x_key].min()
     iso_x_max = df[(df[x_key] == x_var_max)].loc[:,iso_x_key].max()
-    print('iso_x min and max:',iso_x_min, iso_x_max)
-    print('iso_y_key:',iso_y_key)
     iso_y_min = df[(df[y_key] == y_var_min)].loc[:,iso_y_key].min()
     iso_y_max = df[(df[y_key] == y_var_max)].loc[:,iso_y_key].max()
-    print('iso_y min and max:',iso_y_min, iso_y_max)
     # Number of points for the mesh grid in both directions
     n_grid_pts = 100
     # Make meshgrid for calculating
@@ -2469,92 +2481,16 @@ def add_isopycnals(ax, df, x_key, y_key, tw_x_key=None, tw_ax_y=None, tw_y_key=N
     # Calculate potential density referenced to p_ref
     if iso_x_key == 'SA' and iso_y_key == 'iT':
         Z = gsw.pot_rho_t_exact(iso_X, iso_Y, P, p_ref)-1000
-        Z0 = gsw.pot_rho_t_exact(iso_X, iso_Y, iso_X*0+p_min, p_min)-1000
-        Z1 = gsw.pot_rho_t_exact(iso_X, iso_Y, iso_X*0+p_max, p_max)-1000
     # Make meshgrid for plotting
     x_arr = np.arange(x_var_min, x_var_max, abs(x_var_max-x_var_min)/n_grid_pts)
     y_arr = np.arange(y_var_min, y_var_max, abs(y_var_max-y_var_min)/n_grid_pts)
     X, Y = np.meshgrid(x_arr, y_arr)
-    ## Attempting to interpolate the pressure field
-    # Create class instance on the original pressure data
-    # press_interp_inst = interpolate.RBFInterpolator()
-    # Calculate the contours based on which variables are given
-    #   Note: gsw.sigma0(SA, CT), so make sure to convert if needed
-    # if x_key == 'SA':
-    #     if y_key == 'CT':
-    #         Z = gsw.sigma0(X, Y)
-    #     elif y_key == 'PT':
-    #         Z = gsw.sigma0(X, gsw.CT_from_pt(X, Y))
-    #     elif y_key == 'iT':
-    #         # Make dummy values for pressure
-    #         p_arr = X*0         # Reference to the surface, 0 dbar
-    #         Z = gsw.sigma0(X, gsw.CT_from_t(X, Y, p_arr))
-    #     else:
-    #         return
-    # elif x_key == 'SP':
-    #     # Make dummy values for pressure, longitude, and latitude
-    #     p_arr = X*0             # Reference to the surface, 0 dbar
-    #     lon_arr = X*0-137       # 137 W is about where ITP2 was
-    #     lat_arr = X*0+77        # 77 N is about where ITP2 was
-    #     # Calculate SA from SP and dummy values
-    #     SA_arr = gsw.SA_from_SP(X, p_arr, lon_arr, lat_arr)
-    #     if y_key == 'CT':
-    #         Z = gsw.sigma0(SA_arr, Y)
-    #     elif y_key == 'PT':
-    #         Z = gsw.sigma0(SA_arr, gsw.CT_from_pt(SA_arr, Y))
-    #     elif y_key == 'iT':
-    #         Z = gsw.sigma0(SA_arr, gsw.CT_from_t(SA_arr, Y, p_arr))
-    #     else:
-    #         return
-    #     #
-    # elif x_key == 'CT':
-    #     if y_key == 'SA':
-    #         Z = gsw.sigma0(Y, X)
-    #     elif y_key == 'SP':
-    #         # Make dummy values for pressure, longitude, and latitude
-    #         p_arr = X*0             # Reference to the surface, 0 dbar
-    #         lon_arr = X*0-137       # 137 W is about where ITP2 was
-    #         lat_arr = X*0+77        # 77 N is about where ITP2 was
-    #         # Calculate SA from SP and dummy values
-    #         SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
-    #         Z = gsw.sigma0(SA_arr, X)
-    #     #
-    # elif x_key == 'PT':
-    #     if y_key == 'SA':
-    #         Z = gsw.sigma0(Y, gsw.CT_from_pt(Y, X))
-    #     elif y_key == 'SP':
-    #         # Make dummy values for pressure, longitude, and latitude
-    #         p_arr = X*0             # Reference to the surface, 0 dbar
-    #         lon_arr = X*0-137       # 137 W is about where ITP2 was
-    #         lat_arr = X*0+77        # 77 N is about where ITP2 was
-    #         # Calculate SA from SP and dummy values
-    #         SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
-    #         Z = gsw.sigma0(SA_arr, gsw.CT_from_pt(SA_arr, X))
-    #     #
-    # elif x_key == 'iT':
-    #     if y_key == 'SA':
-    #         # Make dummy values for pressure, longitude, and latitude
-    #         p_arr = X*0             # Reference to the surface, 0 dbar
-    #         Z = gsw.sigma0(Y, gsw.CT_from_t(Y, X, p_arr))
-    #     elif y_key == 'SP':
-    #         # Make dummy values for pressure, longitude, and latitude
-    #         p_arr = X*0             # Reference to the surface, 0 dbar
-    #         lon_arr = X*0-137       # 137 W is about where ITP2 was
-    #         lat_arr = X*0+77        # 77 N is about where ITP2 was
-    #         # Calculate SA from SP and dummy values
-    #         SA_arr = gsw.SA_from_SP(Y, p_arr, lon_arr, lat_arr)
-    #         Z = gsw.sigma0(SA_arr, gsw.CT_from_t(Y, X, p_arr))
-        #
-    #
-    # this_cmap = get_color_map('sigma')
-    this_cmap = plt.cm.get_cmap('winter').reversed()
-    # CS = ax.contour(X, Y, Z, cmap=this_cmap, alpha=0.5, zorder=1)
+    # Plot the contours
     CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.2, zorder=1, linestyles='dashed')
-    ax.clabel(CS, inline=True, fontsize=10)
-    # CS0 = ax.contour(X, Y, Z0, colors=std_clr, alpha=0.5, zorder=1, linestyles='dotted')
-    # ax.clabel(CS0, inline=True, fontsize=10)
-    # CS1 = ax.contour(X, Y, Z1, colors=std_clr, alpha=0.5, zorder=1, linestyles='solid')
-    # ax.clabel(CS1, inline=True, fontsize=10)
+    # Place contour labels automatically
+    # ax.clabel(CS, inline=True, fontsize=10)
+    # Place contour labels manuall, interactively
+    ax.clabel(CS, manual=True, fontsize=10)
 
 ################################################################################
 
@@ -3399,7 +3335,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             clstr_df = pd.DataFrame(data=np.arange(n_clusters), columns=['cluster'])
             clstr_df['clstr_mean'] = None
             clstr_df['clstr_rnge'] = None
-            print('cluster,var_'+var)
+            print('cluster,std_'+var)
             # Loop over each cluster
             for i in range(n_clusters):
                 # Find the data from this cluster
@@ -3408,8 +3344,8 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_mean = np.mean(df_this_cluster[var].values)
                 clstr_min = min(df_this_cluster[var].values)
                 clstr_max = max(df_this_cluster[var].values)
-                clstr_vari = np.var(df_this_cluster[var].values)
-                print(i,',',clstr_vari)
+                clstr_std = np.std(df_this_cluster[var].values)
+                print(i,',',clstr_std)
                 clstr_rnge = abs(clstr_max - clstr_min)
                 # Put those values into the cluster dataframe
                 clstr_df.loc[clstr_df['cluster']==i, 'clstr_mean'] = clstr_mean
