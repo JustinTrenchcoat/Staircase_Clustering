@@ -62,7 +62,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = True
+dark_mode = False
 
 # Colorblind-friendly palette by Krzywinski et al. (http://mkweb.bcgsc.ca/biovis2012/)
 #   See the link below for a helpful color wheel:
@@ -122,11 +122,15 @@ bathy_smap = plt.cm.ScalarMappable(cmap=cm1)
 bathy_smap.set_array([])
 
 # Set some plotting styles
-mpl.rcParams['font.size'] = 12
-mpl.rcParams['axes.labelsize'] = 14
-mpl.rcParams['xtick.labelsize'] = 11
-mpl.rcParams['ytick.labelsize'] = 11
-mpl.rcParams['legend.fontsize'] = 10
+font_size_plt = 12
+font_size_labels = 14
+font_size_ticks = 11
+font_size_lgnd = 10
+mpl.rcParams['font.size'] = font_size_plt
+mpl.rcParams['axes.labelsize'] = font_size_labels
+mpl.rcParams['xtick.labelsize'] = font_size_ticks
+mpl.rcParams['ytick.labelsize'] = font_size_ticks
+mpl.rcParams['legend.fontsize'] = font_size_lgnd
 mrk_size      = 0.5
 mrk_alpha     = 0.3
 noise_alpha   = 0.2
@@ -1939,7 +1943,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Plot the least-squares fit line for this cluster through the centroid
                 ax.axline((x_mean, y_mean), slope=m, color=alt_std_clr, zorder=3)
                 # Add annotation to say what the slope is
-                ax.annotate(r'%.2f$\pm$%.2f'%(m,sd_m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
+                ax.annotate(r'%.2f$\pm$%.2f'%(m,sd_m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/10), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
                 invert_y_axis = True
@@ -2374,15 +2378,16 @@ def make_subplot(ax, a_group, fig, ax_pos):
             # Add legend with custom handles
             # Add a standard legend
             if pp.legend:
-                lgnd = ax.legend(handles=lgnd_hndls)
+                lgnd = ax.legend(handles=lgnd_hndls, loc='lower left')
             # Create the colorbar for the bathymetry
             if map_extent == 'Full_Arctic':
-                cbar = plt.colorbar(bathy_smap, ax=ax, extend='min')
+                cbar = plt.colorbar(bathy_smap, ax=ax, extend='min', shrink=0.7, pad=0.15)# fraction=0.05)
                 # Fixing ticks
                 ticks_loc = cbar.ax.get_yticks().tolist()
                 cbar.ax.yaxis.set_major_locator(mpl.ticker.FixedLocator(ticks_loc))
                 cbar.ax.set_yticklabels(['','3000','2000','1000','200','0'])
-                cbar.set_label('Bathymetry (m)')
+                cbar.ax.tick_params(labelsize=font_size_ticks)
+                cbar.set_label('Bathymetry (m)', size=font_size_labels)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, False
@@ -2433,7 +2438,7 @@ def add_isopycnals(ax, df, x_key, y_key, p_ref=None, tw_x_key=None, tw_ax_y=None
             y_arr = [(y_bnds[1]-y_bnds[0])/2]*len(x_arr)
             # Plot the least-squares fit line for this cluster through the centroid
             for i in range(len(x_arr)):
-                ax.axline((x_arr[i], y_arr[i]), slope=1, color=std_clr, alpha=0.2, linestyle='--', zorder=1)
+                ax.axline((x_arr[i], y_arr[i]), slope=1, color=std_clr, alpha=0.25, linestyle='--', zorder=1)
             # Set offset on axis, incredibly specific for making a nice plot for the paper
             ax.ticklabel_format(axis='x', style='sci', scilimits=sci_lims, useMathText=True, useOffset=0.0268)
             return
@@ -2486,11 +2491,11 @@ def add_isopycnals(ax, df, x_key, y_key, p_ref=None, tw_x_key=None, tw_ax_y=None
     y_arr = np.arange(y_var_min, y_var_max, abs(y_var_max-y_var_min)/n_grid_pts)
     X, Y = np.meshgrid(x_arr, y_arr)
     # Plot the contours
-    CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.2, zorder=1, linestyles='dashed')
+    CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.4, zorder=1, linestyles='dashed')
     # Place contour labels automatically
     # ax.clabel(CS, inline=True, fontsize=10)
     # Place contour labels manuall, interactively
-    ax.clabel(CS, manual=True, fontsize=10)
+    ax.clabel(CS, manual=True, fontsize=10, fmt='%.1f')
 
 ################################################################################
 
@@ -3293,6 +3298,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             # Calculate the cluster average version of the variable
             #   Reduces the number of points to just one per cluster
             # Loop over each cluster
+            # print('cluster,'+var)
             for i in range(n_clusters):
                 # Find the data from this cluster
                 df_this_cluster = df[df['cluster']==i].copy()
@@ -3300,6 +3306,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_mean = np.mean(df_this_cluster[var].values)
                 # Put those values back into the original dataframe
                 df.loc[df['cluster']==i, this_var] = clstr_mean
+                # print(str(i)+','+str(clstr_mean))
         elif prefix == 'cs':
             # Calculate the cluster span version of the variable
             #   Reduces the number of points to just one per cluster
@@ -3345,7 +3352,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 clstr_min = min(df_this_cluster[var].values)
                 clstr_max = max(df_this_cluster[var].values)
                 clstr_std = np.std(df_this_cluster[var].values)
-                print(i,',',clstr_std)
+                # print(i,',',clstr_std)
                 clstr_rnge = abs(clstr_max - clstr_min)
                 # Put those values into the cluster dataframe
                 clstr_df.loc[clstr_df['cluster']==i, 'clstr_mean'] = clstr_mean
@@ -3360,8 +3367,8 @@ def calc_extra_cl_vars(df, new_cl_vars):
             this_diff = abs(clstr_mean_below - clstr_mean_here)
             this_rnge = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_rnge'].values[0]
             this_nir = this_rnge / this_diff
-            print('cluster,rnge,diff,nir,diff_below')
-            print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir,',',this_diff)
+            # print('cluster,rnge,diff,nir,diff_below')
+            # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir,',',this_diff)
             # Put that value back into the original dataframe
             df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
             # Loop over each middle cluster, finding the normalized inter-cluster ranges
@@ -3383,14 +3390,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 # Calculate the normalized inter-cluster range for this cluster
                 this_rnge = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_rnge'].values[0]
                 this_nir = this_rnge / this_diff
-                # print('i:',i,'sorted_clstr_id:',clstr_id_here,'this_nir:',this_nir)
-                # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
-                # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
-                # print('\tclstr_mean of',clstr_id_below,':',clstr_mean_below)
-                # print('\tclstr_rnge:',this_rnge)
-                # print('\tclstr_dff(min):',this_diff)
-                # print('\tthis_nir:',this_nir)
-                print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir,',',diff_below)
+                # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir,',',diff_below)
                 # Put that value back into the original dataframe
                 df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
             # Find normalized inter-cluster range for the last cluster
@@ -3400,12 +3400,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
             this_diff = abs(clstr_mean_above - clstr_mean_here)
             this_nir = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_rnge'].values[0] / this_diff
-            # print('i:',str(n_clusters-1),'sorted_clstr_id:',clstr_id_here,'this_nir:',this_nir)
-            # print('\tclstr_mean of',clstr_id_above,':',clstr_mean_above)
-            # print('\tclstr_mean of',clstr_id_here,':',clstr_mean_here)
-            # print('\tclstr_dff(min):',this_diff)
-            # print('\tthis_nir:',this_nir)
-            print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir)
+            # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir)
             # Put that value back into the original dataframe
             df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
             #
@@ -3433,30 +3428,6 @@ def calc_extra_cl_vars(df, new_cl_vars):
                 # print('cluster:',i,'cRL:',this_cRL)
                 # Put those values back into the original dataframe
                 df.loc[df['cluster']==i, this_var] = this_cRL
-            #
-        if this_var == 'cRl':
-            # Find the lateral density ratio R_L for each cluster
-            #   Reduces the number of points to just one per cluster
-            # Loop over each cluster
-            for i in range(n_clusters):
-                # Find the data from this cluster
-                df_this_cluster = df[df['cluster']==i].copy()
-                # Find the variables needed
-                alphas = df_this_cluster['alpha_PT'].values
-                temps  = df_this_cluster['PT'].values
-                betas  = df_this_cluster['beta_PT'].values
-                salts  = df_this_cluster['SP'].values
-                # Calculate variables needed
-                aTs = alphas * temps
-                BSs = betas * salts
-                # Find the slope of this cluster in aT-BS space
-                # m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
-                # Find the slope of the total least-squares of the points for this cluster
-                m, c, sd_m, sd_c = orthoregress(BSs, aTs)
-                # The lateral density ratio is the inverse of the slope
-                this_cRl = 1/m
-                # Put those values back into the original dataframe
-                df.loc[df['cluster']==i, this_var] = this_cRl
             #
         #
     #
@@ -3688,7 +3659,7 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
                 # Plot the least-squares fit line for this cluster through the centroid
                 ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
                 # Add annotation to say what the slope is
-                ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/4), xycoords='data', color=std_clr, weight='bold', zorder=12)
+                ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/10), xycoords='data', color=std_clr, weight='bold', zorder=12)
             #
             # Record the number of points in this cluster
             pts_per_cluster.append(len(x_data))
