@@ -37,7 +37,7 @@ n_pfs_to_plot = 15
 ITP2_some_pfs = list(np.arange(start_pf, start_pf+(n_pfs_to_plot*2), 2))
 # For showing multiple layers grouped into one cluster
 ITP2_some_pfs_0 = [87, 89, 95, 97, 99, 101, 103, 105, 109, 111]
-ITP2_some_pfs_ax_lims_0 = {'y_lims':[240,220]}
+ITP2_some_pfs_ax_lims_0 = {'y_lims':[245,220]}
 # For showing one layer split into multiple clusters
 ITP2_some_pfs_1 = [67, 69, 73, 75, 81, 83, 91, 93, 97, 99]
 ITP2_some_pfs_ax_lims_1 = {'y_lims':[295,270]}
@@ -262,8 +262,8 @@ print('- Creating analysis group objects')
 # group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_T2008_fig6a, plot_title='')
 
 ## Tracking clusters across a subset of profiles
-# group_ITP2_some_pfs_0 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_some_pfs_0)
-# group_ITP2_some_pfs_1 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_some_pfs_1)
+group_ITP2_some_pfs_0 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_some_pfs_0, plot_title='')
+group_ITP2_some_pfs_1 = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_some_pfs_1, plot_title='')
 # group_ITP2_T2008_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_T2008, pp_ITP2_T2008_fig4)
 
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
@@ -308,7 +308,7 @@ print('- Creating outputs')
 ## Map of ITP drifts
 # ahf.make_figure([group_ITP_map], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
 # ahf.make_figure([group_ITP_map_full_Arctic], use_same_x_axis=False, use_same_y_axis=False)
-ahf.make_figure([group_ITP_map_full_Arctic, group_ITP_map], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
+# ahf.make_figure([group_ITP_map_full_Arctic, group_ITP_map], use_same_x_axis=False, use_same_y_axis=False)#, filename='ITP_map.pickle')
 # ahf.find_max_distance([group_ITP_map])
 
 ## Parameter sweeps
@@ -329,7 +329,7 @@ ahf.make_figure([group_ITP_map_full_Arctic, group_ITP_map], use_same_x_axis=Fals
 # ahf.make_figure([group_T2008_fig6a])
 
 ## Tracking clusters across a subset of profiles
-# ahf.make_figure([group_ITP2_some_pfs_0], use_same_x_axis=False, use_same_y_axis=False)
+ahf.make_figure([group_ITP2_some_pfs_0, group_ITP2_some_pfs_1], use_same_x_axis=False, use_same_y_axis=False, row_col_list=[2,1, 0.3, 1.70])
 # ahf.make_figure([group_ITP2_some_pfs_1], use_same_x_axis=False, use_same_y_axis=False)
 # ahf.make_figure([group_ITP2_T2008_pfs], use_same_x_axis=False, use_same_y_axis=False)
 

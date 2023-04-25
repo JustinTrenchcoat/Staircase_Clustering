@@ -1387,7 +1387,7 @@ def find_max_distance(groups_to_analyze):
 # Admin plotting functions #####################################################
 ################################################################################
 
-def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_axis=None):
+def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_axis=None, row_col_list=None):
     """
     Takes in a list of Analysis_Group objects, one for each subplot. Determines
     the needed arrangement of subplots, then passes one Analysis_Group object to
@@ -1465,9 +1465,13 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 print('\t- Set y_lims to',pp.ax_lims['y_lims'])
             except:
                 foo = 2
+            # 
         ax.set_title(plt_title)
     elif n_subplots > 1 and n_subplots < 10:
-        rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
+        if isinstance(row_col_list, type(None)):
+            rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
+        else:
+            rows, cols, f_ratio, f_size = row_col_list
         n_subplots = int(np.floor(n_subplots))
         fig, axes = set_fig_axes([1]*rows, [1]*cols, fig_ratio=f_ratio, fig_size=f_size, share_x_axis=use_same_x_axis, share_y_axis=use_same_y_axis)
         for i in range(n_subplots):
@@ -1757,6 +1761,52 @@ def format_datetime_axes(x_key, y_key, ax, tw_x_key=None, tw_ax_y=None, tw_y_key
     if tw_y_key in ['dt_start', 'dt_end']:
         tw_ax_x.yaxis.set_major_locator(loc)
         tw_ax_x.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+
+################################################################################
+
+def format_sci_notation(x, ndp=2):
+    s = '{x:0.{ndp:d}e}'.format(x=x, ndp=ndp)
+    m, e = s.split('e')
+    # Check to see whether it's outside the scientific notation exponent limits
+    if int(e) < min(sci_lims) or int(e) > max(sci_lims):
+        return r'{m:s}\times 10^{{{e:d}}}'.format(m=m, e=int(e))
+    else:
+        return r'{x:0.{ndp:d}f}'.format(x=x, ndp=ndp)
+
+################################################################################
+
+def add_h_scale_bar(ax, ax_lims, extent_ratio=0.003, unit=""):
+    # Find distance between ticks
+    ax_ticks = np.array(ax.get_xticks())
+    # Use the ticks to decide on the bar length
+    bar_len = min(np.diff(ax_ticks))/2
+    # Find the bounds of the plot axis
+    if isinstance(ax_lims, type(None)):
+        x_bnds = ax.get_xbound()
+        y_bnds = ax.get_ybound()
+    else:
+        if 'x_lims' in ax_lims.keys():
+            x_bnds = ax_lims['x_lims']
+        else:
+            x_bnds = ax.get_xbound()
+        if 'y_lims' in ax_lims.keys():
+            y_bnds = ax_lims['y_lims']
+        else:
+            y_bnds = ax.get_ybound()
+    # print('x_bnds:',x_bnds,'y_bnds:',y_bnds)
+    y_span = abs(max(y_bnds)-min(y_bnds))
+    # Define end points for the scale bar
+    sb_x_min = min(x_bnds) + bar_len/4
+    sb_x_max = sb_x_min + bar_len
+    sb_y_val = max(y_bnds) - y_span/8
+    # Plot scale bar
+    ax.plot([sb_x_min,sb_x_max], [sb_y_val,sb_y_val], color=std_clr)
+    # Plot bar ends
+    ax.scatter([sb_x_min,sb_x_max], [sb_y_val,sb_y_val], color=std_clr, marker='|')
+    # Annotate the bar length
+    ax.annotate(r'%.3f'%(bar_len)+unit, xy=(sb_x_min+(sb_x_max-sb_x_min)/2, sb_y_val+y_span/16), ha='center', xycoords='data', color=std_clr, zorder=12)
+    # Turn off the x tick labels
+    ax.set_xticklabels([])
 
 ################################################################################
 # Main plotting function #######################################################
@@ -2401,7 +2451,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
         exit(0)
     #
     print('ERROR: Should not have gotten here')
-    return a_group.xlabel, a_group.ylabel, plt_title, ax, False
+    return a_group.xlabel, a_group.ylabel, plt_title, ax, False, False
 
 ################################################################################
 # Auxiliary plotting functions #################################################
@@ -2843,6 +2893,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     # Find extra arguments, if given
     legend = pp.legend
     scale = pp.plot_scale
+    ax_lims = pp.ax_lims
     if scale == 'by_pf':
         print('Cannot use',pp.plot_type,'with plot scale by_pf')
         exit(0)
@@ -2889,6 +2940,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             invert_tw_y_axis = False
     else:
         invert_tw_y_axis = False
+    # Whether to add a scale bar or not
+    add_scale_bar = False
     # Get extra args dictionary, if it exists
     try:
         extra_args = pp.extra_args
@@ -3016,6 +3069,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             #
         # Adjust the starting points of each subsequent profile
         elif i > 0:
+            add_scale_bar = True
             # Find array of data and shift it over a bit
             xvar = pf_df[x_key] - min(pf_df[x_key]) + xvar_low + xv_span*0.45
             # Find new upper and lower bounds of profile
@@ -3121,6 +3175,9 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         if invert_tw_y_axis:
             tw_ax_y.invert_yaxis()
             print('\t- Inverting twin y axis')
+    # Check whether to add a scale bar
+    if add_scale_bar:
+        add_h_scale_bar(ax, ax_lims, unit=' g/kg')
     # Add legend
     if legend:
         lgnd = ax.legend()
@@ -3686,11 +3743,41 @@ def plot_clusters(ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, 
             x_span = abs(x_bnds[1] - x_bnds[0])
             y_span = abs(y_bnds[1] - y_bnds[0])
             if x_key == 'cRL':
-                # Add line at R_L = -1
-                ax.axvline(-1, color=std_clr, alpha=0.5, linestyle='--')
-                ax.annotate(r'$R_L=-1$', xy=(-1+x_span/15,y_bnds[0]+y_span/6), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
-                # Plot exponential fit line
+                # Plot polynomial fit line
                 if True:
+                    # Get the data without the outliers
+                    x_data = df[df['out_'+x_key] == False][x_key].astype('float')
+                    y_data = df[df['out_'+x_key] == False][y_key].astype('float')
+                    # Use polyfit 
+                    deg = 2
+                    z = np.polyfit(y_data, x_data, deg)
+                    x_fit = np.poly1d(z)
+                    # Get the means and standard deviations
+                    x_mean = np.mean(x_data)
+                    x_stdv = np.std(x_data)
+                    y_mean = np.mean(y_data)
+                    y_stdv = np.std(y_data)
+                    # Find R^2 (coefficient of determination) value which is 1 
+                    #   minus the ratio of the sum of squares of residuals over 
+                    #   the total sum of squares
+                    x_fit_data = x_fit(y_data)
+                    ss_res = ((x_data-x_fit_data)**2).sum()
+                    ss_tot = ((x_data-x_mean)**2).sum()
+                    R2 = 1 - ss_res/ss_tot
+                    print('\t- Sum of square residuals:',ss_res)
+                    print('\t- Total sum of squares:',ss_tot)
+                    print('\t- R^2:',R2)
+                    # Make an array of values to plot log fit line 
+                    y_arr = np.linspace(y_bnds[0], y_bnds[1], 50)
+                    # Plot the fit
+                    ax.plot(x_fit(y_arr), y_arr, color=alt_std_clr)
+                    # Add annotation to say what the line is
+                    line_label = "$R_L = " + format_sci_notation(z[0]) + " p^2 + " + format_sci_notation(z[1])+ "p " + format_sci_notation(z[2])+"$"
+                    ax.annotate(line_label, xy=(x_mean+0.5*x_stdv,y_span/3+min(y_bnds)), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
+                    # Limit the y axis
+                    ax.set_ylim((y_bnds[1],y_bnds[0]))
+                # Plot exponential fit line
+                if False:
                     # Get the data without the outliers
                     x_data = df[df['out_'+x_key] == False][x_key].astype('float')
                     y_data = df[df['out_'+x_key] == False][y_key].astype('float')
