@@ -477,7 +477,8 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         {
                             'units':'N/A',
                             'label':'Cluster label',
-                            'long_name':'Cluster label (-1 means noise points)'
+                            'long_name':'Cluster label (-1 means noise points)',
+                            'dtype':'int64'
                         }
                 ),
                 'clst_prob':(

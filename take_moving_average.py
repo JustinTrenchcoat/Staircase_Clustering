@@ -36,13 +36,13 @@ ncs_to_modify = [
 
 # Loop through the netcdfs to modify
 for my_nc in ncs_to_modify:
+    print('')
     print('Reading',my_nc)
     # Load in with xarray
     ds = xr.load_dataset(my_nc)
 
     gattrs_to_print = ['Last modified', 'Last modification', 'Moving average window']
 
-    print('')
     # See the variables before
     for attr in gattrs_to_print:
         print('\t',attr+':',ds.attrs[attr])
