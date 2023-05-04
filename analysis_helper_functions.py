@@ -544,7 +544,6 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 #   function gsw.pot_rho_t_exact(SA,t,p,p_ref)
                 if key == 'isopycnals':
                     if not isinstance(pp.extra_args[key], type(None)):
-                        print('gonna add isopycnals')
                         if not 'press' in vars_to_keep:
                             vars_to_keep.append('press')
                         if not 'SA' in vars_to_keep:
@@ -1485,6 +1484,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
         n_subplots = int(np.floor(n_subplots))
         fig, axes = set_fig_axes([1]*rows, [1]*cols, fig_ratio=f_ratio, fig_size=f_size, share_x_axis=use_same_x_axis, share_y_axis=use_same_y_axis)
         for i in range(n_subplots):
+            print('- Subplot '+string.ascii_lowercase[i])
             if rows > 1 and cols > 1:
                 i_ax = (i//cols,i%cols)
             else:
@@ -2558,9 +2558,9 @@ def add_isopycnals(ax, df, x_key, y_key, p_ref=None, tw_x_key=None, tw_ax_y=None
     # Plot the contours
     CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.4, zorder=1, linestyles='dashed')
     # Place contour labels automatically
-    # ax.clabel(CS, inline=True, fontsize=10)
+    ax.clabel(CS, inline=True, fontsize=10)
     # Place contour labels manuall, interactively
-    ax.clabel(CS, manual=True, fontsize=10, fmt='%.1f')
+    # ax.clabel(CS, manual=True, fontsize=10, fmt='%.1f')
 
 ################################################################################
 
@@ -3304,6 +3304,7 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
         if 'cluster' in new_cl_vars:
             new_cl_vars.remove('cluster')
         if len(new_cl_vars) > 0:
+            print('\t\tCalculating extra clustering variables')
             df = calc_extra_cl_vars(df, new_cl_vars)
         # Write this dataframe and DBCV value back to the analysis group
         run_group.data_frames = [df]
@@ -3323,6 +3324,7 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
         if 'cluster' in new_cl_vars:
             new_cl_vars.remove('cluster')
         if len(new_cl_vars) > 0:
+            print('\t\tCalculating extra clustering variables')
             df = calc_extra_cl_vars(df, new_cl_vars)
         return df, gcattr_dict['Clustering DBCV'][0]
 
@@ -3347,7 +3349,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             var = split_var[1]
         except:
             var = None
-        # print('prefix:',prefix,'- var:',var)
+        print('prefix:',prefix,'- var:',var)
         # Make a new blank column in the data frame for this variable
         df[this_var] = None
         # Calculate the new values based on the prefix
