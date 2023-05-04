@@ -206,13 +206,6 @@ clstr_ps_ind_vars = ['m_pts', 'n_pfs', 'maw_size']
 clstr_ps_dep_vars = ['DBCV', 'n_clusters']
 clstr_ps_vars = clstr_ps_ind_vars + clstr_ps_dep_vars
 
-g_clst_attr_dict = {'Last clustered':[],
-                    'Clustering x-axis':[],
-                    'Clustering y-axis':[],
-                    'Clustering m_pts':[],
-                    'Clustering filters':[],
-                    'Clustering DBCV':[]}
-
 ################################################################################
 # Declare classes for custom objects
 ################################################################################
@@ -3262,16 +3255,25 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
     min_samp    An integer, number of points in neighborhood for a core point
     extra_cl_vars   A list of extra variables to potentially calculate
     """
+    # print('-- in HDBSCAN')
+    # print('-- df columns:',df.columns.values.tolist())
     # If run_group == None, then run the algorithm again
     if isinstance(run_group, type(None)):
         re_run = True
+        print('-- run_group is None, re_run:',re_run)
     # Check to make sure there is actually a 'cluster' column in the dataframe
     elif not 'cluster' in df.columns.values.tolist():
         re_run = True
+        print('-- `cluster` not in df columns, re_run:',re_run)
     # Check to make sure the global clustering attributes make sense
     else:
         # Make a copy of the global clustering attribute dictionary
-        gcattr_dict = g_clst_attr_dict.copy()
+        gcattr_dict = {'Last clustered':[],
+                       'Clustering x-axis':[],
+                       'Clustering y-axis':[],
+                       'Clustering m_pts':[],
+                       'Clustering filters':[],
+                       'Clustering DBCV':[]}
         # Get the global clustering attributes from each dataset
         for ds in run_group.data_set.arr_of_ds:
             for attr in gcattr_dict.keys():
@@ -3282,8 +3284,11 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
             gcattr_dict[attr] = list(set(gcattr_dict[attr]))
             if len(gcattr_dict[attr]) > 1:
                 re_run = True
+                print('-- found multiple distinct attrs in list, re_run:',re_run)
         if gcattr_dict['Last clustered'][0] == 'Never':
             re_run = True
+            print('-- `Last clustered` attr is `Never`, re_run:',re_run)
+    print('-- re_run:',re_run)
     if re_run:
         print('\t- Running HDBSCAN')
         print('\t\tClustering x-axis:',x_key)
@@ -3349,7 +3354,7 @@ def calc_extra_cl_vars(df, new_cl_vars):
             var = split_var[1]
         except:
             var = None
-        print('prefix:',prefix,'- var:',var)
+        # print('prefix:',prefix,'- var:',var)
         # Make a new blank column in the data frame for this variable
         df[this_var] = None
         # Calculate the new values based on the prefix
