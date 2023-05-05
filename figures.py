@@ -203,7 +203,7 @@ pp_T2008_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='c
 # Reproducing Timmermans et al. 2008 Figure 4, with cluster coloring and 2 extra profiles
 pp_T2008_fig4  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':True}, legend=True, ax_lims=T2008_fig4_y_lims)
 # Reproducing Timmermans et al. 2008 Figure 5a, but with cluster coloring
-pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0}, ax_lims=T2008_fig5a_ax_lims, legend=False)
+pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0, 'place_isos':'manual'}, ax_lims=T2008_fig5a_ax_lims, legend=False)
 # Reproducing Timmermans et al. 2008 Figure 6a, but with cluster coloring
 pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'isopycnals':True}, ax_lims=T2008_fig6a_ax_lims, legend=False)
 
@@ -278,6 +278,7 @@ print('- Creating analysis group objects')
 ## Finding average profile
 # group_avg_pf = ahf.Analysis_Group(ds_ITP2_all, pfs_maw_100, pp_avg_pf)
 
+################################################################################
 ### Figures for paper
 
 ### Figure 1
@@ -324,7 +325,7 @@ if False:
 
 ### Figure 3
 ## Parameter sweep across \ell and m_pts for ITP2
-if False:
+if True:
     print('')
     print('- Creating Figure 3')
     # Make the subplot groups
@@ -344,7 +345,7 @@ if False:
 ### Figure 4
 ## Evaluating clusterings with the overlap ratio and lateral density ratio
 # For the reproduction of Timmermans et al. 2008
-if True:
+if False:
     print('')
     print('- Creating Figure 4')
     # Make the subplot groups
@@ -354,7 +355,7 @@ if True:
     #   Confirmed
     ahf.make_figure([group_salt_nir, group_salt_R_L])
 # For the reproduction of Lu et al. 2022
-if True:
+if False:
     print('')
     print('- Creating Figure 4, for ITP3')
     group_salt_nir = ahf.Analysis_Group(ds_ITP3_all, pfs_Lu2022, pp_salt_nir)
@@ -366,7 +367,7 @@ if True:
 ### Figure 5
 ## Tracking clusters across a subset of profiles
 # For ITP2
-if True:
+if False:
     print('')
     print('- Creating Figure 5')
     # Make the subplot groups
@@ -375,7 +376,7 @@ if True:
     # Make the figure
     ahf.make_figure([group_ITP2_some_pfs_0, group_ITP2_some_pfs_1], use_same_x_axis=False, use_same_y_axis=False, row_col_list=[2,1, 0.3, 1.70])
 # For ITP3
-if True:
+if False:
     print('')
     print('- Creating Figure 5, for ITP3')
     # Make the subplot groups
@@ -397,7 +398,7 @@ if False:
     #   Confirmed that it will pull from netcdf. Takes a long time to run still
     ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3b, group_Lu2022_fig3c])
 # For ITP2
-if True:
+if False:
     print('')
     print('- Creating Figure 6, for ITP2')
     # Make the subplot groups

@@ -124,7 +124,7 @@ bathy_smap.set_array([])
 # Set some plotting styles
 font_size_plt = 12
 font_size_labels = 14
-font_size_ticks = 11
+font_size_ticks = 12
 font_size_lgnd = 10
 mpl.rcParams['font.size'] = font_size_plt
 mpl.rcParams['axes.labelsize'] = font_size_labels
@@ -376,6 +376,9 @@ class Plot_Parameters:
                     To plot isopycnal contour lines add {'isopycnals':X} where X is the 
                         value in dbar to which the isopycnals are referenced or True 
                         which will set the reference to the median pressure
+                    To manually place the inline labels for isopycnals, add this:
+                        {'place_isos':'manual'}, otherwise they will be placed 
+                        automatically
     """
     def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, ax_lims=None, first_dfs=[False, False], finit_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
         # Add all the input parameters to the object
@@ -1842,6 +1845,10 @@ def make_subplot(ax, a_group, fig, ax_pos):
             isopycnals = extra_args['isopycnals']
             if not isinstance(isopycnals, type(None)):
                 add_isos = True
+        if 'place_isos' in extra_args.keys():
+            place_isos = extra_args['place_isos']
+        else:
+            place_isos = False
     else:
         extra_args = False
     # Concatonate all the pandas data frames together
@@ -1954,7 +1961,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Check whether to plot isopycnals
             if add_isos:
-                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, place_isos=place_isos, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2032,7 +2039,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
             # Check whether to plot isopycnals
             if add_isos:
-                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, place_isos=place_isos, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2083,7 +2090,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 lgnd = ax.legend(handles=lgnd_hndls)
             # Check whether to plot isopycnals
             if add_isos:
-                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, place_isos=place_isos, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2125,7 +2132,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
             if add_isos:
-                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, place_isos=place_isos, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2184,7 +2191,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
             if add_isos:
-                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, place_isos=place_isos, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             # Add a standard title
             plt_title = add_std_title(a_group)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
@@ -2208,7 +2215,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             format_datetime_axes(x_key, y_key, ax)
             # Check whether to plot isopycnals
             if add_isos:
-                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
+                add_isopycnals(ax, df, x_key, y_key, p_ref=isopycnals, place_isos=place_isos, tw_x_key=tw_x_key, tw_ax_y=tw_ax_y, tw_y_key=tw_y_key, tw_ax_x=tw_ax_x)
             return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
             #
         else:
@@ -2465,7 +2472,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
 # Auxiliary plotting functions #################################################
 ################################################################################
 
-def add_isopycnals(ax, df, x_key, y_key, p_ref=None, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
+def add_isopycnals(ax, df, x_key, y_key, p_ref=None, place_isos=False, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
     """
     Adds lines of constant density anomaly, if applicable
 
@@ -2550,10 +2557,13 @@ def add_isopycnals(ax, df, x_key, y_key, p_ref=None, tw_x_key=None, tw_ax_y=None
     X, Y = np.meshgrid(x_arr, y_arr)
     # Plot the contours
     CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.4, zorder=1, linestyles='dashed')
-    # Place contour labels automatically
-    ax.clabel(CS, inline=True, fontsize=10)
-    # Place contour labels manuall, interactively
-    # ax.clabel(CS, manual=True, fontsize=10, fmt='%.1f')
+    # Place contour inline labels
+    if place_isos == 'manual':
+        # Place contour labels manualy, interactively
+        ax.clabel(CS, manual=True, fontsize=10, fmt='%.1f')
+    else:
+        # Place contour labels automatically
+        ax.clabel(CS, inline=True, fontsize=10, fmt='%.1f')
 
 ################################################################################
 
@@ -3288,7 +3298,7 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
         if gcattr_dict['Last clustered'][0] == 'Never':
             re_run = True
             print('-- `Last clustered` attr is `Never`, re_run:',re_run)
-    print('-- re_run:',re_run)
+    print('-- Re-run HDBSCAN:',re_run)
     if re_run:
         print('\t- Running HDBSCAN')
         print('\t\tClustering x-axis:',x_key)
@@ -3312,8 +3322,9 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
             print('\t\tCalculating extra clustering variables')
             df = calc_extra_cl_vars(df, new_cl_vars)
         # Write this dataframe and DBCV value back to the analysis group
-        run_group.data_frames = [df]
-        run_group.data_set.arr_of_ds[0].attrs['Clustering DBCV'] = rel_val
+        if not isinstance(run_group, type(None)):
+            run_group.data_frames = [df]
+            run_group.data_set.arr_of_ds[0].attrs['Clustering DBCV'] = rel_val
         return df, rel_val
     else:
         # Use the clustering results that are already in the dataframe
