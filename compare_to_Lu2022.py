@@ -200,12 +200,11 @@ def plot_comparison(ax, Lu2022_df, my_df, pp):
             ax.scatter(df_this_cluster[x_key], df_this_cluster[y_key], edgecolors='r', s=my_mrk_size*5, marker='o', facecolors='none', zorder=2)
     # Add a standard legend
     ax.legend()
-    # Check whether to plot isopycnals
-    # if pp.isopycnals:
-    #     add_isopycnals(ax, x_key, y_key, tw_x_key, tw_ax_y, tw_y_key, tw_ax_x)
+    # Add grid
+    ax.grid(color=std_clr, linestyle='--', alpha=0.5)
     return xlabel, ylabel, invert_y_axis
 
 ################################################################################
 
 pp_Lu2022 = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['ca_CT'], clr_map='clr_all_same')
-make_figure(Lu2022_df, my_df, pp_Lu2022)#, filename='comparing_to_Lu2022.pickle')
+make_figure(Lu2022_df, my_df, pp_Lu2022, filename='Figure_7_dark.pickle')
