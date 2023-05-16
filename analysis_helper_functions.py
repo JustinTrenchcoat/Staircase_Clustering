@@ -62,7 +62,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = False
+dark_mode = True
 
 # Colorblind-friendly palette by Krzywinski et al. (http://mkweb.bcgsc.ca/biovis2012/)
 #   See the link below for a helpful color wheel:
@@ -134,7 +134,7 @@ mpl.rcParams['legend.fontsize'] = font_size_lgnd
 mrk_size      = 0.5
 mrk_alpha     = 0.3
 noise_alpha   = 0.2
-pf_alpha      = 0.5
+pf_alpha      = 0.4
 map_alpha     = 0.7
 lgnd_mrk_size = 60
 map_mrk_size  = 25
@@ -1336,10 +1336,12 @@ def print_global_variables(Dataset):
     lines = ''
     for ds in Dataset.arr_of_ds:
         for attr in ds.attrs:
-            if attr in ['Creation date', 'Last modified', 'Last modification', 'Sub-sample scheme']:
-                print('\t'+attr+': '+ds.attrs[attr])
-            else:
-                lines = lines+'\t'+attr+': '+ds.attrs[attr]+'\n'
+            print('\t'+str(attr)+': '+str(ds.attrs[attr]))
+            lines = lines+'\t'+str(attr)+': '+str(ds.attrs[attr])+'\n'
+            # if attr in ['Creation date', 'Last modified', 'Last modification', 'Sub-sample scheme']:
+            #     print('\t'+attr+': '+ds.attrs[attr])
+            # else:
+            #     lines = lines+'\t'+attr+': '+ds.attrs[attr]+'\n'
     return lines
 
 ################################################################################
@@ -1450,7 +1452,12 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
     tight_layout_h_pad = 1.0 #None
     tight_layout_w_pad = 1.0 #None
     if n_subplots == 1:
-        fig, ax = set_fig_axes([1], [1], fig_ratio=0.8, fig_size=1.25)
+        if isinstance(row_col_list, type(None)):
+            rows, cols, f_ratio, f_size = n_row_col_dict[str(n_subplots)]
+        else:
+            rows, cols, f_ratio, f_size = row_col_list
+        n_subplots = int(np.floor(n_subplots))
+        fig, ax = set_fig_axes([1], [1], fig_ratio=f_ratio, fig_size=f_size)
         xlabel, ylabel, plt_title, ax, invert_y_axis = make_subplot(ax, groups_to_plot[0], fig, 111)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
@@ -1781,11 +1788,12 @@ def format_sci_notation(x, ndp=2):
 
 ################################################################################
 
-def add_h_scale_bar(ax, ax_lims, extent_ratio=0.003, unit=""):
+def add_h_scale_bar(ax, ax_lims, extent_ratio=0.003, unit="", tw_clr=False):
+    h_bar_clr = std_clr
     # Find distance between ticks
     ax_ticks = np.array(ax.get_xticks())
     # Use the ticks to decide on the bar length
-    bar_len = min(np.diff(ax_ticks))
+    bar_len = min(np.diff(ax_ticks))/2
     # Find the bounds of the plot axis
     if isinstance(ax_lims, type(None)):
         x_bnds = ax.get_xbound()
@@ -1807,15 +1815,19 @@ def add_h_scale_bar(ax, ax_lims, extent_ratio=0.003, unit=""):
         x_pad = bar_len/4
     else:
         x_pad = x_span/10
-    sb_x_min = min(x_bnds) + x_pad #bar_len/4
+    sb_x_min = min(x_bnds) + x_pad 
     sb_x_max = sb_x_min + bar_len
-    sb_y_val = max(y_bnds) - y_span/8
+    if tw_clr==False:
+        sb_y_val = max(y_bnds) - y_span/8
+    else:
+        sb_y_val = max(y_bnds) - y_span/4
+        h_bar_clr = tw_clr
     # Plot scale bar
-    ax.plot([sb_x_min,sb_x_max], [sb_y_val,sb_y_val], color=std_clr)
+    ax.plot([sb_x_min,sb_x_max], [sb_y_val,sb_y_val], color=h_bar_clr)
     # Plot bar ends
-    ax.scatter([sb_x_min,sb_x_max], [sb_y_val,sb_y_val], color=std_clr, marker='|')
+    ax.scatter([sb_x_min,sb_x_max], [sb_y_val,sb_y_val], color=h_bar_clr, marker='|')
     # Annotate the bar length
-    ax.annotate(r'%.3f'%(bar_len)+unit, xy=(sb_x_min+(sb_x_max-sb_x_min)/2, sb_y_val+y_span/16), ha='center', xycoords='data', color=std_clr, zorder=12)
+    ax.annotate(r'%.3f'%(bar_len)+unit, xy=(sb_x_min+(sb_x_max-sb_x_min)/2, sb_y_val+y_span/16), ha='center', xycoords='data', color=h_bar_clr, zorder=12)
     # Turn off the x tick labels
     ax.set_xticklabels([])
 
@@ -2497,8 +2509,8 @@ def add_isopycnals(ax, df, x_key, y_key, p_ref=None, place_isos=False, tw_x_key=
             # Get bounds of axes
             x_bnds = ax.get_xbound()
             y_bnds = ax.get_ybound()
-            print('x_bnds:',x_bnds)
-            print('y_bnds:',y_bnds)
+            # print('x_bnds:',x_bnds)
+            # print('y_bnds:',y_bnds)
             x_arr = np.linspace(x_bnds[0], x_bnds[1], 50)
             y_arr = [(y_bnds[1]-y_bnds[0])/2]*len(x_arr)
             # Plot the least-squares fit line for this cluster through the centroid
@@ -2519,8 +2531,8 @@ def add_isopycnals(ax, df, x_key, y_key, p_ref=None, place_isos=False, tw_x_key=
     # Get bounds of axes
     x_bnds = ax.get_xbound()
     y_bnds = ax.get_ybound()
-    print('x_bnds:',x_bnds)
-    print('y_bnds:',y_bnds)
+    # print('x_bnds:',x_bnds)
+    # print('y_bnds:',y_bnds)
     # Figure out which orientation to make the grid
     if x_key in ['iT','CT','PT']:
         iso_x_key = 'iT'
@@ -2910,6 +2922,13 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     """
     # Find extra arguments, if given
     legend = pp.legend
+    if not isinstance(pp.extra_args, type(None)):
+        try:
+            plt_noise = pp.extra_args['plt_noise']
+        except:
+            plt_noise = True
+    else:
+        plt_noise = True
     scale = pp.plot_scale
     ax_lims = pp.ax_lims
     if scale == 'by_pf':
@@ -3055,6 +3074,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
         # Add a standard title
         plt_title = add_std_title(a_group)
         return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
+    # 
     # Plot each profile
     for i in range(n_pfs):
         # Pull the dataframe for this profile
@@ -3074,34 +3094,73 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # Find span of the profile
             xv_span = abs(xvar_high - xvar_low)
             # Define far left bound for plot
-            left_bound = xvar_low-xv_span/15
+            left_bound = xvar_low
+            # Define pads for x bound (applied at the end)
+            x_pad = xv_span/15
             # Find upper and lower bounds of first profile for twin axis
             if tw_x_key:
                 tvar = pf_df[tw_x_key]
                 twin_low  = min(tvar)
                 twin_high = max(tvar)
                 tw_span   = abs(twin_high - twin_low)
-                tw_left_bound = twin_low-tw_span/15
+                # Find normalized profile difference for spacing
+                norm_xv = (xvar-xvar_low)/xv_span
+                norm_tw = (tvar-twin_low)/tw_span
+                norm_pf_diff = min(norm_tw-norm_xv)
+                # Shift things over
+                right_bound = xvar_high - norm_pf_diff*xv_span
+                tw_left_bound = twin_low + norm_pf_diff*tw_span
+                # Find index of largest x value
+                # xvar_max_idx = np.argmax(xvar)
+                # Find value of twin profile at that index
+                # tw_xvar_max = tvar[xvar_max_idx]
+                tw_x_pad = tw_span/15
             else:
                 tvar = None
+                right_bound = xvar_high
             #
         # Adjust the starting points of each subsequent profile
         elif i > 0:
             add_scale_bar = True
-            # Find array of data and shift it over a bit
-            xvar = pf_df[x_key] - min(pf_df[x_key]) + xvar_low + xv_span*0.45
+            # Keep the old profile for reference
+            old_xvar = xvar
+            old_xvar_low = xvar_low
+            old_xvar_high = xvar_high
+            old_xv_span = xv_span
+            # Find array of data for this profile
+            xvar = pf_df[x_key] - min(pf_df[x_key]) + old_xvar_low
             # Find new upper and lower bounds of profile
             xvar_high = max(xvar)
             xvar_low  = min(xvar)
             # Find span of this profile
             xv_span = abs(xvar_high - xvar_low)
             if tw_x_key:
-                tvar = pf_df[tw_x_key] - min(pf_df[tw_x_key]) + twin_low + tw_span*0.45
-                twin_high = max(tvar)
+                xvar = xvar + old_xv_span*0.8
+                xvar_high = max(xvar)
+                xvar_low = min(xvar)
+                tvar = pf_df[tw_x_key] - min(pf_df[tw_x_key]) + twin_low + tw_span*0.8
+                # 
                 twin_low  = min(tvar)
+                twin_high = max(tvar)
                 tw_span   = abs(twin_high - twin_low)
+                # Find normalized profile difference for spacing
+                norm_xv = (xvar-xvar_low)/xv_span
+                norm_tw = (tvar-twin_low)/tw_span
+                norm_pf_diff = min(norm_tw-norm_xv)
+                # Shift things over
+                right_bound = xvar_high - norm_pf_diff*xv_span
+                twin_high = max(tvar)
+                # Find index of largest x value
+                # xvar_max_idx = np.argmax(xvar)
+                # Find value of twin profile at that index
+                # tw_xvar_max = tvar[xvar_max_idx]
             else:
                 tvar = None
+                # Shift things over
+                xvar = xvar + old_xv_span*0.45
+                xvar_low = min(xvar)
+                xvar_high = max(xvar)
+                right_bound = xvar_high
             #
         # Determine the color mapping to be used
         if clr_map in a_group.vars_to_keep and clr_map != 'cluster':
@@ -3151,13 +3210,13 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # print('\tcluster_numbers:',cluster_numbers)
             # Plot noise points first
             if plt_noise:
-                ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=noise_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=2)
+                ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=noise_clr, s=pf_mrk_size, marker=std_marker, alpha=noise_alpha, zorder=2)
                 #ax.scatter(df_clstrs[df_clstrs.cluster==-1][x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=1)
             # Plot on twin axes, if specified
             if not isinstance(tw_x_key, type(None)):
                 tw_ax_y.plot(tvar, pf_df[y_key], color=tw_clr, linestyle=l_style, label=pf_label, zorder=1)
                 if plt_noise:
-                    tw_ax_y.scatter(df_clstrs[df_clstrs.cluster==-1][tw_x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=pf_alpha, zorder=2)
+                    tw_ax_y.scatter(df_clstrs[df_clstrs.cluster==-1][tw_x_key], df_clstrs[df_clstrs.cluster==-1][y_key], color=std_clr, s=pf_mrk_size, marker=std_marker, alpha=noise_alpha, zorder=2)
             # Loop through each cluster
             for i in cluster_numbers:
                 # Decide on the color and symbol, don't go off the end of the arrays
@@ -3180,9 +3239,12 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     # Compensate for shifting the twin axis by adjusting the max xvar
     # xvar_high = xvar_high + xv_span/5
     # Adjust bounds on axes
-    ax.set_xlim([left_bound, xvar_high])
+    # print('left_bound:',left_bound,'right_bound:',right_bound)
     if tw_x_key:
-        tw_ax_y.set_xlim([tw_left_bound, twin_high])
+        tw_ax_y.set_xlim([tw_left_bound-tw_x_pad, twin_high+tw_x_pad])
+        ax.set_xlim([left_bound-x_pad, right_bound+x_pad])
+    else:
+        ax.set_xlim([left_bound-x_pad, right_bound+x_pad])
     # Plot on twin axes, if specified
     if not isinstance(tw_x_key, type(None)):
         tw_ax_y.set_xlabel(pp.xlabels[1])
@@ -3196,6 +3258,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     # Check whether to add a scale bar
     if add_scale_bar:
         add_h_scale_bar(ax, ax_lims, unit=' g/kg')
+        if tw_x_key:
+            add_h_scale_bar(tw_ax_y, ax_lims, unit=r' $^\circ$C', tw_clr=tw_clr)
     # Add legend
     if legend:
         lgnd = ax.legend()
