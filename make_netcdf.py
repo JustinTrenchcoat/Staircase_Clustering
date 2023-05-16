@@ -820,10 +820,8 @@ def find_geo_region(lon, lat):
 ################################################################################
 
 ## Read instrument makes a netcdf for just the given instrument
-# read_instrmt('ITP', '1', science_data_file_path+'ITPs/itp1/itp1cormat', 'netcdfs/ITP_1.nc')
 read_instrmt('ITP', '2', science_data_file_path+'ITPs/itp2/itp2cormat', 'netcdfs/ITP_2.nc')
 read_instrmt('ITP', '3', science_data_file_path+'ITPs/itp3/itp3cormat', 'netcdfs/ITP_3.nc')
-# read_instrmt('ITP', '13', science_data_file_path+'ITPs/itp13/itp13cormat', 'netcdfs/ITP_13.nc')
 
 ## These will make all the netcdfs for a certain source (takes a long time)
 # make_all_ITP_netcdfs(science_data_file_path)
@@ -832,7 +830,7 @@ exit(0)
 
 ## Tests for how the netcdfs turned out
 
-ds2 = xr.load_dataset('netcdfs/ITP_2.nc')
+# ds2 = xr.load_dataset('netcdfs/ITP_2.nc')
 # ds2['Time'] = pd.DatetimeIndex(ds2['Time'].values)
 # # print ds.info() to only see the structure
 # print(ds2.info())
