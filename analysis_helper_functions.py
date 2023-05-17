@@ -62,7 +62,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = True
+dark_mode = False
 
 # Colorblind-friendly palette by Krzywinski et al. (http://mkweb.bcgsc.ca/biovis2012/)
 #   See the link below for a helpful color wheel:
@@ -134,6 +134,7 @@ mpl.rcParams['legend.fontsize'] = font_size_lgnd
 mrk_size      = 0.5
 mrk_alpha     = 0.3
 noise_alpha   = 0.2
+grid_alpha    = 0.3
 pf_alpha      = 0.4
 map_alpha     = 0.7
 lgnd_mrk_size = 60
@@ -327,6 +328,7 @@ class Plot_Parameters:
                       'la_PT', 'la_SA','la_sigma'
                     Accepted 'by_layer' vars: ???
     legend          True/False whether to add a legend on this plot. Default:True
+    add_grid        True/False whether to add a grid on this plot. Default:True
     ax_lims         An optional dictionary of the limits on the axes for the final plot
                       Ex: {'x_lims':[x_min,x_max], 'y_lims':[y_min,y_max]}
     first_dfs       A list of booleans of whether to take the first differences
@@ -380,7 +382,7 @@ class Plot_Parameters:
                         {'place_isos':'manual'}, otherwise they will be placed 
                         automatically
     """
-    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], legend=True, ax_lims=None, first_dfs=[False, False], finit_dfs=[False, False], clr_map='clr_all_same', extra_args=None):
+    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], clr_map='clr_all_same', first_dfs=[False, False], finit_dfs=[False, False], legend=True, add_grid=True, ax_lims=None, extra_args=None):
         # Add all the input parameters to the object
         self.plot_type = plot_type
         self.plot_scale = plot_scale
@@ -388,12 +390,13 @@ class Plot_Parameters:
         self.y_vars = y_vars
         self.xlabels = [None,None]
         self.ylabels = [None,None]
-        self.legend = legend
-        self.ax_lims = ax_lims
-        self.first_dfs = first_dfs
-        self.finit_dfs = finit_dfs
         self.clr_map = clr_map
         self.clabel = None
+        self.first_dfs = first_dfs
+        self.finit_dfs = finit_dfs
+        self.legend = legend
+        self.add_grid = add_grid
+        self.ax_lims = ax_lims
         # If trying to plot a map, make sure x and y vars are None
         if plot_type == 'map':
             x_vars = None
@@ -1478,6 +1481,10 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
             except:
                 foo = 2
             # 
+        # If called for, add a grid to the plot by default
+        print('\t- Adding grid lines:',pp.add_grid)
+        if pp.add_grid:
+            ax.grid(color=std_clr, linestyle='--', alpha=grid_alpha)
         ax.set_title(plt_title)
     elif n_subplots > 1 and n_subplots < 10:
         if isinstance(row_col_list, type(None)):
@@ -1535,6 +1542,10 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                 except:
                     foo = 2
                 #
+            # If called for, add a grid to the plot by default
+            print('\t- Adding grid lines:',this_ax_pp.add_grid)
+            if this_ax_pp.add_grid:
+                ax.grid(color=std_clr, linestyle='--', alpha=grid_alpha)
             # Label subplots a, b, c, ...
             ax.text(-0.1, -0.1, '('+string.ascii_lowercase[i]+')', transform=ax.transAxes, size=mpl.rcParams['axes.labelsize'], fontweight='bold')
         # Turn off unused axes
@@ -1810,11 +1821,11 @@ def add_h_scale_bar(ax, ax_lims, extent_ratio=0.003, unit="", tw_clr=False):
     # print('x_bnds:',x_bnds,'y_bnds:',y_bnds)
     x_span = abs(max(x_bnds)-min(x_bnds))
     y_span = abs(max(y_bnds)-min(y_bnds))
+    # Adjust bar length if too small
+    if x_span/bar_len > 15:
+        bar_len = bar_len*2
     # Define end points for the scale bar
-    if x_span/10 > bar_len/2:
-        x_pad = bar_len/4
-    else:
-        x_pad = x_span/10
+    x_pad = bar_len/3.8
     sb_x_min = min(x_bnds) + x_pad 
     sb_x_max = sb_x_min + bar_len
     if tw_clr==False:
@@ -2289,7 +2300,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
         # ax.add_feature(bathy_4000, facecolor=bathy_clrs[5], zorder=5)
         # ax.add_feature(bathy_5000, facecolor=bathy_clrs[6], zorder=6)
         #   Add gridlines to show longitude and latitude
-        gl = ax.gridlines(draw_labels=True, color=clr_lines, alpha=0.3, linestyle='--', zorder=7)
+        gl = ax.gridlines(draw_labels=True, color=clr_lines, alpha=grid_alpha, linestyle='--', zorder=7)
         #       x is actually all labels around the edge
         gl.xlabel_style = {'size':8, 'color':clr_lines, 'zorder':7}
         #       y is actually all labels within map
@@ -3236,25 +3247,24 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
                     tw_ax_y.scatter(t_data, y_data, color=my_clr, s=pf_mrk_size, marker=my_mkr, alpha=pf_alpha, zorder=5)
         #
     #
-    # Compensate for shifting the twin axis by adjusting the max xvar
-    # xvar_high = xvar_high + xv_span/5
-    # Adjust bounds on axes
-    # print('left_bound:',left_bound,'right_bound:',right_bound)
-    if tw_x_key:
-        tw_ax_y.set_xlim([tw_left_bound-tw_x_pad, twin_high+tw_x_pad])
-        ax.set_xlim([left_bound-x_pad, right_bound+x_pad])
-    else:
-        ax.set_xlim([left_bound-x_pad, right_bound+x_pad])
     # Plot on twin axes, if specified
     if not isinstance(tw_x_key, type(None)):
+        # Adjust bounds on axes
+        tw_ax_y.set_xlim([tw_left_bound-tw_x_pad, twin_high+tw_x_pad])
+        ax.set_xlim([left_bound-x_pad, right_bound+x_pad])
+        # Add label to twin axis
         tw_ax_y.set_xlabel(pp.xlabels[1])
         # Change color of the axis label on the twin axis
         tw_ax_y.xaxis.label.set_color(tw_clr)
         # Change color of the ticks on the twin axis
         tw_ax_y.tick_params(axis='x', colors=tw_clr)
+        # Add a grid
+        tw_ax_y.grid(color=tw_clr, linestyle='--', alpha=grid_alpha+0.2, axis='x')
         if invert_tw_y_axis:
             tw_ax_y.invert_yaxis()
             print('\t- Inverting twin y axis')
+    else:
+        ax.set_xlim([left_bound-x_pad, right_bound+x_pad])
     # Check whether to add a scale bar
     if add_scale_bar:
         add_h_scale_bar(ax, ax_lims, unit=' g/kg')
@@ -3362,7 +3372,7 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
         if gcattr_dict['Last clustered'][0] == 'Never':
             re_run = True
             print('-- `Last clustered` attr is `Never`, re_run:',re_run)
-    print('-- Re-run HDBSCAN:',re_run)
+    print('\t- Re-run HDBSCAN:',re_run)
     if re_run:
         print('\t- Running HDBSCAN')
         print('\t\tClustering x-axis:',x_key)
@@ -3875,8 +3885,8 @@ def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map
             x_span = abs(x_bnds[1] - x_bnds[0])
             y_span = abs(y_bnds[1] - y_bnds[0])
             # Add line at R_L = -1
-            ax.axvline(1, color=std_clr, alpha=0.5, linestyle='--')
-            ax.annotate(r'$IR_{S_P}=1$', xy=(1+x_span/10,y_bnds[0]+y_span/6), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
+            ax.axvline(1, color=std_clr, alpha=0.5, linestyle='-')
+            ax.annotate(r'$IR_{S_P}=1$', xy=(1+x_span/10,y_bnds[0]+y_span/5), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
         # Add some lines if plotting cRL
         if 'cRL' in [x_key, y_key]:
             # Get bounds of axes
@@ -4124,6 +4134,8 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
                 f.write('\n m_pts: '+str(m_pts)+' '+str(x_key)+': '+str(x)+' n_clstrs: '+str(new_df['cluster'].max()+1)+' DBCV: '+str(rel_val))
             f.close()
         ax.plot(x_var_array, y_var_array, color=std_clr, linestyle=l_styles[i], label=zlabel)
+        # Add gridlines
+        ax.grid(color=std_clr, linestyle='--', alpha=grid_alpha)
         if tw_y_key:
             if z_key:
                 tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
@@ -4134,6 +4146,8 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
             tw_ax_x.yaxis.label.set_color(alt_std_clr)
             # Change color of the ticks on the twin axis
             tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
+            # Add gridlines
+            tw_ax_x.grid(color=alt_std_clr, linestyle='--', alpha=grid_alpha+0.3, axis='y')
         f = open(sweep_txt_file,'a')
         f.write('\n')
         f.close()
