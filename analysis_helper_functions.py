@@ -1520,7 +1520,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
                     ax.set_ylabel(ylabel)
                 # Invert y-axis if specified
                 if i == 0 and invert_y_axis:
-                    ax.invert_yaxis()
+                    # ax.invert_yaxis()
                     print('\t- Inverting y-axis')
             else:
                 ax.set_ylabel(ylabel)
@@ -3321,7 +3321,7 @@ def get_cluster_args(pp):
     try:
         b_a_w_plt = cluster_plt_dict['b_a_w_plt']
     except:
-        b_a_w_plt = True
+        b_a_w_plt = False
     return m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt
 
 ################################################################################
@@ -4147,7 +4147,7 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
             # Change color of the ticks on the twin axis
             tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
             # Add gridlines
-            tw_ax_x.grid(color=alt_std_clr, linestyle='--', alpha=grid_alpha+0.3, axis='y')
+            # tw_ax_x.grid(color=alt_std_clr, linestyle='--', alpha=grid_alpha+0.3, axis='y')
         f = open(sweep_txt_file,'a')
         f.write('\n')
         f.close()
