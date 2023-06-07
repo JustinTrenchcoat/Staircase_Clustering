@@ -1866,7 +1866,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
         extra_args = pp.extra_args
         if 'isopycnals' in extra_args.keys():
             isopycnals = extra_args['isopycnals']
-            if not isinstance(isopycnals, type(None)):
+            if not isinstance(isopycnals, type(None)) and isopycnals != False:
                 add_isos = True
         if 'place_isos' in extra_args.keys():
             place_isos = extra_args['place_isos']
@@ -2828,7 +2828,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         df = df[df[var_key].notnull()]
         # Clusters are labeled starting from 0, so total number of clusters is
         #   the largest label plus 1
-        n_clusters  = df['cluster'].max()+1
+        n_clusters  = int(df['cluster'].max()+1)
         # Make blank lists to record values
         pts_per_cluster = []
         clstr_means = []
