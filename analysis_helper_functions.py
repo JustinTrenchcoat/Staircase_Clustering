@@ -202,7 +202,7 @@ nir_vars   = [ f'{nir_prefix}{var}'  for var in vertical_vars]
 clstr_vars = ['cluster', 'cRL', 'cRl'] + pca_vars + pcs_vars + cmc_vars + ca_vars + cs_vars + cmm_vars + nir_vars
 # For parameter sweeps of clustering
 #   Independent variables
-clstr_ps_ind_vars = ['m_pts', 'n_pfs', 'maw_size']
+clstr_ps_ind_vars = ['m_pts', 'n_pfs', 'ell_size']
 #   Dependent variables
 clstr_ps_dep_vars = ['DBCV', 'n_clusters']
 clstr_ps_vars = clstr_ps_ind_vars + clstr_ps_dep_vars
@@ -372,7 +372,7 @@ class Plot_Parameters:
                         {'cl_x_var':var0, 'cl_y_var':var1, 'cl_ps_tuple':[100,410,50]}
                         where var0 and var1 are as specified above, 'cl_ps_tuple' is
                         the [start,stop,step] for the xvar can be 'm_pts', 'min_samps'
-                        'n_pfs' or 'maw_size', and yvar(s) must be 'DBCV' or 'n_clusters'
+                        'n_pfs' or 'ell_size', and yvar(s) must be 'DBCV' or 'n_clusters'
                         Optional: {'z_var':'m_pts', 'z_list':[90,120,240]} where
                         z_var can be any variable that var0 can be
                     To plot isopycnal contour lines add {'isopycnals':X} where X is the 
@@ -536,7 +536,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                     plot_vars.append(pp.extra_args[key])
                     re_run_clstr = True
                 if key == 'z_var':
-                    if pp.extra_args[key] == 'maw_size':
+                    if pp.extra_args[key] == 'ell_size':
                         # Make sure the parameter sweeps run correctly 
                         vars_to_keep.append('press')
                 # If adding isopycnals, make sure to keep press, SA, and iT to use with the 
@@ -594,7 +594,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 vars_to_keep.append('PT')
                 vars_to_keep.append('beta_PT')
                 vars_to_keep.append('SP')
-            elif var == 'maw_size':
+            elif var == 'ell_size':
                 vars_to_keep.append('press')
             # Check for variables that have underscores, ie. profile cluster
             #   average variables and local anomalies
@@ -4060,15 +4060,15 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
             zlabel = None
             this_df = df.copy()
             # Set parameters based on variables selected
-            #   NOTE: need to run `maw_size` BEFORE `n_pfs`
-            if x_key == 'maw_size':
+            #   NOTE: need to run `ell_size` BEFORE `n_pfs`
+            if x_key == 'ell_size':
                 # Need to apply moving average window to original data, before
                 #   the data filters were applied, so make a new Analysis_Group
                 a_group.profile_filters.m_avg_win = x
                 new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
                 this_df = pd.concat(new_a_group.data_frames)
                 xlabel = r'$\ell$ (dbar)'
-            if z_key == 'maw_size':
+            if z_key == 'ell_size':
                 # Need to apply moving average window to original data, before
                 #   the data filters were applied, so make a new Analysis_Group
                 a_group.profile_filters.m_avg_win = z_list[i]
