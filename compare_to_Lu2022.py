@@ -2,16 +2,9 @@
 Author: Mikhail Schee
 Created: 2023-03-13
 
-This script will take in the name of a csv file and plot the data within it.
+This script will plot average temperature and salinity data from two csv files.
 I specifically made this to compare my clustering results to those of Lu et al.
 2022 with the functions I made in `analysis_helper_functions.py`
-
-Usage:
-    compare_to_Lu2022.py LU2022_CSV MY_CSV
-
-Options:
-    LU2022_CSV          # filepath of the csv with data from Lu et al. 2022
-    MY_CSV              # filepath of the csv with data from my study
 """
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,12 +12,9 @@ import analysis_helper_functions as ahf
 # Import the Thermodynamic Equation of Seawater 2010 (TEOS-10) from GSW
 import gsw
 import dill as pl
-# Parse input parameters
-from docopt import docopt
-args = docopt(__doc__)
-Lu2022_csv = args['LU2022_CSV'] # filepath of the csv with data from Lu et al. 2022
-my_csv     = args['MY_CSV']     # filepath of the csv with data from my study
 
+Lu2022_csv = 'outputs/Lu2022_Table_A1.csv'
+my_csv = 'outputs/ITP3_cluster_table.csv'
 # Try to load the specified csvs
 print('- Loading '+Lu2022_csv)
 try:
@@ -39,10 +29,11 @@ except:
     print('Could not load '+my_csv)
     exit(0)
 
+
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = True
+dark_mode = False
 
 # Enable dark mode plotting
 if dark_mode:
@@ -159,7 +150,6 @@ def plot_comparison(ax, Lu2022_df, my_df, pp):
     # Set the main x and y data keys
     x_key = pp.x_vars[0]
     y_key = pp.y_vars[0]
-    print('x_key:',x_key,'y_key:',y_key)
     # Get the axis labels
     xlabel = get_axis_label(x_key)
     ylabel = get_axis_label(y_key)
@@ -207,4 +197,4 @@ def plot_comparison(ax, Lu2022_df, my_df, pp):
 ################################################################################
 
 pp_Lu2022 = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['ca_CT'], clr_map='clr_all_same')
-make_figure(Lu2022_df, my_df, pp_Lu2022, filename='Figure_7_dark.pickle')
+make_figure(Lu2022_df, my_df, pp_Lu2022)#, filename='Figure_7.pickle')
