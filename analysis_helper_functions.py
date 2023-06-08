@@ -1512,7 +1512,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
             else:
                 ax.set_title(plt_title)
                 ax.set_xlabel(xlabel)
-            # ax.set_title(plt_title)
+            ax.set_title(plt_title)
             if use_same_y_axis:
                 # If in the far left column
                 if i%cols == 0:
@@ -1932,7 +1932,12 @@ def make_subplot(ax, a_group, fig, ax_pos):
             #
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map=clr_map, legend=pp.legend)
-            heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker, zorder=5)
+            # If there aren't that many points, make the markers bigger
+            if len(df[x_key]) < 1000:
+                m_size = map_mrk_size
+            else: 
+                m_size = mrk_size
+            heatmap = ax.scatter(df[x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=m_size, marker=std_marker, zorder=5)
             # Invert y-axis if specified
             if y_key in y_invert_vars:
                 invert_y_axis = True
@@ -1942,8 +1947,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 if tw_clr == std_clr:
                     tw_clr = alt_std_clr
                 # Add backing x to distinguish from main axis
-                tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=mrk_size*10, marker='x', zorder=3)
-                tw_ax_y.scatter(df[tw_x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker, zorder=4)
+                tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=m_size*10, marker='x', zorder=3)
+                tw_ax_y.scatter(df[tw_x_key], df[y_key], c=cmap_data, cmap=this_cmap, s=m_size, marker=std_marker, zorder=4)
                 tw_ax_y.set_xlabel(pp.xlabels[1])
                 # Change color of the axis label on the twin axis
                 tw_ax_y.xaxis.label.set_color(tw_clr)
@@ -1956,8 +1961,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 if tw_clr == std_clr:
                     tw_clr = alt_std_clr
                 # Add backing x to distinguish from main axis
-                tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=mrk_size*10, marker='x', zorder=3)
-                tw_ax_x.scatter(df[x_key], df[tw_y_key], c=cmap_data, cmap=this_cmap, s=mrk_size, marker=std_marker, zorder=4)
+                tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=m_size*10, marker='x', zorder=3)
+                tw_ax_x.scatter(df[x_key], df[tw_y_key], c=cmap_data, cmap=this_cmap, s=m_size, marker=std_marker, zorder=4)
                 # Invert y-axis if specified
                 if tw_y_key in y_invert_vars:
                     tw_ax_x.invert_yaxis()
@@ -2011,8 +2016,13 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 df[y_key] = mpl.dates.date2num(df[y_key])
             # Drop duplicates
             df.drop_duplicates(subset=[x_key, y_key], keep='first', inplace=True)
+            # If there aren't that many points, make the markers bigger
+            if len(df[x_key]) < 1000:
+                m_size = map_mrk_size
+            else: 
+                m_size = mrk_size
             # Plot every point the same color, size, and marker
-            ax.scatter(df[x_key], df[y_key], color=std_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
+            ax.scatter(df[x_key], df[y_key], color=std_clr, s=m_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
             if plot_slopes:
                 # Mark outliers
                 mark_outliers(ax, df, x_key, y_key)
@@ -2040,7 +2050,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 tw_clr = get_var_color(tw_x_key)
                 if tw_clr == std_clr:
                     tw_clr = alt_std_clr
-                tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+                tw_ax_y.scatter(df[tw_x_key], df[y_key], color=tw_clr, s=m_size, marker=std_marker, alpha=mrk_alpha)
                 tw_ax_y.set_xlabel(pp.xlabels[1])
                 # Change color of the ticks on the twin axis
                 tw_ax_y.tick_params(axis='x', colors=tw_clr)
@@ -2048,7 +2058,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 tw_clr = get_var_color(tw_y_key)
                 if tw_clr == std_clr:
                     tw_clr = alt_std_clr
-                tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha)
+                tw_ax_x.scatter(df[x_key], df[tw_y_key], color=tw_clr, s=m_size, marker=std_marker, alpha=mrk_alpha)
                 # Invert y-axis if specified
                 if tw_y_key in y_invert_vars:
                     tw_ax_x.invert_yaxis()
@@ -2078,6 +2088,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
                     sources_list.append(s)
             # The pandas version of 'unique()' preserves the original order
             sources_list = pd.unique(pd.Series(sources_list))
+            # If there aren't that many points, make the markers bigger
+            if len(df[x_key]) < 1000:
+                m_size = map_mrk_size
+            else: 
+                m_size = mrk_size
             i = 0
             lgnd_hndls = []
             for source in sources_list:
@@ -2093,7 +2108,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 if y_key in ['dt_start', 'dt_end']:
                     this_df[y_key] = mpl.dates.date2num(this_df[y_key])
                 # Plot every point from this df the same color, size, and marker
-                ax.scatter(this_df[x_key], this_df[y_key], color=my_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
+                ax.scatter(this_df[x_key], this_df[y_key], color=my_clr, s=m_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
                 i += 1
                 # Add legend to report the total number of points for this instrmt
                 lgnd_label = source+': '+str(len(this_df[x_key]))+' points'
@@ -2120,6 +2135,11 @@ def make_subplot(ax, a_group, fig, ax_pos):
         elif clr_map == 'clr_by_instrmt':
             if plot_hist:
                 return plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=pp.legend)
+            # If there aren't that many points, make the markers bigger
+            if len(df[x_key]) < 1000:
+                m_size = map_mrk_size
+            else: 
+                m_size = mrk_size
             i = 0
             lgnd_hndls = []
             # Loop through each data frame, the same as looping through instrmts
@@ -2135,7 +2155,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Decide on the color, don't go off the end of the array
                 my_clr = mpl_clrs[i%len(mpl_clrs)]
                 # Plot every point from this df the same color, size, and marker
-                ax.scatter(df[x_key], df[y_key], color=my_clr, s=mrk_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
+                ax.scatter(df[x_key], df[y_key], color=my_clr, s=m_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
                 i += 1
                 # Add legend to report the total number of points for this instrmt
                 lgnd_label = s_instrmt+': '+str(len(df[x_key]))+' points'
@@ -2874,7 +2894,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         n_noise_pts = len(df_noise)
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[var_key]))+' points')
-        m_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(m_pts))
+        m_pts_patch = mpl.patches.Patch(color='none', label=r'$m_{pts}$: '+str(m_pts))
         n_clstr_patch = mpl.lines.Line2D([],[],color=cnt_clr, label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
         n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
         rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
@@ -3955,7 +3975,7 @@ def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map
             #
         # Add legend to report the total number of points and notes on the data
         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
-        m_pts_patch = mpl.patches.Patch(color='none', label='min(pts/cluster): '+str(m_pts))
+        m_pts_patch = mpl.patches.Patch(color='none', label=r'$m_{pts}$: '+str(m_pts))
         n_clstr_patch = mpl.lines.Line2D([],[],color=cnt_clr, label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
         n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
         rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
