@@ -146,12 +146,6 @@ print('- Creating profile filtering objects')
 pfs_0 = ahf.Profile_Filters()
 pfs_1 = ahf.Profile_Filters(p_range=T2008_p_range)
 
-test_p_range = [200,400]
-pfs_ell_10  = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=10)
-pfs_ell_50  = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=50)
-pfs_ell_100 = ahf.Profile_Filters(p_range=test_p_range)
-pfs_ell_150 = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=150)
-
 pfs_ITP2  = ahf.Profile_Filters(SP_range=ITP2_S_range)
 pfs_ITP3 = ahf.Profile_Filters(SP_range=Lu2022_S_range)
 
@@ -162,13 +156,13 @@ print('- Creating plotting parameter objects')
 ################################################################################
 
 ### Test plots
-## Histogram of practical salinity
+## Changing the value of m_pts
 # Make the Plot Parameters
-pp_SP_hist = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['hist'], clr_map='clr_all_same')
-# Make the Analysis Group
-group_SP_hist = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_SP_hist)
+pp_m_pts_100 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':100})
+# Make the Analysis Groups
+group_m_pts_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_m_pts_100, plot_title=r'ITP2 $m_{pts}=100$')
 # Make the figure
-ahf.make_figure([group_SP_hist])
+ahf.make_figure([group_m_pts_100])
 
 
 pp_xy_default = ahf.Plot_Parameters()
