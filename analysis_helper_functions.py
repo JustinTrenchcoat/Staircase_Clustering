@@ -243,6 +243,7 @@ class Analysis_Group:
     profile_filters     A custom Profile_Filters object with filters to apply to
                         all individual profiles in the xarrays
     plt_params          A custom Plot_Parameters object
+    plot_title          A string to use as the title for this subplot
     """
     def __init__(self, data_set, profile_filters, plt_params, plot_title=None):
         self.data_set = data_set
@@ -262,11 +263,13 @@ class Profile_Filters:
     that filter will not be applied. All these are ignored when plotting 'by_pf'
 
     p_range             [p_min, p_max] where the values are floats in dbar
-                          or, "Shibley2017" to follow their method of selecting a range
     d_range             [d_min, d_max] where the values are floats in m
     *T_range            [T_min, T_max] where the values are floats in degrees C
     S*_range            [S_min, S_max] where the values are floats in g/kg
     subsample           True/False whether to apply the subsample mask to the profiles
+    regrid_TS           [1st_var_str, Delta_1st_var, 2nd_var_str, Delta_2nd_var], a pair of 
+                            [var, Delta_var] where you specify the variable then the value
+                            of the spacing to regrid that value to
     m_avg_win           The value in dbar of the moving average window to take for ma_ variables
     """
     def __init__(self, p_range=None, d_range=None, iT_range=None, CT_range=None, PT_range=None, SP_range=None, SA_range=None, subsample=False, regrid_TS=None, m_avg_win=None):
@@ -304,10 +307,13 @@ class Plot_Parameters:
                       'aiT', 'aCT', 'aPT', 'BSP', 'BSA', 'ma_iT', 'ma_CT', 'ma_PT', 
                       'ma_SP', 'ma_SA', 'ma_sigma', 'ss_mask', 'la_iT', 'la_CT', 
                       'la_PT', 'la_SA','la_sigma'
-    legend          True/False whether to add a legend on this plot. Default:True
-    add_grid        True/False whether to add a grid on this plot. Default:True
-    ax_lims         An optional dictionary of the limits on the axes for the final plot
-                      Ex: {'x_lims':[x_min,x_max], 'y_lims':[y_min,y_max]}
+    clr_map         A string to determine what color map to use in the plot
+                    'xy' can use 'clr_all_same', 'clr_by_source',
+                      'clr_by_instrmt', 'density_hist', 'cluster', or any
+                      regular variable
+                    'map' can use 'clr_all_same', 'clr_by_source',
+                      'clr_by_instrmt', or any 'by_pf' regular variable
+                    'profiles' can use 'clr_all_same' or any regular variable
     first_dfs       A list of booleans of whether to take the first differences
                       of the plot_vars before analysis. Defaults to all False
                     'xy' and 'profiles' expect a list of 2, ex: [True, False]
@@ -316,13 +322,10 @@ class Plot_Parameters:
                       of the plot_vars before analysis. Defaults to all False
                     'xy' and 'profiles' expect a list of 2, ex: [True, False]
                     'map' and ignores this parameter
-    clr_map         A string to determine what color map to use in the plot
-                    'xy' can use 'clr_all_same', 'clr_by_source',
-                      'clr_by_instrmt', 'density_hist', 'cluster', or any
-                      regular variable
-                    'map' can use 'clr_all_same', 'clr_by_source',
-                      'clr_by_instrmt', or any 'by_pf' regular variable
-                    'profiles' can use 'clr_all_same' or any regular variable
+    legend          True/False whether to add a legend on this plot. Default:True
+    add_grid        True/False whether to add a grid on this plot. Default:True
+    ax_lims         An optional dictionary of the limits on the axes for the final plot
+                      Ex: {'x_lims':[x_min,x_max], 'y_lims':[y_min,y_max]}
     extra_args      A general use argument for passing extra info for the plot
                     'map' expects a dictionary following this format:
                         {'map_extent':'Canada_Basin'}
@@ -359,7 +362,7 @@ class Plot_Parameters:
                         {'place_isos':'manual'}, otherwise they will be placed 
                         automatically
     """
-    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['iT'], clr_map='clr_all_same', first_dfs=[False, False], finit_dfs=[False, False], legend=True, add_grid=True, ax_lims=None, extra_args=None):
+    def __init__(self, plot_type='xy', plot_scale='by_vert', x_vars=['SP'], y_vars=['CT'], clr_map='clr_all_same', first_dfs=[False, False], finit_dfs=[False, False], legend=True, add_grid=True, ax_lims=None, extra_args=None):
         # Add all the input parameters to the object
         self.plot_type = plot_type
         self.plot_scale = plot_scale
@@ -1190,7 +1193,9 @@ def txt_summary(groups_to_summarize, filename=None):
     Takes in a list of Analysis_Group objects. Analyzes and outputs summary info
     for each one.
 
-    groups_to_plot  A list of Analysis_Group objects
+    groups_to_plot      A list of Analysis_Group objects
+    filename            The file to write the output to. If none, it will print
+                            the output to the console
     """
     # Loop over all Analysis_Group objects
     i = 0
@@ -1346,6 +1351,14 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
 
     groups_to_plot  A list of Analysis_Group objects, one for each subplot
                     Each Analysis_Group contains the info to create each subplot
+    filename        The filename in which to save the figure
+                        only accepts .png or .pickle filenames
+    use_same_x_axis     True/False whether to force subplots to share x axis
+                        ranges if they have the same variable
+    use_same_y_axis     True/False whether to force subplots to share y axis
+                        ranges if they have the same variable
+    row_col_list        [rows, cols, f_ratio, f_size], if none given, will use 
+                        the defaults specified below in n_row_col_dict
     """
     # Define number of rows and columns based on number of subplots
     #   key: number of subplots, value: (rows, cols, f_ratio, f_size)
@@ -1526,7 +1539,7 @@ def set_fig_axes(heights, widths, fig_ratio=0.5, fig_size=1, share_x_axis=None, 
     fig_size     size scale factor, 1 changes nothing, 2 makes it very big
     share_x_axis bool whether the subplots should share their x axes
     share_y_axis bool whether the subplots should share their y axes
-    projection   projection type for the subplots
+    prjctn       projection type for the subplots
     """
     # Set aspect ratio of overall figure
     w, h = mpl.figure.figaspect(fig_ratio)
@@ -1730,6 +1743,12 @@ def format_datetime_axes(x_key, y_key, ax, tw_x_key=None, tw_ax_y=None, tw_y_key
 ################################################################################
 
 def format_sci_notation(x, ndp=2):
+    """
+    Formats a number into scientific notation
+
+    x       The number to format
+    ndp     The number of decimal places
+    """
     s = '{x:0.{ndp:d}e}'.format(x=x, ndp=ndp)
     m, e = s.split('e')
     # Check to see whether it's outside the scientific notation exponent limits
@@ -1740,7 +1759,15 @@ def format_sci_notation(x, ndp=2):
 
 ################################################################################
 
-def add_h_scale_bar(ax, ax_lims, extent_ratio=0.003, unit="", tw_clr=False):
+def add_h_scale_bar(ax, ax_lims, unit="", tw_clr=False):
+    """
+    Adds a horizontal scale bar to a plot
+
+    ax          The axis on which to add the legend
+    ax_lims     The limits on the horizontal axis range
+    unit        A string of the units of the horizontal axis
+    tw_clr      The color of the twin axis, if necessary
+    """
     h_bar_clr = std_clr
     # Find distance between ticks
     ax_ticks = np.array(ax.get_xticks())
@@ -2466,6 +2493,7 @@ def add_isopycnals(ax, df, x_key, y_key, p_ref=None, place_isos=False, tw_x_key=
     x_key       The string of the name for the x data on the main axis
     y_key       The string of the name for the y data on the main axis
     p_ref       Value of pressure to reference the isopycnals to. Default is surface (0 dbar)
+    place_isos  How to place the isopycnals, either 'auto' or 'manual'
     tw_x_key    The string of the name for the x data on the twin axis
     tw_ax_y     The twin y axis on which to format
     tw_y_key    The string of the name for the y data on the twin axis
@@ -2558,11 +2586,18 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
     to produce a subplot of individual profiles. Returns the x and y labels and
     the subplot title
 
-    x_key           String
-    ax              The axis on which to make the plot
-    a_group         A Analysis_Group object containing the info to create this subplot
-    pp              The Plot_Parameters object for a_group
-    clr_map
+    x_key       The string of the name for the x data on the main axis
+    y_key       The string of the name for the y data on the main axis
+    ax          The axis on which to make the plot
+    a_group     A Analysis_Group object containing the info to create this subplot
+    pp          The Plot_Parameters object for a_group
+    clr_map     A string to determine what color map to use in the plot
+    legend      True/False whether to add a legend
+    df          A pandas dataframe
+    txk         Twin x variable key
+    tay         Twin y axis
+    tyk         Twin y variable key
+    tax         Twin x axis
     """
     # Find the histogram parameters, if given
     if not isinstance(pp.extra_args, type(None)):
@@ -2859,8 +2894,9 @@ def get_hist_params(df, h_key, n_h_bins=25):
     """
     Returns the needed information to make a histogram
 
-    df      A pandas data frame of the data to plot
-    h_key   A string of the column header to plot
+    df          A pandas data frame of the data to plot
+    h_key       A string of the column header to plot
+    n_h_bins    The number of histogram bins to use
     """
     if isinstance(n_h_bins, type(None)):
         n_h_bins = 25
@@ -2890,8 +2926,9 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     the subplot title
 
     ax              The axis on which to make the plot
-    a_group         A Analysis_Group object containing the info to create this subplot
+    a_group         An Analysis_Group object containing the info to create this subplot
     pp              The Plot_Parameters object for a_group
+    clr_map         A string to determine what color map to use in the plot
     """
     # Find extra arguments, if given
     legend = pp.legend
@@ -3237,6 +3274,11 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
 ################################################################################
 
 def get_cluster_args(pp):
+    """
+    Finds cluster-realted variables in the extra_args dictionary
+
+    pp              The Plot_Parameters object for a_group
+    """
     # Get the dictionary stored in extra_args
     cluster_plt_dict = pp.extra_args
     # print('cluster_plt_dict:',cluster_plt_dict)
@@ -3279,6 +3321,7 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
     dataframe with columns for x_key, y_key, 'cluster', and 'clst_prob' and a
     rough measure of the DBCV score from `relative_validity_`
 
+    run_group   The Analysis_Group object to run HDBSCAN on
     df          A pandas data frame with x_key and y_key as equal length columns
     x_key       String of the name of the column to use on the x-axis
     y_key       String of the name of the column to use on the y-axis
@@ -3629,9 +3672,10 @@ def mark_outliers(ax, df, x_key, y_key, find_all=False, threshold=2, mrk_clr='r'
     df              A pandas data frame
     x_key           A string of the variable from df to use on the x axis
     y_key           A string of the variable from df to use on the y axis
-    find_all        True/False as whether to find outliers in both cRL and cor_SP
+    find_all        True/False as whether to find outliers in both cRL and nir_SP
     threshold       The threshold zscore for which to consider an outlier
     mrk_clr         The color in which to mark the outliers
+    mk_size         The size of the marker to use to mark the outliers
     """
     print('\t- Marking outliers')
     # Find outliers
@@ -3667,6 +3711,8 @@ def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map
     df              A pandas data frame output from HDBSCAN_
     x_key           String of the name of the column to use on the x-axis
     y_key           String of the name of the column to use on the y-axis
+    cl_x_var        String of the name of the column used on x-axis of clustering
+    cl_y_var        String of the name of the column used on y-axis of clustering
     clr_map         String of the name of the colormap to use (ex: 'clusters')
     m_pts          An integer, the minimum number of points for a cluster
     min_samp        An integer, number of points in neighborhood for a core point
@@ -3933,6 +3979,9 @@ def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
     included in the data set
 
     ax              The axis on which to plot
+    tw_ax_x         The twin x axis on which to plot
+    a_group         An Analysis_Group object containing the info to create this subplot
+    plt_title       A string to use as the title of this subplot
     """
     ## Get relevant parameters for the plot
     pp = a_group.plt_params
