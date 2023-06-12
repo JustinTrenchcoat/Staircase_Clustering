@@ -156,13 +156,15 @@ print('- Creating plotting parameter objects')
 ################################################################################
 
 ### Test plots
-## Changing the value of m_pts
+## Regrid
+# Make the Profile Filters
+pfs_regrid = ahf.Profile_Filters(SP_range=ITP2_S_range, regrid_TS=['CT',0.01,'SP',0.005])
 # Make the Plot Parameters
-pp_m_pts_100 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':100})
-# Make the Analysis Groups
-group_m_pts_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_m_pts_100, plot_title=r'ITP2 $m_{pts}=100$')
+pp_regrid = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='clr_all_same', legend=True)
+# Make the Analysis Group
+group_regrid = ahf.Analysis_Group(ds_ITP2_all, pfs_regrid, pp_regrid)
 # Make the figure
-ahf.make_figure([group_m_pts_100])
+ahf.make_figure([group_regrid])
 
 
 pp_xy_default = ahf.Plot_Parameters()
@@ -229,11 +231,11 @@ pp_ITP_map_full_Arctic = ahf.Plot_Parameters(plot_type='map', clr_map='clr_by_in
 ### Figure 2
 ## Using ITP2, reproducing figures from Timmermans et al. 2008
 # The actual clustering done for reproducing figures from Timmermans et al. 2008
-pp_T2008_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':True}, ax_lims=T2008_fig5a_x_lims, legend=False, add_grid=False)
+pp_T2008_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=False, add_grid=False)
 # Reproducing Timmermans et al. 2008 Figure 4, with cluster coloring and 2 extra profiles
 pp_T2008_fig4  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':True}, legend=True, ax_lims=T2008_fig4_y_lims, add_grid=True)
 # Reproducing Timmermans et al. 2008 Figure 5a, but with cluster coloring
-pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0, 'place_isos':'manual'}, ax_lims=T2008_fig5a_ax_lims, legend=False, add_grid=False)
+pp_T2008_fig5a = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0, 'place_isos':'auto'}, ax_lims=T2008_fig5a_ax_lims, legend=False, add_grid=False)
 # Reproducing Timmermans et al. 2008 Figure 6a, but with cluster coloring
 pp_T2008_fig6a = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'isopycnals':True}, ax_lims=T2008_fig6a_ax_lims, legend=False, add_grid=False)
 ## For ITP3
@@ -333,7 +335,7 @@ if False:
     group_2T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_2T2008_fig6a, plot_title='')
     # Make the figure
     #   Remember, adding isopycnals means it will prompt you to place the in-line labels manually
-    ahf.make_figure([group_2T2008_fig5a, group_2T2008_fig4, group_2T2008_clstr, group_2T2008_fig6a], filename='Figure_2_SA.png')
+    ahf.make_figure([group_2T2008_fig5a, group_2T2008_fig4, group_2T2008_clstr, group_2T2008_fig6a])#, filename='Figure_2_SA.png')
     # ahf.make_figure([group_2T2008_clstr])
     # ahf.make_figure([group_2T2008_fig4])
     # ahf.make_figure([group_2T2008_fig5a])
@@ -378,8 +380,8 @@ if False:
     group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_T2008_fig6a, plot_title='')
     # Make the figure
     #   Remember, adding isopycnals means it will prompt you to place the in-line labels manually
-    # ahf.make_figure([group_T2008_fig5a, group_T2008_fig4, group_T2008_clstr, group_T2008_fig6a], filename='Figure_2.png')
-    ahf.make_figure([group_T2008_clstr])
+    ahf.make_figure([group_T2008_fig5a, group_T2008_fig4, group_T2008_clstr, group_T2008_fig6a])#, filename='Figure_2.png')
+    # ahf.make_figure([group_T2008_clstr])
     # ahf.make_figure([group_T2008_fig4])
     # ahf.make_figure([group_T2008_fig5a])
     # ahf.make_figure([group_T2008_fig6a])
