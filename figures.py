@@ -9,44 +9,25 @@ Note: You unfortunately cannot pickle plots with parasite axes. So, the pickling
 functionality won't work if you try to make a plot with the box and whisker plot
 in an inset.
 
+The Jupyter notebook Create_Figures.ipynb offers detailed explanations of each 
+plot created by this script.
 """
 
 """
 NOTE: BEFORE YOU RUN THIS SCRIPT
 
-This script expects 
+This script expects that the following files exist:
+netcdfs/ITP_2.nc
+netcdfs/ITP_3.nc
+
+and that they have been created by running the following scripts in this order:
+make_netcdf.py
+take_moving_average.py
+cluster_data.py
 """
 
 # For custom analysis functions
 import analysis_helper_functions as ahf
-
-"""
-The plots that can be generated from this script are very customizable. It works 
-by creating different instances of custom objects which can be combined to make
-different types of plots. The objects that are created are, in order:
-    - Data Filters
-        - A set of rules to broadly filter the data
-    - Data Set
-        - Contains the data to be plotted
-    - Profile Filters
-        - A set of rules on how to filter individual profiles
-    - Plot Parameters
-        - A set of rules on how to plot the data
-    - Analysis Group
-        - Wraps the other objects, contains the information to make one subplot
-
-The data filters, data sets, profile filters, and plot parameters can be combined
-in many different ways. For example, if you want to plot the same data in many 
-different ways, you can make one Data Set object and combine it with many different
-Plot Parameter objects. Or, if you want to compare many different data sets by 
-make many of the same type of plot, you can make many Data Set objects and combine
-each with the same Plot Parameters object.
-
-As the analysis groups contain the data to plot and the rules by which to plot
-the data, each analysis group represents a subplot. Between 1 and 9 analysis
-groups can be combined using the `make_plot()` function to produce a plot, either
-as an image in the GUI, an image file, or a pickle file.
-"""
 
 ### Filters for reproducing plots from Timmermans et al. 2008
 ITP2_p_range = [185,300]
@@ -65,10 +46,11 @@ T2008_fig6a_ax_lims = {'x_lims':[0.027002,0.027042], 'y_lims':[-13e-6,3e-6]}
 T2008_fig6a_ax_lims = {'x_lims':[0.026838,0.026878], 'y_lims':[-13e-6,3e-6]}
 
 # A list of many profiles to plot from ITP2
-start_pf = 1#411
+start_pf = 1
 import numpy as np
 n_pfs_to_plot = 10
 ITP2_some_pfs = list(np.arange(start_pf, start_pf+(n_pfs_to_plot*2), 2))
+
 # For showing multiple layers grouped into one cluster
 ITP2_some_pfs_0 = [87, 89, 95, 97, 99, 101, 103, 105, 109, 111]
 ITP2_some_pfs_ax_lims_0 = {'y_lims':[245,220]}
@@ -76,7 +58,7 @@ ITP2_some_pfs_ax_lims_0 = {'y_lims':[245,220]}
 ITP2_some_pfs_1 = [67, 69, 73, 75, 81, 83, 91, 93, 97, 99]
 ITP2_some_pfs_ax_lims_1 = {'y_lims':[295,270]}
 
-# Test: for showing how well the clustering does near the AW core
+# For showing how well the clustering does near the AW core
 ITP3_some_pfs_2 = [313, 315, 317, 319, 321]
 ITP3_some_pfs_ax_lims_2 = {'y_lims':[370,300]}
 
@@ -97,19 +79,13 @@ all_ITPs = {'ITP_2':'all','ITP_3':'all'}
 ITP2_all  = {'ITP_2':'all'}
 ITP3_all  = {'ITP_3':'all'}
 
-# Just specific profiles
-ITP2_pfs  = {'ITP_2':[185]}#T2008_fig4_pfs}
-
 # A list of many profiles to plot from ITP3
 start_pf = 1331
 import numpy as np
 n_pfs_to_plot = 5
-ITP3_some_pfs1 = list(np.arange(start_pf, start_pf+(n_pfs_to_plot*2), 2))
-ITP3_pfs0  = {'ITP_3':[387]}
-ITP3_pfs1  = {'ITP_3':ITP3_some_pfs1}
+ITP3_some_pfs_1 = list(np.arange(start_pf, start_pf+(n_pfs_to_plot*2), 2))
+ITP3_pfs1  = {'ITP_3':ITP3_some_pfs_1}
 ITP3_pfs2  = {'ITP_3':ITP3_some_pfs_2}
-
-ITP2_pfs1  = {'ITP_2':ITP2_some_pfs}
 
 ################################################################################
 # Create data filtering objects
@@ -117,9 +93,6 @@ print('- Creating data filtering objects')
 ################################################################################
 
 dfs0 = ahf.Data_Filters()
-dfs_S2019 = ahf.Data_Filters(date_range=['2007/09/01','2007/12/31'])
-dfs_test = ahf.Data_Filters(date_range=['2005/08/25 00:00:00','2005/10/31 00:00:00'])
-# dfs_test = ahf.Data_Filters(date_range=['2004/09/01 00:00:00','2004/09/15 00:00:00'])
 
 ################################################################################
 # Create data sets by combining filters and the data to load in
@@ -129,13 +102,8 @@ print('- Creating data sets')
 ds_all_ITPs = ahf.Data_Set(all_ITPs, dfs0)
 
 ds_ITP2_all = ahf.Data_Set(ITP2_all, dfs0)
-ds_ITP2_pfs = ahf.Data_Set(ITP2_pfs, dfs0)
-
-ds_ITP2_some_pfs = ahf.Data_Set(ITP2_pfs, dfs0)
 
 ds_ITP3_all = ahf.Data_Set(ITP3_all, dfs0)
-ds_ITP3_some_pfs0 = ahf.Data_Set(ITP3_pfs0, dfs0)
-ds_ITP3_some_pfs1 = ahf.Data_Set(ITP3_pfs1, dfs0)
 ds_ITP3_some_pfs2 = ahf.Data_Set(ITP3_pfs2, dfs0)
 
 ################################################################################
@@ -144,7 +112,6 @@ print('- Creating profile filtering objects')
 ################################################################################
 
 pfs_0 = ahf.Profile_Filters()
-pfs_1 = ahf.Profile_Filters(p_range=T2008_p_range)
 
 pfs_ITP2  = ahf.Profile_Filters(SP_range=ITP2_S_range)
 pfs_ITP3 = ahf.Profile_Filters(SP_range=Lu2022_S_range)
@@ -165,39 +132,6 @@ pp_regrid = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='clr_all_s
 group_regrid = ahf.Analysis_Group(ds_ITP2_all, pfs_regrid, pp_regrid)
 # Make the figure
 ahf.make_figure([group_regrid])
-
-
-pp_xy_default = ahf.Plot_Parameters()
-pp_test0 = ahf.Plot_Parameters(x_vars=['alpha'], y_vars=['beta'], clr_map='clr_all_same', legend=True, extra_args={'b_a_w_plt':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':100})
-pp_og_ma_la_pf = ahf.Plot_Parameters(x_vars=['CT', 'ma_CT'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':[185], 'plt_noise':True, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':210}, ax_lims=T2008_fig4_y_lims)
-pp_test1 = ahf.Plot_Parameters(x_vars=['cRL'], y_vars=['ca_press'], clr_map='clr_all_same', extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts, 'plot_slopes':True}, legend=True)
-# pp_test1 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['hist'], clr_map='cluster', legend=True, extra_args={'b_a_w_plt':False, 'plt_noise':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':90})
-# pp_test1 = ahf.Plot_Parameters(x_vars=['pcs_press'], y_vars=['pca_press'], clr_map='density_hist', legend=True, extra_args={'b_a_w_plt':False, 'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':90, 'clr_min':0, 'clr_max':15, 'clr_ext':'max', 'xy_bins':250})
-# pp_test0 = ahf.Plot_Parameters(x_vars=['dt_start'], y_vars=['lat'], clr_map='clr_all_same')
-pp_map = ahf.Plot_Parameters(plot_type='map', clr_map='dt_start')
-
-pp_pfs0 = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['depth'], plot_type='profiles')
-pp_pfs1 = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['depth'], first_dfs=[True], plot_type='profiles')
-pp_pfs2 = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['depth'], finit_dfs=[True], plot_type='profiles')
-pp_pfs3 = ahf.Plot_Parameters(x_vars=['sigma','ma_sigma'], y_vars=['depth'], finit_dfs=[True], plot_type='profiles')
-
-## Test Figures
-# Testing profile spacing
-pp_pf_spacing_test0 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], clr_map='cluster', plot_type='profiles', ax_lims=ITP3_some_pfs_ax_lims_2)
-pp_pf_spacing_test1 = ahf.Plot_Parameters(x_vars=['SP','CT'], y_vars=['press'], clr_map='cluster', plot_type='profiles', ax_lims=ITP3_some_pfs_ax_lims_2)
-
-## Testing impact of ell_size
-pp_CT_SP  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='clr_all_same', legend=False)
-pp_CT_pfs = ahf.Plot_Parameters(x_vars=['CT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':T2008_fig4_pfs})
-pp_ma_CT_SP  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['ma_CT'], clr_map='clr_all_same', legend=False)
-pp_ma_CT_pfs = ahf.Plot_Parameters(x_vars=['ma_CT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':T2008_fig4_pfs})
-#
-pp_CT_and_ma_CT_pfs = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['press'], plot_type='profiles', clr_map='clr_all_same', extra_args={'pfs_to_plot':[185]})
-
-## Finding average profile
-pp_avg_pf = ahf.Plot_Parameters(x_vars=['CT','SP'], y_vars=['press'])
-
-pp_ca_SP_CT  = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['ca_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts, 'b_a_w_plt':False, 'plt_noise':False}, legend=True)
 
 ### Figure 2, but with S_A instead of S_P
 ## Using ITP2, reproducing figures from Timmermans et al. 2008
@@ -279,49 +213,7 @@ pp_ITP3_some_pfs_2 = ahf.Plot_Parameters(x_vars=['SP','CT'], y_vars=['press'], p
 print('- Creating analysis group objects')
 ################################################################################
 
-## Test Analysis Groups
-# my_group0 = ahf.Analysis_Group(ds_ITP13_all, pfs_ITP13, pp_test0)
-# my_group0 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_test0)
-# my_group1 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ca_SP_CT)
-# my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_test0)
-# my_group0 = ahf.Analysis_Group(ds_ITP3_all, pfs_0, pp_test0)
-# my_group0 = ahf.Analysis_Group(ds_ITP1_all, pfs_0, pp_map)
-
-# Finding the typical gradients of example profile
-# pf_test0 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_1, pp_pfs0, plot_title='')
-# pf_test1 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_1, pp_pfs1, plot_title='')
-# pf_test2 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_1, pp_pfs2, plot_title='')
-# pf_test3 = ahf.Analysis_Group(ds_ITP2_pfs, pfs_1, pp_pfs3, plot_title='')
-
 ## Test figures
-## Viewing example profiles with original, moving average, and local anomaly 
-# group_og_ma_la_pf = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_og_ma_la_pf)
-
-# Testing profile spacing
-# group_pf_spacing_test0 = ahf.Analysis_Group(ds_ITP3_some_pfs1, pfs_ITP3, pp_pf_spacing_test0)
-# ahf.make_figure([group_pf_spacing_test0])
-# group_pf_spacing_test1 = ahf.Analysis_Group(ds_ITP3_some_pfs1, pfs_ITP3, pp_pf_spacing_test1)
-# ahf.make_figure([group_pf_spacing_test1], row_col_list=[1,1, 0.2, 1.70])
-
-## Testing moving average window size
-# group_ell_010 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_10, pp_test0, plot_title=r'ITP2 $\ell=10$ dbar')
-# group_ell_050 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_50, pp_test0, plot_title=r'ITP2 $\ell=50$ dbar')
-# group_ell_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_100,pp_test0,plot_title=r'ITP2 $\ell=100$ dbar')
-# group_ell_150 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_150,pp_test0,plot_title=r'ITP2 $\ell=150$ dbar')
-
-## Testing impact of ell_size
-# group_CT_SP  = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_100, pp_CT_SP)
-# group_CT_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_100, pp_CT_pfs)
-# group_ma_CT_SP  = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_100, pp_ma_CT_SP)
-# group_ma_CT_pfs = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_100, pp_ma_CT_pfs)
-# # 
-# group_CT_and_ma_CT_pfs__10 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_10, pp_CT_and_ma_CT_pfs, plot_title=r'ITP2 $\ell=10$ dbar')
-# group_CT_and_ma_CT_pfs__50 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_50, pp_CT_and_ma_CT_pfs, plot_title=r'ITP2 $\ell=50$ dbar')
-# group_CT_and_ma_CT_pfs_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_100, pp_CT_and_ma_CT_pfs, plot_title=r'ITP2 $\ell=100$ dbar')
-# group_CT_and_ma_CT_pfs_150 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_150, pp_CT_and_ma_CT_pfs, plot_title=r'ITP2 $\ell=150$ dbar')
-
-## Finding average profile
-# group_avg_pf = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_100, pp_avg_pf)
 
 ### Figure 2, but using S_A
 ## Using ITP2, reproducing figures from Timmermans et al. 2008
@@ -483,31 +375,3 @@ if False:
     ahf.make_figure([group_ITP3_some_pfs_2], row_col_list=[1,1, 0.27, 0.90], filename='Figure_8.pickle')
 
 ################################################################################
-# Declare figures or summaries to output
-# print('- Creating outputs')
-################################################################################
-
-# ahf.make_figure([group_T2008_fig4])#, filename='test.pickle')
-# ahf.make_figure([group_salt_nir])
-# ahf.make_figure([group_ps_n_pfs])
-# ahf.make_figure([my_group1])#, filename='test.pickle')
-# ahf.make_figure([my_group0, my_group1])
-# ahf.make_figure([group_T2008_clstr])
-
-# ahf.make_figure([pf_test0, pf_test1, pf_test2, pf_test3])
-
-## Test Figures
-# ahf.make_figure([group_press_hist, group_press_nir, group_sigma_hist, group_sigma_nir, group_temp_hist, group_temp_nir, group_salt_hist, group_salt_nir], filename='ITP2_nir_vs_press_all_var.pickle')
-# ahf.make_figure([group_clstr_ST, group_salt_nir, group_salt_R_L])#, filename='ITP2_nir_vs_press_all_var.pickle')
-# ahf.make_figure([group_salt_R_L, group_salt_R_l])#, filename='ITP2_nir_vs_press_all_var.pickle')
-# ahf.make_figure([group_T2008_clstr, group_salt_hist, group_salt_nir, group_salt_R_L])#, filename='ITP2_nir_vs_press_all_var.pickle')
-# ahf.make_figure([group_ell_001, group_ell_005, group_ell_010, group_ell_050, group_ell_100, group_ell_200], filename='ITP2_ell_size_tests.png')
-
-## Testing impact of ell_size
-# ahf.make_figure([group_ell_010, group_ell_050, group_ell_100, group_ell_150])
-# ahf.make_figure([group_CT_SP, group_ma_CT_SP, group_CT_pfs, group_ma_CT_pfs])
-# ahf.make_figure([group_CT_and_ma_CT_pfs__10, group_CT_and_ma_CT_pfs__50, group_CT_and_ma_CT_pfs_100, group_CT_and_ma_CT_pfs_150])
-# ahf.make_figure([group_CT_and_ma_CT_pfs_100])
-
-## Finding average profile
-# ahf.find_avg_profile(group_avg_pf, 'press', 0.25)
