@@ -19,7 +19,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS "AS IS" AND ANY EXPRESSED OR 
 ## Contact
 
 * Corresponding Author: Mikhail Schee (he/him)
-* Email: mikhail.schee@mail.utoronto.ca
+* Email: [mikhail.schee@mail.utoronto.ca](mailto:mikhail.schee@mail.utoronto.ca)
 * GitHub: https://github.com/scheemik/Staircase_Clustering_Detection_Algorithm
 
 ## Summary
