@@ -30,14 +30,10 @@ import gsw
 import string
 # For taking moving averages
 import scipy.ndimage as ndimage
-# For interpolating
-from scipy import interpolate
 # For getting zscores to find outliers
 from scipy import stats
 # For making clusters
 import hdbscan
-# For computing Adjusted Rand Index
-from sklearn import metrics
 # For calculating the distance between pairs of (latitude, longitude)
 from geopy.distance import geodesic
 # For calculating Orthogonal Distance Regression for Total Least Squares
@@ -88,24 +84,24 @@ if dark_mode:
     plt.style.use('dark_background')
     std_clr = 'w'
     alt_std_clr = 'yellow'
-    noise_clr = 'w'#D7642C'
-    cnt_clr = '#db6d00'#'r'
+    noise_clr = 'w'
+    cnt_clr = '#db6d00'
     clr_ocean = 'k'
     clr_land  = 'grey'
     clr_lines = 'w'
     clstr_clrs = jackson_clr[[2,14,4,6,7,9,13]]
-    # clstr_clrs = jackson_clr[[2,14,4,6,7,12,13]]
     bathy_clrs = ['#000040','k']
 else:
     std_clr = 'k'
     alt_std_clr = 'olive'
-    noise_clr = 'k'#D7642C'
-    cnt_clr = "#ffff6d"#'k'
+    noise_clr = 'k'
+    cnt_clr = "#ffff6d"
     clr_ocean = 'w'
     clr_land  = 'grey'
     clr_lines = 'k'
     clstr_clrs = jackson_clr[[12,1,10,6,5,2,13]]
     bathy_clrs = ['w','#b6dbff']
+
 # Define bathymetry colors
 n_bathy = 5
 cm0 = mpl.colors.LinearSegmentedColormap.from_list("Custom", bathy_clrs, N=n_bathy)
@@ -143,7 +139,6 @@ big_map_mrkr  = 80
 sml_map_mrkr  = 5
 cent_mrk_size = 50
 pf_mrk_size   = 15
-layer_mrk_size= 10
 std_marker = '.'
 map_marker = '.' #'x'
 map_ln_wid = 0.5
@@ -154,17 +149,7 @@ l_marker   = '+'
 sci_lims = (-2,3)
 
 #   Get list of standard colors
-mpl_clrs = plt.rcParams['axes.prop_cycle'].by_key()['color']
-#   Color-blind friendly color schemes by Paul Tol
-#       See: https://personal.sron.nl/~pault/#sec:qualitative
-#   Vibrant qualitative color scheme
-ptc_bright = ['#4477AA','#66CCEE','#228833','#CCBB44','#EE6677','#AA3377']
-#   Vibrant qualitative color scheme
-ptc_vibrnt = ['#0077BB','#33BBEE','#009988','#EE7733','#CC3311','#EE3377']
-#   Muted qualitative color scheme
-ptc_muted  = ['#332288','#88CCEE','#44AA99','#117733','#999933','#DDCC77','#CC6677','#882255','#AA4499']
-
-mpl_clrs = clstr_clrs
+distinct_clrs = clstr_clrs
 #   Make list of marker and fill styles
 unit_star_3 = mpl.path.Path.unit_regular_star(3)
 unit_star_4 = mpl.path.Path.unit_regular_star(4)
@@ -172,13 +157,8 @@ mpl_mrks = [mplms('o',fillstyle='left'), mplms('o',fillstyle='right'), 'x', unit
 # Define array of linestyles to cycle through
 l_styles = ['-', '--', '-.', ':']
 
-# Set random seed
-rand_seq = np.random.RandomState(1234567)
-
 # A list of variables for which the y-axis should be inverted so the surface is up
 y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_PT', 'ca_PT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
-# A list of the variables on the `Layer` dimension
-layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
 pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho']
 # A list of the variables on the `Vertical` dimension
@@ -310,10 +290,9 @@ class Plot_Parameters:
 
     plot_type       A string of the kind of plot to make from these options:
                         'xy', 'map', 'profiles'
-    plot_scale      A string specifying either 'by_pf', 'by_vert', or 'by_layer'
+    plot_scale      A string specifying either 'by_pf' or 'by_vert'
                     which will determine whether to add one data point per
-                    profile, per vertical observation, or per detected layer,
-                    respectively
+                    profile or per vertical observation, respectively
     x_vars          A list of strings of the variables to plot on the x axis
     y_vars          A list of strings of the variables to plot on the y axis
                     Note: 'xy' and 'profiles' expect both x_vars and y_vars and
@@ -326,7 +305,6 @@ class Plot_Parameters:
                       'aiT', 'aCT', 'aPT', 'BSP', 'BSA', 'ma_iT', 'ma_CT', 'ma_PT', 
                       'ma_SP', 'ma_SA', 'ma_sigma', 'ss_mask', 'la_iT', 'la_CT', 
                       'la_PT', 'la_SA','la_sigma'
-                    Accepted 'by_layer' vars: ???
     legend          True/False whether to add a legend on this plot. Default:True
     add_grid        True/False whether to add a grid on this plot. Default:True
     ax_lims         An optional dictionary of the limits on the axes for the final plot
@@ -622,7 +600,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
                 foo = 2
         # Add vars for the profile filters, if applicable
         scale = pp.plot_scale
-        if scale == 'by_vert' or scale == 'by_layer':
+        if scale == 'by_vert':
             if not isinstance(profile_filters.p_range, type(None)):
                 vars_to_keep.append('press')
             if not isinstance(profile_filters.d_range, type(None)):
@@ -832,39 +810,6 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
                         df = df[df[dvar].notnull()]
                     #
                 # 
-            #
-            # Append the filtered dataframe to the list
-            output_dfs.append(df)
-        #
-    elif plot_scale == 'by_layer':
-        for ds in arr_of_ds:
-            ds = calc_extra_vars(ds, vars_to_keep)
-            # Convert to a pandas data frame
-            df = ds[vars_to_keep].to_dataframe()
-            # Add a notes column
-            df['notes'] = ''
-            # Remove rows where the plot variables are null
-            for var in pp.x_vars+pp.y_vars:
-                if var in vars_to_keep:
-                    df = df[df[var].notnull()]
-            # Add expedition and instrument columns
-            df['source'] = ds.Expedition
-            df['instrmt'] = ds.Instrument
-            ## Filters on each profile separately
-            df = filter_profile_ranges(df, profile_filters, 'press', 'depth', iT_key='iT', CT_key='CT', PT_key='PT', SP_key='SP', SA_key='SA')
-            # Find a value of the Vertical dimension that is included in all profiles
-            try:
-                df.reset_index(inplace=True, level=['Vertical'])
-                v_vals = df['Vertical'].values
-                print('\t- Dropping Vertical dimension')
-                for pf_no in df['prof_no'].values:
-                    v_vals = list(set(v_vals) & set(df[df['prof_no']==pf_no]['Vertical'].values))
-                # Avoid the nan's on the edges, find a value in the middle of the array
-                v_med = v_vals[len(v_vals)//2]
-                # Drop dimension by just taking the rows where Vertical = v_med
-                df = df[df['Vertical']==v_med]
-            except:
-                foo = 2
             #
             # Append the filtered dataframe to the list
             output_dfs.append(df)
@@ -1230,7 +1175,7 @@ def get_axis_label(var_key, var_attr_dicts):
                  'DBCV':'Relative validity measure (DBCV)',
                  'n_clusters':'Number of clusters',
                  'cRL':r'Lateral density ratio $R_L$',
-                 'cRl':r'Lateral density ratio $R_L$ with PT'
+                 'cRl':r'Lateral density ratio $R_L$ with $\theta$'
                 }
     if var_key in ax_labels.keys():
         return ax_labels[var_key]
@@ -1863,7 +1808,8 @@ def make_subplot(ax, a_group, fig, ax_pos):
         extra_args = pp.extra_args
         if 'isopycnals' in extra_args.keys():
             isopycnals = extra_args['isopycnals']
-            if not isinstance(isopycnals, type(None)) and isopycnals != False:
+            print('isopycnals:',isopycnals)
+            if not isinstance(isopycnals, type(None)) and not isopycnals is False:
                 add_isos = True
         if 'place_isos' in extra_args.keys():
             place_isos = extra_args['place_isos']
@@ -2094,7 +2040,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd_hndls = []
             for source in sources_list:
                 # Decide on the color, don't go off the end of the array
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
+                my_clr = distinct_clrs[i%len(distinct_clrs)]
                 these_dfs = []
                 for df in a_group.data_frames:
                     these_dfs.append(df[df['source'] == source])
@@ -2150,7 +2096,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Get instrument name
                 s_instrmt = np.unique(df['source-instrmt'])[0]
                 # Decide on the color, don't go off the end of the array
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
+                my_clr = distinct_clrs[i%len(distinct_clrs)]
                 # Plot every point from this df the same color, size, and marker
                 ax.scatter(df[x_key], df[y_key], color=my_clr, s=m_size, marker=std_marker, alpha=mrk_alpha, zorder=5)
                 i += 1
@@ -2411,7 +2357,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
             lgnd_hndls = []
             for source in sources_list:
                 # Decide on the color, don't go off the end of the array
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
+                my_clr = distinct_clrs[i%len(distinct_clrs)]
                 these_dfs = []
                 for df in a_group.data_frames:
                     these_dfs.append(df[df['source'] == source])
@@ -2457,7 +2403,7 @@ def make_subplot(ax, a_group, fig, ax_pos):
                 # Get instrument name
                 s_instrmt = np.unique(df['source-instrmt'])[0]
                 # Decide on the color, don't go off the end of the array
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
+                my_clr = distinct_clrs[i%len(distinct_clrs)]
                 # Plot every point from this df the same color, size, and marker
                 ax.scatter(df['lon'], df['lat'], color=my_clr, s=mrk_s, marker=map_marker, alpha=map_alpha, linewidths=map_ln_wid, transform=ccrs.PlateCarree(), zorder=10)
                 # Find first and last profile, based on entry
@@ -2751,7 +2697,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         lgnd_hndls = []
         for source in sources_list:
             # Decide on the color, don't go off the end of the array
-            my_clr = mpl_clrs[i%len(mpl_clrs)]
+            my_clr = distinct_clrs[i%len(distinct_clrs)]
             these_dfs = []
             for df in a_group.data_frames:
                 these_dfs.append(df[df['source'] == source])
@@ -2802,7 +2748,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
             # Get instrument name
             s_instrmt = np.unique(df['source-instrmt'])[0]
             # Decide on the color, don't go off the end of the array
-            my_clr = mpl_clrs[i%len(mpl_clrs)]
+            my_clr = distinct_clrs[i%len(distinct_clrs)]
             # Get histogram parameters
             h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
             # Plot the histogram
@@ -2853,7 +2799,7 @@ def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None,
         # Loop through each cluster
         for i in range(n_clusters):
             # Decide on the color and symbol, don't go off the end of the arrays
-            my_clr = mpl_clrs[i%len(mpl_clrs)]
+            my_clr = distinct_clrs[i%len(distinct_clrs)]
             my_mkr = mpl_mrks[i%len(mpl_mrks)]
             # Get relevant data
             this_clstr_df = df[df.cluster == i]
@@ -2962,7 +2908,6 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     if scale == 'by_pf':
         print('Cannot use',pp.plot_type,'with plot scale by_pf')
         exit(0)
-    # Declare variables related to plotting detected layers
     clr_map = pp.clr_map
     ## Make a plot of the given profiles vs. the vertical
     # Set the main x and y data keys
@@ -3086,13 +3031,6 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             #   (need to make the index `Vertical` a column first)
             pf_df_v = pf_df.reset_index(level=['Vertical'])
             pf_df_v.drop_duplicates(inplace=True, subset=['Vertical'])
-        elif scale == 'by_layer':
-            # Drop `Vertical` dimension to reduce size of data arrays
-            #   (need to make the index `Layer` a column first)
-            pf_df_v = pf_df.reset_index(level=['Layer'])
-            pf_df_v.drop_duplicates(inplace=True, subset=['Layer'])
-            # Technically, this profile dataframe isn't `Vertical` but
-            #   it works as is, so I'll keep the variable name
         profile_dfs.append(pf_df_v)
     #
     # Check to see whether any profiles were actually loaded
@@ -3248,7 +3186,7 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
             # Loop through each cluster
             for i in cluster_numbers:
                 # Decide on the color and symbol, don't go off the end of the arrays
-                my_clr = mpl_clrs[i%len(mpl_clrs)]
+                my_clr = distinct_clrs[i%len(distinct_clrs)]
                 my_mkr = mpl_mrks[i%len(mpl_mrks)]
                 # print('\t\tcluster:',i,'my_clr:',my_clr,'my_mkr:',my_mkr)
                 # Get relevant data
@@ -3831,9 +3769,6 @@ def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map
         mrk_outliers = True
     else:
         mrk_outliers = False
-    # Check whether to change the marker size
-    # if 'pca_' in x_key or 'pca_' in y_key:
-    #     m_size = layer_mrk_size
     # Set variable as to whether to invert the y axis
     invert_y_axis = False
     # Which colormap?
@@ -3845,7 +3780,7 @@ def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map
         # Loop through each cluster
         for i in range(n_clusters):
             # Decide on the color and symbol, don't go off the end of the arrays
-            my_clr = mpl_clrs[i%len(mpl_clrs)]
+            my_clr = distinct_clrs[i%len(distinct_clrs)]
             my_mkr = mpl_mrks[i%len(mpl_mrks)]
             # Find the data from this cluster
             df_this_cluster = df[df['cluster']==i]
