@@ -49,9 +49,6 @@ science_data_file_path = '/Users/Grey/Documents/Research/Science_Data/'
 me_string = 'Mikhail Schee, University of Toronto'
 doi = 'No DOI yet'
 
-# Sizes of netcdf dimensions (because netcdfs can't do ragged arrays)
-max_l_count = 200       # Maximum number of detected layers that will be stored
-
 ################################################################################
 # Loading in data
 
@@ -195,7 +192,6 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
     # Make a blank array for each dimension
     Time_blank = [None]*len(list_of_datetimes_start)
     Vertical_blank = [[None]*max_vert_count]*len(list_of_datetimes_start)
-    Layer_blank = [[None]*max_l_count]*len(list_of_datetimes_start)
 
     # Define variables with data and attributes
     nc_vars = {
@@ -509,15 +505,6 @@ def read_instrmt(source, instrmt_name, instrmt_dir, out_file):
                         {
                             'units':'N/A',
                             'long_name':'An index of vertical position (depth or pressure)',
-                            'dtype':'int64'
-                        }
-                ),
-               'Layer':(
-                        ['Layer'],
-                        np.arange(max_l_count),
-                        {
-                            'units':'N/A',
-                            'long_name':'An index for detected layers',
                             'dtype':'int64'
                         }
                 )

@@ -143,7 +143,6 @@ std_marker = '.'
 map_marker = '.' #'x'
 map_ln_wid = 0.5
 l_cap_size = 3.0
-l_marker   = '+'
 
 # The magnitude limits for axis ticks before they use scientific notation
 sci_lims = (-2,3)
@@ -159,7 +158,7 @@ l_styles = ['-', '--', '-.', ':']
 
 # A list of variables for which the y-axis should be inverted so the surface is up
 y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_PT', 'ca_PT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
-# A list of the variables that don't have the `Vertical` or `Layer` dimensions
+# A list of the per profile variables
 pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho']
 # A list of the variables on the `Vertical` dimension
 vertical_vars = ['press', 'depth', 'iT', 'CT', 'PT', 'SP', 'v1_SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'aPT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_PT', 'ma_SP', 'ma_SA', 'ma_sigma', 'la_iT', 'la_CT', 'v2_CT', 'la_PT', 'la_SP', 'la_SA', 'la_sigma']
@@ -824,7 +823,7 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
             ## Filters on each profile separately
             df = filter_profile_ranges(df, profile_filters, 'press', 'depth', iT_key='iT', CT_key='CT', PT_key='PT', SP_key='SP', SA_key='SA')
             # Drop dimensions, if needed
-            if 'Vertical' in df.index.names or 'Layer' in df.index.names:
+            if 'Vertical' in df.index.names:
                 # Drop duplicates along the `Time` dimension
                 #   (need to make the index `Time` a column first)
                 df.reset_index(level=['Time'], inplace=True)
@@ -3022,16 +3021,9 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     #     print('Plotting',len(pfs_in_this_df),'profiles')
     # Loop through each profile to create a list of dataframes
     for pf_no in pfs_in_this_df:
-        # print('')
-        # print('profile:',pf_no)
         # Get just the part of the dataframe for this profile
         pf_df = df[df['prof_no']==pf_no]
-        if scale == 'by_vert':
-            # Drop `Layer` dimension to reduce size of data arrays
-            #   (need to make the index `Vertical` a column first)
-            pf_df_v = pf_df.reset_index(level=['Vertical'])
-            pf_df_v.drop_duplicates(inplace=True, subset=['Vertical'])
-        profile_dfs.append(pf_df_v)
+        profile_dfs.append(pf_df)
     #
     # Check to see whether any profiles were actually loaded
     n_pfs = len(profile_dfs)
