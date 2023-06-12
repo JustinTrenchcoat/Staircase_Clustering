@@ -180,7 +180,7 @@ y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'pca_depth', 'ca_d
 # A list of the variables on the `Layer` dimension
 layer_vars = []
 # A list of the variables that don't have the `Vertical` or `Layer` dimensions
-pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho', 'p_theta_max', 's_theta_max', 'theta_max']
+pf_vars = ['entry', 'prof_no', 'BL_yn', 'dt_start', 'dt_end', 'lon', 'lat', 'region', 'up_cast', 'R_rho']
 # A list of the variables on the `Vertical` dimension
 vertical_vars = ['press', 'depth', 'iT', 'CT', 'PT', 'SP', 'v1_SP', 'SA', 'sigma', 'alpha', 'beta', 'aiT', 'aCT', 'aPT', 'BSP', 'BSA', 'ss_mask', 'ma_iT', 'ma_CT', 'ma_PT', 'ma_SP', 'ma_SA', 'ma_sigma', 'la_iT', 'la_CT', 'v2_CT', 'la_PT', 'la_SP', 'la_SA', 'la_sigma']
 # Make lists of clustering variables
@@ -1225,9 +1225,6 @@ def get_axis_label(var_key, var_attr_dicts):
                  'BSP':r'$\beta S_P$',
                  'BSt':r'$\beta_{PT} S_P$',
                  'BSA':r'$\beta S_A$',
-                 'p_theta_max':r'$p(\theta_{max})$ (dbar)',
-                 's_theta_max':r'$S(\theta_{max})$ (g/kg)',
-                 'theta_max':r'$\theta_{max}$ ($^\circ$C)',
                 #  'distance':r'Along-path distance (km)',
                  'm_pts':r'Minimum density threshold $m_{pts}$',
                  'DBCV':'Relative validity measure (DBCV)',
@@ -1704,11 +1701,11 @@ def get_var_color(var):
             'BSt':'darkturquoise',
             'BSA':'darkturquoise'
             }
-    if var in ['entry', 'prof_no', 'dt_start', 'dt_end', 'lon', 'lat', 'press', 'depth', 'og_press', 'og_depth', 'p_theta_max']:
+    if var in ['entry', 'prof_no', 'dt_start', 'dt_end', 'lon', 'lat', 'press', 'depth', 'og_press', 'og_depth']:
         return std_clr
-    elif var in ['iT', 'CT', 'PT', 'theta_max', 'alpha']:
+    elif var in ['iT', 'CT', 'PT', 'alpha']:
         return 'lightcoral'
-    elif var in ['SP', 'SA', 's_theta_max', 'beta']:
+    elif var in ['SP', 'SA', 'beta']:
         return 'cornflowerblue'
     elif var in ['sigma']:
         return 'mediumpurple'
@@ -1741,11 +1738,11 @@ def get_color_map(cmap_var):
              'R_rho':'ocean',
              'density_hist':'inferno'
              }
-    if cmap_var in ['press', 'depth', 'p_theta_max']:
+    if cmap_var in ['press', 'depth']:
         return 'cividis'
-    elif cmap_var in ['iT', 'CT', 'PT', 'theta_max', 'alpha', 'aiT', 'aCT', 'aPT', 'ma_iT', 'ma_CT', 'ma_PT', 'la_iT', 'la_CT', 'la_PT']:
+    elif cmap_var in ['iT', 'CT', 'PT', 'alpha', 'aiT', 'aCT', 'aPT', 'ma_iT', 'ma_CT', 'ma_PT', 'la_iT', 'la_CT', 'la_PT']:
         return 'Reds'
-    elif cmap_var in ['SP', 'SA', 's_theta_max', 'beta', 'BSP', 'BSt', 'BSA', 'ma_SP', 'ma_SA', 'la_SP', 'la_SA']:
+    elif cmap_var in ['SP', 'SA', 'beta', 'BSP', 'BSt', 'BSA', 'ma_SP', 'ma_SA', 'la_SP', 'la_SA']:
         return 'Blues'
     elif cmap_var in ['sigma', 'ma_sigma', 'la_sigma']:
         return 'Purples'
