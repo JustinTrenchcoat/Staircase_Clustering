@@ -57,8 +57,12 @@ https://scitools.org.uk/cartopy/docs/latest/installing.html#installing
 Relevent command:
 $ conda install -c conda-forge cartopy
 """
-import cartopy.crs as ccrs
-import cartopy.feature
+try:
+    import cartopy.crs as ccrs
+    import cartopy.feature
+except:
+    print('Failed to import cartopy\nIf you do not need to plot maps, comment out these import statements')
+    exit(0)
 
 science_data_file_path = '/Users/Grey/Documents/Research/Science_Data/'
 
@@ -201,27 +205,6 @@ clstr_ps_vars = clstr_ps_ind_vars + clstr_ps_dep_vars
 # Declare classes for custom objects
 ################################################################################
 
-class Data_Set:
-    """
-    Loads data from netcdfs and returns a list of xarrays with filters applied
-    Note: Only filters to a selection of profiles. Does not filter individual
-        profiles in any manner
-
-    sources_dict    A dictionary with the following format:
-                    {'ITP_1':[13,22,32],'ITP_2':'all'}
-                    where the keys are the netcdf filenames without the extension
-                    and the values are lists of profiles to include or 'all'
-    data_filters    A custom Data_Filters object that contains the filters to apply
-    """
-    def __init__(self, sources_dict, data_filters):
-        # Load just the relevant profiles into the xarrays
-        self.sources_dict = sources_dict
-        self.data_filters = data_filters
-        xarrs, self.var_attr_dicts = list_xarrays(sources_dict)
-        self.arr_of_ds = apply_data_filters(xarrs, data_filters)
-
-################################################################################
-
 class Data_Filters:
     """
     A set of filters to select certain profiles
@@ -245,26 +228,24 @@ class Data_Filters:
 
 ################################################################################
 
-class Analysis_Group:
+class Data_Set:
     """
-    Takes in a list of xarray datasets and applies filters to individual profiles
-    Returns a list of pandas dataframes, one for each source
+    Loads data from netcdfs and returns a list of xarrays with filters applied
+    Note: Only filters to a selection of profiles. Does not filter individual
+        profiles in any manner
 
-    data_set            A Data_Set object
-    profile_filters     A custom Profile_Filters object with filters to apply to
-                        all individual profiles in the xarrays
-    plt_params          A custom Plot_Parameters object
-    plot_title          A string to use as the title for this subplot
+    sources_dict    A dictionary with the following format:
+                    {'ITP_1':[13,22,32],'ITP_2':'all'}
+                    where the keys are the netcdf filenames without the extension
+                    and the values are lists of profiles to include or 'all'
+    data_filters    A custom Data_Filters object that contains the filters to apply
     """
-    def __init__(self, data_set, profile_filters, plt_params, plot_title=None):
-        self.data_set = data_set
-        self.vars_available = list(data_set.arr_of_ds[0].keys())
-        self.profile_filters = profile_filters
-        self.plt_params = get_axis_labels(plt_params, data_set.var_attr_dicts)
-        self.plot_title = plot_title
-        self.vars_to_keep = find_vars_to_keep(plt_params, profile_filters, self.vars_available)
+    def __init__(self, sources_dict, data_filters):
         # Load just the relevant profiles into the xarrays
-        self.data_frames = apply_profile_filters(data_set.arr_of_ds, self.vars_to_keep, profile_filters, plt_params)
+        self.sources_dict = sources_dict
+        self.data_filters = data_filters
+        xarrs, self.var_attr_dicts = list_xarrays(sources_dict)
+        self.arr_of_ds = apply_data_filters(xarrs, data_filters)
 
 ################################################################################
 
@@ -397,6 +378,29 @@ class Plot_Parameters:
             self.extra_args = {'map_extent':'Canada_Basin'}
         else:
             self.extra_args = extra_args
+
+################################################################################
+
+class Analysis_Group:
+    """
+    Takes in a list of xarray datasets and applies filters to individual profiles
+    Returns a list of pandas dataframes, one for each source
+
+    data_set            A Data_Set object
+    profile_filters     A custom Profile_Filters object with filters to apply to
+                        all individual profiles in the xarrays
+    plt_params          A custom Plot_Parameters object
+    plot_title          A string to use as the title for this subplot
+    """
+    def __init__(self, data_set, profile_filters, plt_params, plot_title=None):
+        self.data_set = data_set
+        self.vars_available = list(data_set.arr_of_ds[0].keys())
+        self.profile_filters = profile_filters
+        self.plt_params = get_axis_labels(plt_params, data_set.var_attr_dicts)
+        self.plot_title = plot_title
+        self.vars_to_keep = find_vars_to_keep(plt_params, profile_filters, self.vars_available)
+        # Load just the relevant profiles into the xarrays
+        self.data_frames = apply_profile_filters(data_set.arr_of_ds, self.vars_to_keep, profile_filters, plt_params)
 
 ################################################################################
 # Define class functions #######################################################
@@ -1801,8 +1805,8 @@ def add_h_scale_bar(ax, ax_lims, unit="", tw_clr=False):
     x_span = abs(max(x_bnds)-min(x_bnds))
     y_span = abs(max(y_bnds)-min(y_bnds))
     # Adjust bar length if too small
-    if x_span/bar_len > 15:
-        bar_len = bar_len*2
+    # if x_span/bar_len > 17:
+    #     bar_len = bar_len*2
     # Define end points for the scale bar
     x_pad = bar_len/3.8
     sb_x_min = min(x_bnds) + x_pad 
@@ -1845,7 +1849,6 @@ def make_subplot(ax, a_group, fig, ax_pos):
         extra_args = pp.extra_args
         if 'isopycnals' in extra_args.keys():
             isopycnals = extra_args['isopycnals']
-            print('isopycnals:',isopycnals)
             if not isinstance(isopycnals, type(None)) and not isopycnals is False:
                 add_isos = True
         if 'place_isos' in extra_args.keys():
@@ -3887,7 +3890,7 @@ def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map
             y_span = abs(y_bnds[1] - y_bnds[0])
             # Add line at R_L = -1
             ax.axvline(1, color=std_clr, alpha=0.5, linestyle='-')
-            ax.annotate(r'$IR_{S_P}=1$', xy=(1+x_span/10,y_bnds[0]+y_span/5), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
+            ax.annotate(r'$IR_{S_P}=1$', xy=(1+x_span/15,y_bnds[0]+y_span/5), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
         # Add some lines if plotting cRL
         if 'cRL' in [x_key, y_key]:
             # Get bounds of axes
@@ -3926,7 +3929,20 @@ def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map
                     ax.plot(x_fit(y_arr), y_arr, color=alt_std_clr)
                     # Add annotation to say what the line is
                     line_label = "$R_L = " + format_sci_notation(z[0]) + " p^2 + " + format_sci_notation(z[1])+ "p " + format_sci_notation(z[2])+"$"
-                    ax.annotate(line_label, xy=(x_mean+0.5*x_stdv,y_span/3+min(y_bnds)), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
+                    # Find a good place for the annotation
+                    if x_bnds[1] < 0:
+                        ann_x_placement = x_span/10+min(x_bnds)
+                    else:
+                        ann_x_placement = x_mean+0.5*x_stdv
+                    ax.annotate(line_label, xy=(ann_x_placement,y_span/2.7+min(y_bnds)), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
+                    # For Figure 5, add the line of the opposite ITP
+                    print('format_sci_notation(z[2]):',format_sci_notation(z[2]))
+                    if format_sci_notation(z[2]) == "-39.85":
+                        print('\t- Adding additional curve for ITP3')
+                        ax.plot(-3.38e-4*(y_arr)**2 + 0.24*y_arr - 43.29, y_arr, color=std_clr, alpha=0.5, linestyle='--', zorder=1)
+                    elif format_sci_notation(z[2]) == "-43.29":
+                        print('\t- Adding additional curve for ITP2')
+                        ax.plot(-3.81e-4*(y_arr)**2 + 0.24*y_arr - 39.85, y_arr, color=std_clr, alpha=0.5, linestyle='--', zorder=1)
                     # Limit the y axis
                     ax.set_ylim((y_bnds[1],y_bnds[0]))
                 # Plot exponential fit line

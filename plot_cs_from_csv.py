@@ -43,7 +43,7 @@ except:
 ################################################################################
 # Declare variables for plotting
 ################################################################################
-dark_mode = True
+dark_mode = False
 
 # Enable dark mode plotting
 if dark_mode:
@@ -196,14 +196,15 @@ def plot_clstr_param_sweep(ax, tw_ax_x, df, pp, plt_title=None):
         ax.plot(df[x_key], df[y_key], color=std_clr, linestyle=l_styles[i], label=zlabel)
         if tw_y_key:
             # Plot twin axis
-            tw_ax_x.plot(df[x_key], df[tw_y_key], color=alt_std_clr, linestyle=l_styles[i])
+            tw_ax_x.plot(df[x_key], df[tw_y_key], color=alt_std_clr, linestyle='--')#l_styles[i])
             tw_ax_x.set_ylabel(tw_ylabel)
             # Change color of the axis label on the twin axis
             tw_ax_x.yaxis.label.set_color(alt_std_clr)
             # Change color of the ticks on the twin axis
             tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
     if z_key:
-        ax.legend()
+        if False:
+            ax.legend()
     return xlabel, ylabel
 
 ################################################################################

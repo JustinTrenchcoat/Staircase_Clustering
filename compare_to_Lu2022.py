@@ -65,7 +65,7 @@ else:
 Lu_mrk_size = 20
 my_mrk_size = 30
 std_marker = '.'
-mpl_clrs = ahf.mpl_clrs
+mpl_clrs = ahf.distinct_clrs
 mpl_mrks = ahf.mpl_mrks
 
 ################################################################################
@@ -207,5 +207,5 @@ def plot_comparison(ax, Lu2022_df, my_df, pp):
 
 ################################################################################
 
-pp_Lu2022 = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['ca_CT'], clr_map='clr_all_same')
-make_figure(Lu2022_df, my_df, pp_Lu2022)#, filename='Figure_7.pickle')
+# pp_Lu2022 = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['ca_CT'], clr_map='clr_all_same')
+# make_figure(Lu2022_df, my_df, pp_Lu2022)#, filename='Figure_7.pickle')
