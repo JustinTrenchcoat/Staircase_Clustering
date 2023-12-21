@@ -70,7 +70,7 @@ ITP2_some_pfs = list(np.arange(start_pf, start_pf+(n_pfs_to_plot*2), 2))
 
 # For showing multiple layers grouped into one cluster
 ITP2_some_pfs_0 = [87, 89, 95, 97, 99, 101, 103, 105, 109, 111]
-ITP2_some_pfs_ax_lims_0 = {'y_lims':[245,220]}
+ITP2_some_pfs_ax_lims_0 = {'y_lims':[240,215]}
 # For showing one layer split into multiple clusters
 ITP2_some_pfs_1 = [67, 69, 73, 75, 81, 83, 91, 93, 97, 99]
 ITP2_some_pfs_ax_lims_1 = {'y_lims':[295,270]}
@@ -272,7 +272,7 @@ if False:
 
 ### Figure 4
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
-if True:
+if False:
     print('')
     print('- Creating Figure 4')
     # Make the subplot groups
@@ -344,3 +344,34 @@ if False:
     ahf.make_figure([group_ITP3_some_pfs_2], row_col_list=[1,1, 0.27, 0.90], filename='Figure_8.pickle')
 
 ################################################################################
+# Supplementary Figures
+
+
+### Figure S.4
+## Changing the value of \ell
+if False:
+    # Profile filters
+    pfs_ell_10  = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=10, p_range=[5,1000])
+    pfs_ell_50  = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=50, p_range=[5,1000])
+    pfs_ell_100 = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=100, p_range=[5,1000])
+    pfs_ell_150 = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=150, p_range=[5,1000])
+    # Make the Analysis Groups for parameter sweeps
+    group_ell_010 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_10,  pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=10$ dbar')
+    group_ell_050 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_50,  pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=50$ dbar')
+    group_ell_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2,    pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=100$ dbar')
+    group_ell_150 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_150, pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=150$ dbar')
+    # Make the figure
+    # ahf.make_figure([group_ell_010, group_ell_050, group_ell_100, group_ell_150], filename='MAW_comparison_ps.pickle')
+
+    # Make the Plot Parameters
+    pp_SP_la_CT_010 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':230, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
+    pp_SP_la_CT_050 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':200, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
+    pp_SP_la_CT_100 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':170, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
+    pp_SP_la_CT_150 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':140, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
+    # Make the Analysis Groups
+    group_ell_010 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_10,  pp_SP_la_CT_010, plot_title=r'ITP2 $\ell=10$ dbar')
+    group_ell_050 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_50,  pp_SP_la_CT_050, plot_title=r'ITP2 $\ell=50$ dbar')
+    group_ell_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2,    pp_SP_la_CT_100, plot_title=r'ITP2 $\ell=100$ dbar')
+    group_ell_150 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_150, pp_SP_la_CT_150, plot_title=r'ITP2 $\ell=150$ dbar')
+    # Make the figure
+    ahf.make_figure([group_ell_010, group_ell_050, group_ell_100, group_ell_150], filename='MAW_comparison.png')

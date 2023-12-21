@@ -1,0 +1,49 @@
+Parameter Sweep for ITP2 $\ell=50$ dbar
+11:17AM on October 31, 2023
+Plotting these x values of m_pts:
+[ 20  30  40  50  60  70  80  90 100 110 120 130 140 150 160 170 180 190
+ 200 210 220 230 240 250 260 270 280 290 300 310 320 330 340 350 360 370
+ 380 390 400 410 420 430 440 450]
+ m_pts: 20 m_pts: 20 n_clstrs: 181 DBCV: 0.11002779356772599
+ m_pts: 30 m_pts: 30 n_clstrs: 84 DBCV: 0.18417106823494045
+ m_pts: 40 m_pts: 40 n_clstrs: 60 DBCV: 0.1291804516412902
+ m_pts: 50 m_pts: 50 n_clstrs: 50 DBCV: 0.17554421323866343
+ m_pts: 60 m_pts: 60 n_clstrs: 48 DBCV: 0.23940996596153225
+ m_pts: 70 m_pts: 70 n_clstrs: 47 DBCV: 0.10166528976052025
+ m_pts: 80 m_pts: 80 n_clstrs: 46 DBCV: 0.23258127748828156
+ m_pts: 90 m_pts: 90 n_clstrs: 45 DBCV: 0.21727270952248437
+ m_pts: 100 m_pts: 100 n_clstrs: 44 DBCV: 0.1936760698022135
+ m_pts: 110 m_pts: 110 n_clstrs: 44 DBCV: 0.1775910594473678
+ m_pts: 120 m_pts: 120 n_clstrs: 43 DBCV: 0.20463155624520674
+ m_pts: 130 m_pts: 130 n_clstrs: 43 DBCV: 0.1909858810496535
+ m_pts: 140 m_pts: 140 n_clstrs: 42 DBCV: 0.15791495426715713
+ m_pts: 150 m_pts: 150 n_clstrs: 41 DBCV: 0.17997485781502437
+ m_pts: 160 m_pts: 160 n_clstrs: 41 DBCV: 0.2025370855407064
+ m_pts: 170 m_pts: 170 n_clstrs: 40 DBCV: 0.19373650101129022
+ m_pts: 180 m_pts: 180 n_clstrs: 40 DBCV: 0.1928294678174748
+ m_pts: 190 m_pts: 190 n_clstrs: 40 DBCV: 0.224367530583577
+ m_pts: 200 m_pts: 200 n_clstrs: 40 DBCV: 0.24221823409236354
+ m_pts: 210 m_pts: 210 n_clstrs: 40 DBCV: 0.21851594718831252
+ m_pts: 220 m_pts: 220 n_clstrs: 40 DBCV: 0.21198710594758474
+ m_pts: 230 m_pts: 230 n_clstrs: 38 DBCV: 0.21855714859644265
+ m_pts: 240 m_pts: 240 n_clstrs: 37 DBCV: 0.1838671349496392
+ m_pts: 250 m_pts: 250 n_clstrs: 36 DBCV: 0.1906507995169973
+ m_pts: 260 m_pts: 260 n_clstrs: 35 DBCV: 0.17223406701960678
+ m_pts: 270 m_pts: 270 n_clstrs: 34 DBCV: 0.1601584073199554
+ m_pts: 280 m_pts: 280 n_clstrs: 33 DBCV: 0.16461077704735566
+ m_pts: 290 m_pts: 290 n_clstrs: 31 DBCV: 0.19379517437959193
+ m_pts: 300 m_pts: 300 n_clstrs: 31 DBCV: 0.18644569288147714
+ m_pts: 310 m_pts: 310 n_clstrs: 31 DBCV: 0.19632892578523914
+ m_pts: 320 m_pts: 320 n_clstrs: 28 DBCV: 0.22987741869016043
+ m_pts: 330 m_pts: 330 n_clstrs: 27 DBCV: 0.19680744101562514
+ m_pts: 340 m_pts: 340 n_clstrs: 26 DBCV: 0.18719112500340157
+ m_pts: 350 m_pts: 350 n_clstrs: 25 DBCV: 0.19000137491109606
+ m_pts: 360 m_pts: 360 n_clstrs: 25 DBCV: 0.16857273172333181
+ m_pts: 370 m_pts: 370 n_clstrs: 25 DBCV: 0.20627423556516747
+ m_pts: 380 m_pts: 380 n_clstrs: 25 DBCV: 0.16586208119832946
+ m_pts: 390 m_pts: 390 n_clstrs: 23 DBCV: 0.1505286865823088
+ m_pts: 400 m_pts: 400 n_clstrs: 23 DBCV: 0.14964378892750774
+ m_pts: 410 m_pts: 410 n_clstrs: 24 DBCV: 0.15223781318922297
+ m_pts: 420 m_pts: 420 n_clstrs: 24 DBCV: 0.1942368980529685
+ m_pts: 430 m_pts: 430 n_clstrs: 23 DBCV: 0.17727967109201292
+ m_pts: 440 m_pts: 440 n_clstrs: 22 DBCV: 0.19801544212792896

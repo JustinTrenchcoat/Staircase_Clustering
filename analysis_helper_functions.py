@@ -169,7 +169,7 @@ unit_star_3 = mpl.path.Path.unit_regular_star(3)
 unit_star_4 = mpl.path.Path.unit_regular_star(4)
 mpl_mrks = [mplms('o',fillstyle='left'), mplms('o',fillstyle='right'), 'x', unit_star_4, '*', unit_star_3, '1','+']
 # Define array of linestyles to cycle through
-l_styles = ['-', '--', '-.', ':']
+l_styles = ['-', '--']#, '-.', ':']
 
 # A list of variables for which the y-axis should be inverted so the surface is up
 y_invert_vars = ['press', 'pca_press', 'ca_press', 'cmm_mid', 'pca_depth', 'ca_depth', 'sigma', 'ma_sigma', 'pca_sigma', 'ca_sigma', 'pca_iT', 'ca_iT', 'pca_CT', 'ca_CT', 'pca_PT', 'ca_PT', 'pca_SP', 'ca_SP', 'pca_SA', 'ca_SA']
@@ -1253,6 +1253,43 @@ def txt_summary(groups_to_summarize, filename=None):
     else:
         for line in lines:
             print(line)
+
+################################################################################
+
+def print_profile_filters(pfs):
+    """
+    Returns a human readable string of all the profile filters in the given object
+
+    pfs         A Profile_Filters object
+    """
+    return_string = ''
+    if not isinstance(pfs.p_range, type(None)): 
+        return_string += ('Pressure range: ['+str(pfs.p_range[0])+', '+str(pfs.p_range[1])+'] ')
+    if not isinstance(pfs.d_range, type(None)): 
+        return_string += ('Depth range: ['+str(pfs.d_range[0])+', '+str(pfs.d_range[1])+'] ')
+    if not isinstance(pfs.iT_range, type(None)): 
+        return_string += ('iT range: ['+str(pfs.iT_range[0])+', '+str(pfs.iT_range[1])+'] ')
+    if not isinstance(pfs.CT_range, type(None)): 
+        return_string += ('CT range: ['+str(pfs.CT_range[0])+', '+str(pfs.CT_range[1])+'] ')
+    if not isinstance(pfs.PT_range, type(None)): 
+        return_string += ('PT range: ['+str(pfs.PT_range[0])+', '+str(pfs.PT_range[1])+'] ')
+    if not isinstance(pfs.SP_range, type(None)): 
+        return_string += ('SP range: ['+str(pfs.SP_range[0])+', '+str(pfs.SP_range[1])+'] ')
+    if not isinstance(pfs.SA_range, type(None)): 
+        return_string += ('SA range: ['+str(pfs.SA_range[0])+', '+str(pfs.SA_range[1])+'] ')
+    if not isinstance(pfs.lon_range, type(None)): 
+        return_string += ('Longitude range: ['+str(pfs.lon_range[0])+', '+str(pfs.lon_range[1])+'] ')
+    if not isinstance(pfs.lat_range, type(None)): 
+        return_string += ('Latitude range: ['+str(pfs.lat_range[0])+', '+str(pfs.lat_range[1])+'] ')
+    if pfs.lt_pCT_max: 
+        return_string += ('Pressures less than p(CT_max) ')
+    if pfs.subsample: 
+        return_string += ('Subsampled ')
+    if not isinstance(pfs.regrid_TS, type(None)): 
+        return_string += ('Regrid: d'+str(pfs.regrid_TS[0])+'='+str(pfs.regrid_TS[1])+', d'+str(pfs.regrid_TS[2])+'='+str(pfs.regrid_TS[3])+' ')
+    if not isinstance(pfs.m_avg_win, type(None)): 
+        return_string += ('Moving average window: ['+str(pfs.m_avg_win)+' ')
+    return return_string
 
 ################################################################################
 
