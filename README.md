@@ -1,7 +1,7 @@
 # Staircase Clustering Detection Algorithm
 
 Written by Mikhail Schee for:
-Mikhail Schee, Erica Rosenblum, Jonathan M. Lilly, and Nicolas Grisouard (2023) "Unsupervised Clustering Identifies Thermohaline Staircases in the Canada Basin of the Arctic Ocean"
+Mikhail Schee, Erica Rosenblum, Jonathan M. Lilly, and Nicolas Grisouard (2024) "Unsupervised Clustering Identifies Thermohaline Staircases in the Canada Basin of the Arctic Ocean," Environmental Data Science, 3:e13, 1-19, doi:[10.1017/eds.2024.13](https://doi.org/10.1017/eds.2024.13)
 
 ## License
 
@@ -30,13 +30,14 @@ A detailed explanation of how the code was used to make each plot in the study c
 
 ## Acknowledgements
 
-The Ice-Tethered Profiler data were collected and made available by the Ice-Tethered Profiler Program (Toole et al., 2011; Krishfield et al., 2008) based at the Woods Hole Oceanographic Institution https://www2.whoi.edu/site/itp/
+We acknowledge fruitful discussions with Maike Sonnewald and Carine van der Boog. M.G.S. acknow- ledges fruitful discussions that occurred during the Kavli Institute of Theoretical Physics program on Layering in Atmospheres, Oceans and Plasmas (supported by the National Science Foundation under grant no. NSF PHY-1748958). E.R. is grateful to the researchers, staff, and students of the Centre for Earth Observation Science for the support received during the preparation of this manuscript. J. M. L. thanks the Department of Physics at the University of Toronto, where he was a visiting scientist during the time this work was carried out.
 
 This repository includes the [orthoregress code](https://gist.github.com/robintw/d94eb527c44966fbc8b9) from [Robin Wilson](https://blog.rtwilson.com/orthogonal-distance-regression-in-python/).
 
-This research was supported in part by the National Science Foundation under Grant No. NSF PHY-1748958. 
+## Data availability statement
 
-We acknowledge fruitful discussions with Maike Sonnewald and Carine van der Boog.
+The Ice-Tethered Profiler data were collected and made available by the Ice-Tethered Profiler Program (Toole et al., 2011; Krishfield et al., 2008) based at the Woods Hole Oceanographic Institution https://www2.whoi.edu/site/itp/
 
-M.S. and N.G. were supported by the Natural Sciences and Engineering Research Council of Canada (NSERC) [funding reference numbers RGPIN-2015-03684 and RGPIN-2022-04560]. J.M.L. was supported by grant number 2049521 from the Physical Oceanography program of the United States National Science Foundation.
+## Funding statement
 
+M.G.S. and N.G. were supported by the Natural Sciences and Engineering Research Council of Canada (NSERC) (funding reference numbers RGPIN-2015-03684 and RGPIN-2022-04560). J.M.L. was supported by grant number 2049521 from the Physical Oceanography program of the United States National Science Foundation. ER was supported by the NSERC Postdoctoral Fellowship award, the NSERC Canada-150 Chair (Award G00321321), and the NSERC Discovery Grant (funding reference number RGPIN-2024-05545).
