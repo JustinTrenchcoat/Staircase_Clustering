@@ -160,23 +160,11 @@ pp_ITP2_ex_pfs = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type=
 pp_ITP2_CT_SP = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0, 'place_isos':'auto'}, ax_lims=T2008_fig5a_ax_lims, legend=False, add_grid=False)
 # Reproducing Timmermans et al. 2008 Figure 6a, but with cluster coloring
 pp_ITP2_aCT_BSP = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'isopycnals':True}, ax_lims=T2008_fig6a_ax_lims, legend=False, add_grid=False)
-## For ITP3
-# The actual clustering done for reproducing figures from Lu et al. 2022
-pp_ITP3_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False}, ax_lims=ITP3_SP_ax_lims, legend=False, add_grid=False)
-# Example profiles from ITP3
-pp_ITP3_ex_pfs = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':ITP3_ex_pfs, 'plt_noise':True}, legend=True, ax_lims=ITP3_ex_pf_y_lims, add_grid=True)
-# Plotting clusters back in regular CT vs SP space
-pp_ITP3_CT_SP = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0, 'place_isos':'auto'}, ax_lims=ITP3_SP_ax_lims, legend=True, add_grid=False)
-# Plotting in aCT vs. BSP space
-pp_ITP3_aCT_BSP = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'isopycnals':True}, ax_lims=ITP3_aCT_BSP_ax_lims, legend=False, add_grid=False)
 
 ### Figure 3
 ## Parameter sweep across \ell and m_pts for ITP2, Timmermans et al. 2008
 pp_ITP2_ps_m_pts = ahf.Plot_Parameters(x_vars=['m_pts'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts, 'cl_ps_tuple':[20,455,10]}, legend=False, add_grid=False)
-pp_ITP2_ps_ell  = ahf.Plot_Parameters(x_vars=['ell_size'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts, 'cl_ps_tuple':[10,271,10]}, legend=False, add_grid=False)
-## Parameter sweep across \ell and m_pts for ITP3, Lu et al. 2022
-pp_ITP3_ps_m_pts = ahf.Plot_Parameters(x_vars=['m_pts'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':Lu2022_m_pts, 'cl_ps_tuple':[800,1001,10]}, legend=False, add_grid=False)
-pp_ITP3_ps_ell  = ahf.Plot_Parameters(x_vars=['ell_size'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':Lu2022_m_pts, 'cl_ps_tuple':[10,210,10]}, legend=False, add_grid=False)
+pp_ITP2_ps_ell  = ahf.Plot_Parameters(x_vars=['ell_size'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':T2008_m_pts, 'cl_ps_tuple':[2.5,67.75,2.5]}, legend=False, add_grid=False)
 
 ### Figure 4
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
@@ -201,6 +189,65 @@ pp_ITP2_some_pfs_1  = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_
 ## Tracking clusters across a subset of profiles
 # For ITP3
 pp_ITP3_some_pfs_2 = ahf.Plot_Parameters(x_vars=['SP','CT'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'plt_noise':True}, legend=False, ax_lims=ITP3_some_pfs_ax_lims_2)
+
+################################################################################
+
+### Figures for the supplementary materials
+
+### Figure S.1
+## For ITP2, similar to Figure 2 reproducing figures from Timmermans et al. 2008
+# Using absolute salinity `SA` instead of practical salinity `SP`
+Fig_S1_x_lims = {'x_lims':[34.215,34.92]}
+Fig_S1_ax_lims = {'x_lims':[0.026965,0.02701], 'y_lims':[-13e-6,3e-6]}
+pp_ITP2_SA_clstr = ahf.Plot_Parameters(x_vars=['SA'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SA', 'cl_y_var':'la_CT', 'm_pts':170, 'b_a_w_plt':False}, ax_lims=Fig_S1_x_lims, legend=True, add_grid=False)
+# Reproducing Timmermans et al. 2008 Figure 4, with cluster coloring and 2 extra profiles
+pp_ITP2_SA_ex_pfs = ahf.Plot_Parameters(x_vars=['SA'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'cl_x_var':'SA', 'cl_y_var':'la_CT', 'm_pts':170, 'pfs_to_plot':T2008_fig4_pfs, 'plt_noise':True}, legend=True, ax_lims=T2008_fig4_y_lims, add_grid=True)
+# Reproducing Timmermans et al. 2008 Figure 5a, but with cluster coloring
+pp_ITP2_CT_SA = ahf.Plot_Parameters(x_vars=['SA'], y_vars=['CT'], clr_map='cluster', extra_args={'cl_x_var':'SA', 'cl_y_var':'la_CT', 'm_pts':170, 'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0, 'place_isos':'auto'}, ax_lims=Fig_S1_x_lims, legend=True, add_grid=False)
+# Reproducing Timmermans et al. 2008 Figure 6a, but with cluster coloring
+pp_ITP2_aCT_BSA = ahf.Plot_Parameters(x_vars=['BSA'], y_vars=['aCT'], clr_map='cluster', extra_args={'cl_x_var':'SA', 'cl_y_var':'la_CT', 'm_pts':170, 'b_a_w_plt':False, 'plot_slopes':True, 'isopycnals':True}, ax_lims=Fig_S1_ax_lims, legend=True, add_grid=False)
+
+### Figure S.2
+## Evaluating clusterings with the overlap ratio and lateral density ratio
+# For ITP2, using absolute salinity `SA` instead of practical salinity `SP`
+pp_ITP2_SA_nir = ahf.Plot_Parameters(x_vars=['nir_SA'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SA', 'cl_y_var':'la_CT', 'm_pts':170, 'b_a_w_plt':False, 'plt_noise':False}, ax_lims=fig4ab_ax_lims, legend=False)
+pp_ITP2_SA_R_L = ahf.Plot_Parameters(x_vars=['cRL'], y_vars=['ca_press'], clr_map='cluster', extra_args={'cl_x_var':'SA', 'cl_y_var':'la_CT', 'm_pts':170, 'b_a_w_plt':False, 'plt_noise':False, 'plot_slopes':True}, ax_lims=fig4ab_ax_lims, legend=False)
+
+### Figure S.3
+## Changing the value of \ell, showing examples of one profile, ITP2 185
+# Data Set
+ds_ITP2_185 = ahf.Data_Set({'ITP_2':[185]}, dfs0)
+# Profile filters
+test_p_range = [400,200]
+pfs_ell_02_5  = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=2.5)
+pfs_ell_12_5 = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=12.5)
+pfs_ell_25_0 = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=25)
+pfs_ell_37_5 = ahf.Profile_Filters(p_range=test_p_range, m_avg_win=37.5)
+# Make the Plot Parameters
+pp_CT_ma_CT = ahf.Plot_Parameters(x_vars=['CT','ma_CT'], y_vars=['depth'], plot_type='profiles')
+
+### Figure S.4
+## Changing the value of \ell, clustering ITP2
+pp_SP_la_CT_02_5 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':230, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
+pp_SP_la_CT_12_5 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':200, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
+pp_SP_la_CT_25_0 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':170, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
+pp_SP_la_CT_37_5 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':140, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
+
+### Figure S.5
+## For ITP3, similar to Figure 2 reproducing figures from Timmermans et al. 2008
+# The actual clustering done for reproducing figures from Lu et al. 2022
+pp_ITP3_clstr = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'b_a_w_plt':False}, ax_lims=ITP3_SP_ax_lims, legend=False, add_grid=False)
+# Example profiles from ITP3
+pp_ITP3_ex_pfs = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['press'], plot_type='profiles', clr_map='cluster', extra_args={'pfs_to_plot':ITP3_ex_pfs, 'plt_noise':True}, legend=True, ax_lims=ITP3_ex_pf_y_lims, add_grid=True)
+# Plotting clusters back in regular CT vs SP space
+pp_ITP3_CT_SP = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['CT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':False, 'isopycnals':0, 'place_isos':'auto'}, ax_lims=ITP3_SP_ax_lims, legend=False, add_grid=False)
+# Plotting in aCT vs. BSP space
+pp_ITP3_aCT_BSP = ahf.Plot_Parameters(x_vars=['BSP'], y_vars=['aCT'], clr_map='cluster', extra_args={'b_a_w_plt':False, 'plot_slopes':True, 'isopycnals':True}, ax_lims=ITP3_aCT_BSP_ax_lims, legend=False, add_grid=False)
+
+### Figure S.6
+## Parameter sweep across \ell and m_pts for ITP3 (similar to Figure 3)
+pp_ITP3_ps_m_pts = ahf.Plot_Parameters(x_vars=['m_pts'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':Lu2022_m_pts, 'cl_ps_tuple':[800,1001,10]}, legend=False, add_grid=False)
+pp_ITP3_ps_ell  = ahf.Plot_Parameters(x_vars=['ell_size'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':Lu2022_m_pts, 'cl_ps_tuple':[2.5,52.5,2.5]}, legend=False, add_grid=False)
 
 ################################################################################
 # Create analysis group objects
@@ -234,22 +281,11 @@ if False:
     group_T2008_fig6a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_aCT_BSP, plot_title='')
     # Make the figure
     #   Remember, adding isopycnals means it will prompt you to place the in-line labels manually
-    ahf.make_figure([group_T2008_fig5a, group_T2008_fig4, group_T2008_clstr, group_T2008_fig6a])#, filename='Figure_2.png')
+    ahf.make_figure([group_T2008_fig5a, group_T2008_fig4, group_T2008_clstr, group_T2008_fig6a], filename='Figure_2.pickle')
     # ahf.make_figure([group_T2008_clstr])
     # ahf.make_figure([group_T2008_fig4])
     # ahf.make_figure([group_T2008_fig5a])
     # ahf.make_figure([group_T2008_fig6a])
-## Using ITP3
-if False:
-    print('')
-    print('- Creating Figure 2, for ITP3')
-    # Make the subplot groups
-    group_ITP3_clstr   = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_clstr, plot_title='')
-    group_ITP3_ex_pfs  = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_ex_pfs, plot_title='')
-    group_ITP3_CT_SP   = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_CT_SP, plot_title='')
-    group_ITP3_aCT_BSP = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_aCT_BSP, plot_title='')
-    # Make the figure
-    ahf.make_figure([group_ITP3_CT_SP, group_ITP3_ex_pfs, group_ITP3_clstr, group_ITP3_aCT_BSP], use_same_y_axis=False, filename='ITP3_clusters.png')
 
 ### Figure 3
 ## Parameter sweep across \ell and m_pts for ITP2
@@ -261,14 +297,6 @@ if False:
     group_ps_m_pts = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_ps_m_pts, plot_title='')
     # Make the figure
     ahf.make_figure([group_ps_ell, group_ps_m_pts], use_same_y_axis=False, filename='Figure_3.pickle')
-## Parameter sweep across \ell and m_pts for ITP3
-if False:
-    print('')
-    # Make the subplot groups
-    group_ps_ell = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_ps_ell)
-    group_ps_m_pts = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_ps_m_pts)
-    # Make the figure
-    ahf.make_figure([group_ps_ell, group_ps_m_pts], use_same_y_axis=False, filename='ITP3_param_sweep.pickle')
 
 ### Figure 4
 ## Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
@@ -281,17 +309,7 @@ if False:
     group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_Lu2022_fig3c, plot_title='')
     # Make the figure
     #   Confirmed that it will pull from netcdf. Takes a long time to run still
-    ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3b, group_Lu2022_fig3c], filename='Figure_4.pickle')
-# For ITP2
-if False:
-    print('')
-    print('- Creating Figure 4, for ITP2')
-    # Make the subplot groups
-    group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3a)
-    group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3b, plot_title='')
-    group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3c, plot_title='')
-    # Make the figure
-    ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3b, group_Lu2022_fig3c])
+    ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3b, group_Lu2022_fig3c], row_col_list=[3,1, 0.5, 1.70], filename='Figure_4.png')
 
 ### Figure 5
 ## Evaluating clusterings with the overlap ratio and lateral density ratio
@@ -318,7 +336,7 @@ if False:
     group_ITP2_some_pfs_1 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_some_pfs_1, plot_title='')
     group_ITP2_some_pfs_0 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_some_pfs_0, plot_title='')
     # Make the figure
-    ahf.make_figure([group_ITP2_some_pfs_1, group_ITP2_some_pfs_0], use_same_x_axis=False, use_same_y_axis=False, row_col_list=[2,1, 0.31, 1.60], filename='Figure_6.pickle')
+    ahf.make_figure([group_ITP2_some_pfs_1, group_ITP2_some_pfs_0], use_same_x_axis=False, use_same_y_axis=False, row_col_list=[2,1, 0.5, 1.60], filename='Figure_6.png')
 
 ### Figure 7
 ## Comparing to Lu et al. 2022
@@ -330,7 +348,7 @@ if False:
     pp_Lu2022 = ahf.Plot_Parameters(x_vars=['ca_SP'], y_vars=['ca_CT'], clr_map='clr_all_same')
     # Make the figure 
     import compare_to_Lu2022 as ctL
-    ctL.make_figure(ctL.Lu2022_df, ctL.my_df, pp_Lu2022, filename='Figure_7.pickle')
+    ctL.make_figure(ctL.Lu2022_df, ctL.my_df, pp_Lu2022, filename='Figure_7.png')
 
 ### Figure 8
 ## Tracking clusters across a subset of profiles
@@ -341,37 +359,108 @@ if False:
     # Make the subplot group
     group_ITP3_some_pfs_2 = ahf.Analysis_Group(ds_ITP3_some_pfs2, pfs_ITP3, pp_ITP3_some_pfs_2)
     # Make the figure
-    ahf.make_figure([group_ITP3_some_pfs_2], row_col_list=[1,1, 0.27, 0.90], filename='Figure_8.pickle')
+    ahf.make_figure([group_ITP3_some_pfs_2], row_col_list=[1,1, 0.27, 0.90], filename='Figure_8.png')
 
 ################################################################################
 # Supplementary Figures
 
+### Figure S.1
+## For ITP2, similar to Figure 2 reproducing figures from Timmermans et al. 2008
+# Using absolute salinity `SA` instead of practical salinity `SP`
+if False:
+    print('')
+    print('- Creating Figure S.1 (similar to Figure 2, but for ITP2 using SA instead of SP)')
+    # Make the subplot groups
+    group_ITP2_clstr   = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_SA_clstr, plot_title='')
+    group_ITP2_ex_pfs  = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_SA_ex_pfs, plot_title='')
+    group_ITP2_CT_SA   = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_CT_SA, plot_title='')
+    group_ITP2_aCT_BSA = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_aCT_BSA, plot_title='')
+    # Make the figure
+    ahf.make_figure([group_ITP2_CT_SA, group_ITP2_ex_pfs, group_ITP2_clstr, group_ITP2_aCT_BSA], use_same_y_axis=False, filename='Figure_S1.png')
+
+### Figure S.2
+## Evaluating clusterings with the overlap ratio and lateral density ratio
+# For ITP2, using absolute salinity `SA` instead of practical salinity `SP`
+if False:
+    print('')
+    print('- Creating Figure S.2 (similar to Figure 5, but for ITP2 using SA instead of SP)')
+    # Make the subplot groups
+    group_ITP2_salt_nir = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_SA_nir)
+    group_ITP2_salt_R_L = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_ITP2_SA_R_L)
+    # Make the figure
+    #   Confirmed
+    ahf.make_figure([group_ITP2_salt_nir, group_ITP2_salt_R_L], use_same_y_axis=False, filename='Figure_S2.png')
+
+### Figure S.3
+## Changing the value of \ell, showing examples of one profile, ITP2 185
+if False:
+    print('')
+    print('- Creating Figure S.3, changing the value of ell for example profile ITP2 185')
+    # Make the Analysis Groups
+    group_ell_02_5 = ahf.Analysis_Group(ds_ITP2_185, pfs_ell_02_5, pp_CT_ma_CT, plot_title=r'ITP2 $\ell=2.5$ dbar')
+    group_ell_12_5 = ahf.Analysis_Group(ds_ITP2_185, pfs_ell_12_5, pp_CT_ma_CT, plot_title=r'ITP2 $\ell=12.5$ dbar')
+    group_ell_25_0 = ahf.Analysis_Group(ds_ITP2_185, pfs_ell_25_0, pp_CT_ma_CT, plot_title=r'ITP2 $\ell=25$ dbar')
+    group_ell_37_5 = ahf.Analysis_Group(ds_ITP2_185, pfs_ell_37_5, pp_CT_ma_CT, plot_title=r'ITP2 $\ell=37.5$ dbar')
+    # Make the figure
+    ahf.make_figure([group_ell_02_5, group_ell_12_5, group_ell_25_0, group_ell_37_5], filename='Figure_S3.png')
 
 ### Figure S.4
-## Changing the value of \ell
+## Changing the value of \ell, clustering ITP2
 if False:
     # Profile filters
-    pfs_ell_10  = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=10, p_range=[5,1000])
-    pfs_ell_50  = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=50, p_range=[5,1000])
-    pfs_ell_100 = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=100, p_range=[5,1000])
-    pfs_ell_150 = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=150, p_range=[5,1000])
+    pfs_ell_02_5  = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=2.5, p_range=[5,1000])
+    pfs_ell_12_5  = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=12.5, p_range=[5,1000])
+    pfs_ell_37_5 = ahf.Profile_Filters(SP_range=ITP2_S_range, m_avg_win=37.5, p_range=[5,1000])
     # Make the Analysis Groups for parameter sweeps
-    group_ell_010 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_10,  pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=10$ dbar')
-    group_ell_050 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_50,  pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=50$ dbar')
-    group_ell_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2,    pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=100$ dbar')
-    group_ell_150 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_150, pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=150$ dbar')
+    group_ell_02_5 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_02_5, pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=2.5$ dbar')
+    group_ell_12_5 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_12_5, pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=12.5$ dbar')
+    group_ell_25_0 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2,     pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=25$ dbar')
+    group_ell_37_5 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_37_5, pp_ITP2_ps_m_pts, plot_title=r'ITP2 $\ell=37.5$ dbar')
     # Make the figure
-    # ahf.make_figure([group_ell_010, group_ell_050, group_ell_100, group_ell_150], filename='MAW_comparison_ps.pickle')
+    # ahf.make_figure([group_ell_02_5, group_ell_12_5, group_ell_25_0, group_ell_37_5], filename='MAW_comparison_ps.pickle')
 
-    # Make the Plot Parameters
-    pp_SP_la_CT_010 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':230, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
-    pp_SP_la_CT_050 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':200, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
-    pp_SP_la_CT_100 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':170, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
-    pp_SP_la_CT_150 = ahf.Plot_Parameters(x_vars=['SP'], y_vars=['la_CT'], clr_map='cluster', extra_args={'cl_x_var':'SP', 'cl_y_var':'la_CT', 'm_pts':140, 'b_a_w_plt':False}, ax_lims=T2008_fig5a_x_lims, legend=True, add_grid=True)
     # Make the Analysis Groups
-    group_ell_010 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_10,  pp_SP_la_CT_010, plot_title=r'ITP2 $\ell=10$ dbar')
-    group_ell_050 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_50,  pp_SP_la_CT_050, plot_title=r'ITP2 $\ell=50$ dbar')
-    group_ell_100 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2,    pp_SP_la_CT_100, plot_title=r'ITP2 $\ell=100$ dbar')
-    group_ell_150 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_150, pp_SP_la_CT_150, plot_title=r'ITP2 $\ell=150$ dbar')
+    group_ell_02_5 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_02_5, pp_SP_la_CT_02_5, plot_title=r'ITP2 $\ell=2.5$ dbar')
+    group_ell_12_5 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_12_5, pp_SP_la_CT_12_5, plot_title=r'ITP2 $\ell=12.5$ dbar')
+    group_ell_25_0 = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2,     pp_SP_la_CT_25_0, plot_title=r'ITP2 $\ell=25$ dbar')
+    group_ell_37_5 = ahf.Analysis_Group(ds_ITP2_all, pfs_ell_37_5, pp_SP_la_CT_37_5, plot_title=r'ITP2 $\ell=37.5$ dbar')
     # Make the figure
-    ahf.make_figure([group_ell_010, group_ell_050, group_ell_100, group_ell_150], filename='MAW_comparison.png')
+    ahf.make_figure([group_ell_02_5, group_ell_12_5, group_ell_25_0, group_ell_37_5], filename='Figure_S4.png')
+
+### Figure S.5
+## Using ITP3, similar to Figure 2 reproducing figures from Timmermans et al. 2008
+if False:
+    print('')
+    print('- Creating Figure S.5 (similar to Figure 2, but for ITP3)')
+    # Make the subplot groups
+    group_ITP3_clstr   = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_clstr, plot_title='')
+    group_ITP3_ex_pfs  = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_ex_pfs, plot_title='')
+    group_ITP3_CT_SP   = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_CT_SP, plot_title='')
+    group_ITP3_aCT_BSP = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_aCT_BSP, plot_title='')
+    # Make the figure
+    ahf.make_figure([group_ITP3_CT_SP, group_ITP3_ex_pfs, group_ITP3_clstr, group_ITP3_aCT_BSP], use_same_y_axis=False, filename='Figure_S5.png')
+
+### Figure S.6
+## Parameter sweep across \ell and m_pts for ITP3 (similar to Figure 3)
+#   Note: This will take a long time to run, plot from plot_cs_from_csv.py instead
+if False:
+    print('')
+    print('- Creating Figure S.6 (similar to Figure 3, but for ITP3)')
+    # Make the subplot groups
+    group_ps_ell = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_ps_ell)
+    group_ps_m_pts = ahf.Analysis_Group(ds_ITP3_all, pfs_ITP3, pp_ITP3_ps_m_pts)
+    # Make the figure
+    ahf.make_figure([group_ps_m_pts], use_same_y_axis=False, filename='Figure_S6.pickle')
+
+### Figure S.7
+## Using ITP2, similar to Figure 4
+# Tracking clusters across profiles, reproducing Lu et al. 2022 Figure 3
+if False:
+    print('')
+    print('- Creating Figure S.7 (similar to Figure 4, but for ITP2)')
+    # Make the subplot groups
+    group_Lu2022_fig3a = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3a)
+    group_Lu2022_fig3b = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3b, plot_title='')
+    group_Lu2022_fig3c = ahf.Analysis_Group(ds_ITP2_all, pfs_ITP2, pp_Lu2022_fig3c, plot_title='')
+    # Make the figure
+    ahf.make_figure([group_Lu2022_fig3a, group_Lu2022_fig3b, group_Lu2022_fig3c], row_col_list=[3,1, 0.8, 1.70], filename='Figure_S7.png')

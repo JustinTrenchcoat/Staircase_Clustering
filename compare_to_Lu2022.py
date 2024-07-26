@@ -108,7 +108,7 @@ def make_figure(Lu2022_df, my_df, pp, filename=None, use_same_y_axis=None):
     if filename != None:
         print('- Saving figure to outputs/'+filename)
         if '.png' in filename:
-            plt.savefig('outputs/'+filename, dpi=400)
+            plt.savefig('outputs/'+filename, dpi=400, transparent=True)
         elif '.pickle' in filename:
             pl.dump(fig, open('outputs/'+filename, 'wb'))
         else:

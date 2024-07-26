@@ -22,6 +22,7 @@ Usage:
 
 Options:
     CSV             # filepath of the csv to plot
+                    #    To reproduce Figure S6, use 'outputs/ITP3_param_sweep.csv'
 """
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -100,7 +101,7 @@ def make_figure(df, pp, filename=None, use_same_y_axis=None):
     if filename != None:
         print('- Saving figure to outputs/'+filename)
         if '.png' in filename:
-            plt.savefig('outputs/'+filename, dpi=400)
+            plt.savefig('outputs/'+filename, dpi=400, transparent=True)
         elif '.pickle' in filename:
             pl.dump(fig, open('outputs/'+filename, 'wb'))
         else:
@@ -210,4 +211,4 @@ def plot_clstr_param_sweep(ax, tw_ax_x, df, pp, plt_title=None):
 ################################################################################
 
 pp_ITP3_ps_m_pts = ahf.Plot_Parameters(x_vars=['m_pts'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'z_var':'maw_size', 'z_list':[100]})
-make_figure(df, pp_ITP3_ps_m_pts, filename='ITP3_test_sweep.pickle')
+make_figure(df, pp_ITP3_ps_m_pts, filename='Figure_S6.png')
