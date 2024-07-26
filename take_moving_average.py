@@ -31,7 +31,7 @@ from scipy import interpolate
 import gsw
 
 # The moving average window in dbar
-c3 = 100
+c3 = 25
 
 ################################################################################
 # Main execution
@@ -68,7 +68,8 @@ for my_nc in ncs_to_modify:
     #   win_type='boxcar' uses a rectangular window shape
     #   on='press' means it will take `press` as the index column
     #   .mean() takes the average of the rolling
-    df1 = df.rolling(window=c3, center=True, win_type='boxcar', on='press').mean()
+    #   multiplying m_avg_win by 4 because the data is in 0.25 dbar increments
+    df1 = df.rolling(window=int(c3*4), center=True, win_type='boxcar', on='press').mean()
     # Put the moving average profiles for temperature, salinity, and density into the dataset
     ds['ma_iT'].values = df1['iT'].values.reshape((len0, len1))
     ds['ma_CT'].values = df1['CT'].values.reshape((len0, len1))

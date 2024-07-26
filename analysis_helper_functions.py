@@ -263,6 +263,7 @@ class Profile_Filters:
                             [var, Delta_var] where you specify the variable then the value
                             of the spacing to regrid that value to
     m_avg_win           The value in dbar of the moving average window to take for ma_ variables
+                            This is multiplied by 4 to get the number of rows to average
     """
     def __init__(self, p_range=None, d_range=None, iT_range=None, CT_range=None, PT_range=None, SP_range=None, SA_range=None, subsample=False, regrid_TS=None, m_avg_win=None):
         self.p_range = p_range
@@ -879,7 +880,8 @@ def take_m_avg(df, m_avg_win, vars_available):
     #   win_type='boxcar' uses a rectangular window shape
     #   on='press' means it will take `press` as the index column
     #   .mean() takes the average of the rolling
-    df1 = df.rolling(window=int(m_avg_win), center=True, win_type='boxcar', on='press').mean()
+    #   multiplying m_avg_win by 4 because the data is in 0.25 dbar increments
+    df1 = df.rolling(window=int(m_avg_win*4), center=True, win_type='boxcar', on='press').mean()
     # Put the moving average profiles for temperature, salinity, and density into the dataset
     for var in vars_available:
         if var in ['iT','ma_iT','la_iT']:
@@ -1567,7 +1569,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
     if filename != None:
         print('- Saving figure to outputs/'+filename)
         if '.png' in filename:
-            plt.savefig('outputs/'+filename, dpi=1000)
+            plt.savefig('outputs/'+filename, dpi=1000, transparent=True)
         elif '.pickle' in filename:
             pl.dump(fig, open('outputs/'+filename, 'wb'))
         else:
@@ -3960,6 +3962,9 @@ def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map
                     print('\t- Sum of square residuals:',ss_res)
                     print('\t- Total sum of squares:',ss_tot)
                     print('\t- R^2:',R2)
+                    print('\t- Median cRL:',np.median(x_data))
+                    print('\t- Mean cRL:',np.mean(x_data))
+                    print('\t- Standard deviation of cRL:',np.std(x_data))
                     # Make an array of values to plot log fit line 
                     y_arr = np.linspace(y_bnds[0], y_bnds[1], 50)
                     # Plot the fit
