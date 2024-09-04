@@ -73,6 +73,7 @@ available_variables_list = []
 ################################################################################
 # Declare variables for plotting
 ################################################################################
+# Be sure to set dark_mode similiarly in the other scripts
 dark_mode = False
 
 # Colorblind-friendly palette by Krzywinski et al. (http://mkweb.bcgsc.ca/biovis2012/)

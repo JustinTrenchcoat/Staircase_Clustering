@@ -44,6 +44,7 @@ except:
 ################################################################################
 # Declare variables for plotting
 ################################################################################
+# Be sure to set dark_mode similiarly in the other scripts
 dark_mode = False
 
 # Enable dark mode plotting

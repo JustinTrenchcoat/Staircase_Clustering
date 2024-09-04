@@ -44,6 +44,7 @@ except:
 ################################################################################
 # Declare variables for plotting
 ################################################################################
+# Be sure to set dark_mode similiarly in the other scripts
 dark_mode = False
 
 # Enable dark mode plotting
@@ -54,12 +55,14 @@ if dark_mode:
     clr_ocean = 'k'
     clr_land  = 'grey'
     clr_lines = 'w'
+    file_prefix = 'dark_'
 else:
     std_clr = 'k'
     alt_std_clr = 'olive'
     clr_ocean = 'w'
     clr_land  = 'grey'
     clr_lines = 'k'
+    file_prefix = ''
 
 # Define array of linestyles to cycle through
 l_styles = ['-', '--', '-.', ':']
@@ -211,4 +214,4 @@ def plot_clstr_param_sweep(ax, tw_ax_x, df, pp, plt_title=None):
 ################################################################################
 
 pp_ITP3_ps_m_pts = ahf.Plot_Parameters(x_vars=['m_pts'], y_vars=['n_clusters','DBCV'], clr_map='clr_all_same', extra_args={'z_var':'maw_size', 'z_list':[100]})
-make_figure(df, pp_ITP3_ps_m_pts, filename='Figure_S6.png')
+make_figure(df, pp_ITP3_ps_m_pts, filename=file_prefix+'Figure_S6.png')
