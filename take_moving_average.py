@@ -31,7 +31,11 @@ from scipy import interpolate
 import gsw
 
 # The moving average window in dbar
-c3 = 25
+m_avg_win = 25
+# Vertical resolution of the data
+res = 0.25
+# The number of data points across which to average
+c3 = int(m_avg_win/res)
 
 ################################################################################
 # Main execution
@@ -69,7 +73,7 @@ for my_nc in ncs_to_modify:
     #   on='press' means it will take `press` as the index column
     #   .mean() takes the average of the rolling
     #   multiplying m_avg_win by 4 because the data is in 0.25 dbar increments
-    df1 = df.rolling(window=int(c3*4), center=True, win_type='boxcar', on='press').mean()
+    df1 = df.rolling(window=int(c3), center=True, win_type='boxcar', on='press').mean()
     # Put the moving average profiles for temperature, salinity, and density into the dataset
     ds['ma_iT'].values = df1['iT'].values.reshape((len0, len1))
     ds['ma_CT'].values = df1['CT'].values.reshape((len0, len1))
@@ -80,8 +84,8 @@ for my_nc in ncs_to_modify:
 
     # Update the global variables:
     ds.attrs['Last modified'] = str(datetime.now())
-    ds.attrs['Last modification'] = 'Added moving averages with '+str(c3)+' dbar window'
-    ds.attrs['Moving average window'] = str(c3)+' dbar'
+    ds.attrs['Last modification'] = 'Added moving averages with '+str(m_avg_win)+' dbar window'
+    ds.attrs['Moving average window'] = str(m_avg_win)+' dbar'
 
     # Write out to netcdf
     print('Writing data to',my_nc)
