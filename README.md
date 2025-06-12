@@ -50,4 +50,5 @@ Below is a comprehensive development log with dates and brief comments.
 - Tried to follow `Create_Figures.ipynb`'s instruction but unable to produce figure in step 2. Investigation turned out that the dataframe was empty.
 - isolated Figure 2 section from `Create_Figures.ipynb` into `experiment.ipynb`. Reproduced figure 2 successfully.
 - ITP3 clustering takes a long time and takes up most of computing power, might need to reconsider its performance when put to actual use
-- Will fully assess its performance on ITP2
+- Will fully assess its performance on ITP2. Update: `cluster_data.py` functions normally, and `experiment.ipynb` needs more adjustments. Will read into ahf for more info. 
+- One thing could be sure: this needs a lot of rework for this project.

@@ -35,6 +35,7 @@ import gsw
 
 # For custom analysis functions
 import analysis_helper_functions as ahf
+import matplotlib.pyplot as plt
 
 ################################################################################
 # Main execution
@@ -53,9 +54,9 @@ dfs0 = ahf.Data_Filters()
 ITP2_clstr_dict = {'netcdf_to_load':'netcdfs/ITP_2.nc',
                    'sources_dict':{'ITP_2':'all'},
                    'data_filters':dfs0,
-                   'pfs_object':ahf.Profile_Filters(SP_range=[34.05,34.75]),
-                   'cl_x_var':'SP',
-                   'cl_y_var':'la_CT',
+                   'pfs_object':ahf.Profile_Filters(),
+                   'cl_x_var':'CT',
+                   'cl_y_var':'depth',
                    'm_pts':170
                    }
 
@@ -69,9 +70,10 @@ ITP3_clstr_dict = {'netcdf_to_load':'netcdfs/ITP_3.nc',
                    'm_pts':580
                    }
 
-for clstr_dict in [ITP2_clstr_dict, ITP3_clstr_dict]:
+for clstr_dict in [ITP2_clstr_dict]: #, ITP3_clstr_dict]:
     # Find the netcdf to use
     my_nc = clstr_dict['netcdf_to_load']
+
     print('Reading',my_nc)
     # Load in with xarray
     xarrs, var_attr_dicts = ahf.list_xarrays(clstr_dict['sources_dict'])
