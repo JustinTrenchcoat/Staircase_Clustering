@@ -1280,12 +1280,12 @@ def print_profile_filters(pfs):
         return_string += ('SP range: ['+str(pfs.SP_range[0])+', '+str(pfs.SP_range[1])+'] ')
     if not isinstance(pfs.SA_range, type(None)): 
         return_string += ('SA range: ['+str(pfs.SA_range[0])+', '+str(pfs.SA_range[1])+'] ')
-    if not isinstance(pfs.lon_range, type(None)): 
-        return_string += ('Longitude range: ['+str(pfs.lon_range[0])+', '+str(pfs.lon_range[1])+'] ')
-    if not isinstance(pfs.lat_range, type(None)): 
-        return_string += ('Latitude range: ['+str(pfs.lat_range[0])+', '+str(pfs.lat_range[1])+'] ')
-    if pfs.lt_pCT_max: 
-        return_string += ('Pressures less than p(CT_max) ')
+    # if not isinstance(pfs.lon_range, type(None)): 
+    #     return_string += ('Longitude range: ['+str(pfs.lon_range[0])+', '+str(pfs.lon_range[1])+'] ')
+    # if not isinstance(pfs.lat_range, type(None)): 
+    #     return_string += ('Latitude range: ['+str(pfs.lat_range[0])+', '+str(pfs.lat_range[1])+'] ')
+    # if pfs.lt_pCT_max: 
+    #     return_string += ('Pressures less than p(CT_max) ')
     if pfs.subsample: 
         return_string += ('Subsampled ')
     if not isinstance(pfs.regrid_TS, type(None)): 
