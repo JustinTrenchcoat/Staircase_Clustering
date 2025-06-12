@@ -41,3 +41,10 @@ The Ice-Tethered Profiler data were collected and made available by the Ice-Teth
 ## Funding statement
 
 M.G.S. and N.G. were supported by the Natural Sciences and Engineering Research Council of Canada (NSERC) (funding reference numbers RGPIN-2015-03684 and RGPIN-2022-04560). J.M.L. was supported by grant number 2049521 from the Physical Oceanography program of the United States National Science Foundation. ER was supported by the NSERC Postdoctoral Fellowship award, the NSERC Canada-150 Chair (Award G00321321), and the NSERC Discovery Grant (funding reference number RGPIN-2024-05545).
+
+
+## Development Log:
+
+Below is a comprehensive development log with dates and brief comments.
+2025/06/12:
+- Tried to follow `Create_Figures.ipynb`'s instruction but unable to produce figure in step 2. Investigation turned out that the dataframe was empty.

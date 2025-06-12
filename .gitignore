@@ -1,0 +1,4 @@
+outputs/*
+ITPs/*
+__pycache__/*
+netcdfs/*

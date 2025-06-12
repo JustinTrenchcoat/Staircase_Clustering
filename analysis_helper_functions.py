@@ -25,7 +25,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 # For getting different marker styles
 from matplotlib.markers import MarkerStyle as mplms
 # For storing figure objects in files (can use `pickle` instead if need be)
-import dill as pl
+import pickle as pl
 # For formatting data into dataframes
 import pandas as pd
 # For matching regular expressions
@@ -57,14 +57,14 @@ https://scitools.org.uk/cartopy/docs/latest/installing.html#installing
 Relevent command:
 $ conda install -c conda-forge cartopy
 """
-try:
-    import cartopy.crs as ccrs
-    import cartopy.feature
-except:
-    print('Failed to import cartopy\nIf you do not need to plot maps, comment out these import statements')
-    exit(0)
+# try:
+#     import cartopy.crs as ccrs
+#     import cartopy.feature
+# except:
+#     print('Failed to import cartopy\nIf you do not need to plot maps, comment out these import statements')
+#     exit(0)
 
-science_data_file_path = '/Users/Grey/Documents/Research/Science_Data/'
+science_data_file_path = 'D:/EOAS/Staircase_Clustering/'
 
 # This list gets filled in with the names of all the available columns for the
 #   given data during the `apply_data_filters()` function
