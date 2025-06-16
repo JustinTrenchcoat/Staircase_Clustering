@@ -52,3 +52,8 @@ Below is a comprehensive development log with dates and brief comments.
 - ITP3 clustering takes a long time and takes up most of computing power, might need to reconsider its performance when put to actual use
 - Will fully assess its performance on ITP2. Update: `cluster_data.py` functions normally, and `experiment.ipynb` needs more adjustments. Will read into ahf for more info. 
 - One thing could be sure: this needs a lot of rework for this project.
+-------------
+2025/06/13:
+- Things needs rework
+    - ahf make_figure: can not select depth range.
+    - 

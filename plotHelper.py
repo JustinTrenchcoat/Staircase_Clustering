@@ -404,11 +404,14 @@ class Analysis_Group:
         # Load just the relevant profiles into the xarrays
         self.data_frames = apply_profile_filters(data_set.arr_of_ds, self.vars_to_keep, profile_filters, plt_params)
 
+print("called")
 ################################################################################
 # Define class functions #######################################################
 ################################################################################
 
 def list_xarrays(sources_dict):
+    print("called 1")
+
     """
     Returns a list of xarrays, one for each data source as specified by the
     input dictionary
@@ -453,6 +456,8 @@ def list_xarrays(sources_dict):
 ################################################################################
 
 def apply_data_filters(xarrays, data_filters):
+    print("called 2")
+
     """
     Returns a list of the same xarrays as provided, but with the filters applied
 
@@ -495,6 +500,8 @@ def apply_data_filters(xarrays, data_filters):
 ################################################################################
 
 def find_vars_to_keep(pp, profile_filters, vars_available):
+    print("called 3")
+
     """
     Returns a list the variables to keep for an analysis group based on the plot
     parameters and profile filters given
@@ -648,6 +655,7 @@ def find_vars_to_keep(pp, profile_filters, vars_available):
 ################################################################################
 
 def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
+    print("called 4")
     """
     Returns a list of pandas dataframes, one for each array in arr_of_ds with
     the filters applied to all individual profiles
@@ -865,58 +873,58 @@ def apply_profile_filters(arr_of_ds, vars_to_keep, profile_filters, pp):
     return output_dfs
 
 ################################################################################
+# def take_m_avg(df, m_avg_win, vars_available):
+#     print("called 5")
+#     """
+#     Returns the same pandas dataframe, but with the filters provided applied to
+#     the data within
 
-def take_m_avg(df, m_avg_win, vars_available):
-    """
-    Returns the same pandas dataframe, but with the filters provided applied to
-    the data within
-
-    df                  A pandas dataframe
-    m_avg_win           The value of the moving average window in dbar
-    vars_available      A list of variables available in the dataframe
-    """
-    print('\tIn take_m_avg(), m_avg_win:',m_avg_win)
-    # Use the pandas `rolling` function to get the moving average
-    #   center=True makes the first and last window/2 of the profiles are masked
-    #   win_type='boxcar' uses a rectangular window shape
-    #   on='press' means it will take `press` as the index column
-    #   .mean() takes the average of the rolling
-    #   multiplying m_avg_win by 4 because the data is in 0.25 dbar increments
-    df1 = df.rolling(window=int(m_avg_win*4), center=True, win_type='boxcar', on='press').mean()
-    # Put the moving average profiles for temperature, salinity, and density into the dataset
-    for var in vars_available:
-        if var in ['iT','ma_iT','la_iT']:
-            df['ma_iT'] = df1['iT']
-            if 'la_iT' in vars_available:
-                df['la_iT'] = df['iT'] - df['ma_iT']
-        if var in ['CT','ma_CT','la_CT']:
-            df['ma_CT'] = df1['CT']
-            if 'la_CT' in vars_available:
-                df['la_CT'] = df['CT'] - df['ma_CT']
-        if var in ['PT','ma_PT','la_PT']:
-            df['ma_PT'] = df1['PT']
-            if 'la_PT' in vars_available:
-                df['la_PT'] = df['PT'] - df['ma_PT']
-        if var in ['SP','ma_SP','la_SP']:
-            df['ma_SP'] = df1['SP']
-            if 'la_SP' in vars_available:
-                df['la_SP'] = df['SP'] - df['ma_SP']
-        if var in ['SA','ma_SA','la_SA']:
-            df['ma_SA'] = df1['SA']
-            if 'la_SA' in vars_available:
-                df['la_SA'] = df['SA'] - df['ma_SA']
-        if var in ['sigma','ma_sigma','la_sigma']:
-            df['ma_sigma'] = df1['sigma']
-            if 'la_sigma' in vars_available:
-                df['la_sigma'] = df['sigma'] - df['ma_sigma']
-            #
-        #
-    #
-    return df
+#     df                  A pandas dataframe
+#     m_avg_win           The value of the moving average window in dbar
+#     vars_available      A list of variables available in the dataframe
+#     """
+#     print('\tIn take_m_avg(), m_avg_win:',m_avg_win)
+#     # Use the pandas `rolling` function to get the moving average
+#     #   center=True makes the first and last window/2 of the profiles are masked
+#     #   win_type='boxcar' uses a rectangular window shape
+#     #   on='press' means it will take `press` as the index column
+#     #   .mean() takes the average of the rolling
+#     #   multiplying m_avg_win by 4 because the data is in 0.25 dbar increments
+#     df1 = df.rolling(window=int(m_avg_win*4), center=True, win_type='boxcar', on='press').mean()
+#     # Put the moving average profiles for temperature, salinity, and density into the dataset
+#     for var in vars_available:
+#         if var in ['iT','ma_iT','la_iT']:
+#             df['ma_iT'] = df1['iT']
+#             if 'la_iT' in vars_available:
+#                 df['la_iT'] = df['iT'] - df['ma_iT']
+#         if var in ['CT','ma_CT','la_CT']:
+#             df['ma_CT'] = df1['CT']
+#             if 'la_CT' in vars_available:
+#                 df['la_CT'] = df['CT'] - df['ma_CT']
+#         if var in ['PT','ma_PT','la_PT']:
+#             df['ma_PT'] = df1['PT']
+#             if 'la_PT' in vars_available:
+#                 df['la_PT'] = df['PT'] - df['ma_PT']
+#         if var in ['SP','ma_SP','la_SP']:
+#             df['ma_SP'] = df1['SP']
+#             if 'la_SP' in vars_available:
+#                 df['la_SP'] = df['SP'] - df['ma_SP']
+#         if var in ['SA','ma_SA','la_SA']:
+#             df['ma_SA'] = df1['SA']
+#             if 'la_SA' in vars_available:
+#                 df['la_SA'] = df['SA'] - df['ma_SA']
+#         if var in ['sigma','ma_sigma','la_sigma']:
+#             df['ma_sigma'] = df1['sigma']
+#             if 'la_sigma' in vars_available:
+#                 df['la_sigma'] = df['sigma'] - df['ma_sigma']
+#             #
+#         #
+#     #
+#     return df
 
 ################################################################################
-
 def filter_profile_ranges(df, profile_filters, p_key, d_key, iT_key=None, CT_key=None, PT_key=None, SP_key=None, SA_key=None):
+    print("called 6")
     """
     Returns the same pandas dataframe, but with the filters provided applied to
     the data within
@@ -983,8 +991,8 @@ def filter_profile_ranges(df, profile_filters, p_key, d_key, iT_key=None, CT_key
     return df
 
 ################################################################################
-
 def calc_extra_vars(ds, vars_to_keep):
+    print("called 7")
     """
     Takes in an xarray object and a list of variables and, if there are extra
     variables to calculate, it will add those to the xarray
@@ -1029,8 +1037,8 @@ def calc_extra_vars(ds, vars_to_keep):
     return ds
 
 ################################################################################
-
 def get_axis_labels(pp, var_attr_dicts):
+    print("called 8")
     """
     Using the dictionaries of variable attributes, this adds the xlabel and ylabel
     attributes to the plot parameters object passed in (this replaced the
@@ -1118,287 +1126,287 @@ def get_axis_labels(pp, var_attr_dicts):
     return pp
 
 ################################################################################
+# def get_axis_label(var_key, var_attr_dicts):
+#     print("called 9")
+#     """
+#     Takes in a variable name and returns a nicely formatted string for an axis label
 
-def get_axis_label(var_key, var_attr_dicts):
-    """
-    Takes in a variable name and returns a nicely formatted string for an axis label
-
-    var_key             A string of the variable name
-    var_attr_dicts      A list of dictionaries of variable attributes
-    """
-    # Check for certain modifications to variables,
-    #   check longer strings first to avoid mismatching
-    # Check for profile cluster average variables
-    if 'pca_' in var_key:
-        # Take out the first 4 characters of the string to leave the original variable name
-        var_str = var_key[4:]
-        return 'PCA '+ var_attr_dicts[0][var_str]['label']
-        # return 'Profile cluster average of '+ var_attr_dicts[0][var_str]['label']
-    # Check for profile cluster span variables
-    if 'pcs_' in var_key:
-        # Take out the first 4 characters of the string to leave the original variable name
-        var_str = var_key[4:]
-        return 'Profile cluster span of '+ var_attr_dicts[0][var_str]['label']
-    # Check for cluster mean-centered variables
-    elif 'cmc_' in var_key:
-        # Take out the first 4 characters of the string to leave the original variable name
-        var_str = var_key[4:]
-        return 'Cluster mean-centered '+ var_attr_dicts[0][var_str]['label']
-    # Check for local anomaly variables
-    elif 'la_' in var_key:
-        # Take out the first 3 characters of the string to leave the original variable name
-        var_str = var_key[3:]
-        return r"$\Theta'$ ($^\circ$C)"
-        # return 'Local anomaly of '+ var_attr_dicts[0][var_str]['label']
-    # Check for local anomaly variables
-    elif 'v1_' in var_key:
-        # Take out the first 3 characters of the string to leave the original variable name
-        var_str = var_key[3:]
-        return 'Stretched '+ var_attr_dicts[0][var_str]['label']
-    # Check for local anomaly variables
-    elif 'v2_' in var_key:
-        # Take out the first 3 characters of the string to leave the original variable name
-        var_str = var_key[3:]
-        return 'Stretched local anomaly of '+ var_attr_dicts[0][var_str]['label']
-    # Check for cluster average variables
-    elif 'ca_' in var_key:
-        # Take out the first 3 characters of the string to leave the original variable name
-        var_str = var_key[3:]
-        return 'Cluster average of '+ var_attr_dicts[0][var_str]['label']
-    # Check for cluster span variables
-    elif 'cs_' in var_key:
-        # Take out the first 3 characters of the string to leave the original variable name
-        var_str = var_key[3:]
-        return 'Cluster span of '+ var_attr_dicts[0][var_str]['label']
-    # Check for cluster min/max variables
-    elif 'cmm_' in var_key:
-        # Take out the first 3 characters of the string to leave the original variable name
-        var_str = var_key[4:]
-        return 'Cluster min/max of '+ var_attr_dicts[0][var_str]['label']
-    # Check for normalized inter-cluster range variables
-    elif 'nir_' in var_key:
-        # Take out the first 3 characters of the string to leave the original variable name
-        var_str = var_key[4:]
-        return r'Normalized inter-cluster range $IR_{S_P}$'
-        # return r'Normalized inter-cluster range $IR$ of '+ var_attr_dicts[0][var_str]['label']
-    # Build dictionary of axis labels
-    ax_labels = {
-                 'hist':r'Occurrences',
-                 'aiT':r'$\alpha T$',
-                 'aCT':r'$\alpha \Theta$',
-                 'aPT':r'$\alpha \theta$',
-                 'BSP':r'$\beta S_P$',
-                 'BSt':r'$\beta_{PT} S_P$',
-                 'BSA':r'$\beta S_A$',
-                #  'distance':r'Along-path distance (km)',
-                 'm_pts':r'Minimum density threshold $m_{pts}$',
-                 'DBCV':'Relative validity measure (DBCV)',
-                 'n_clusters':'Number of clusters',
-                 'cRL':r'Lateral density ratio $R_L$',
-                 'cRl':r'Lateral density ratio $R_L$ with $\theta$'
-                }
-    if var_key in ax_labels.keys():
-        return ax_labels[var_key]
-    else:
-        return 'None'
+#     var_key             A string of the variable name
+#     var_attr_dicts      A list of dictionaries of variable attributes
+#     """
+#     # Check for certain modifications to variables,
+#     #   check longer strings first to avoid mismatching
+#     # Check for profile cluster average variables
+#     if 'pca_' in var_key:
+#         # Take out the first 4 characters of the string to leave the original variable name
+#         var_str = var_key[4:]
+#         return 'PCA '+ var_attr_dicts[0][var_str]['label']
+#         # return 'Profile cluster average of '+ var_attr_dicts[0][var_str]['label']
+#     # Check for profile cluster span variables
+#     if 'pcs_' in var_key:
+#         # Take out the first 4 characters of the string to leave the original variable name
+#         var_str = var_key[4:]
+#         return 'Profile cluster span of '+ var_attr_dicts[0][var_str]['label']
+#     # Check for cluster mean-centered variables
+#     elif 'cmc_' in var_key:
+#         # Take out the first 4 characters of the string to leave the original variable name
+#         var_str = var_key[4:]
+#         return 'Cluster mean-centered '+ var_attr_dicts[0][var_str]['label']
+#     # Check for local anomaly variables
+#     elif 'la_' in var_key:
+#         # Take out the first 3 characters of the string to leave the original variable name
+#         var_str = var_key[3:]
+#         return r"$\Theta'$ ($^\circ$C)"
+#         # return 'Local anomaly of '+ var_attr_dicts[0][var_str]['label']
+#     # Check for local anomaly variables
+#     elif 'v1_' in var_key:
+#         # Take out the first 3 characters of the string to leave the original variable name
+#         var_str = var_key[3:]
+#         return 'Stretched '+ var_attr_dicts[0][var_str]['label']
+#     # Check for local anomaly variables
+#     elif 'v2_' in var_key:
+#         # Take out the first 3 characters of the string to leave the original variable name
+#         var_str = var_key[3:]
+#         return 'Stretched local anomaly of '+ var_attr_dicts[0][var_str]['label']
+#     # Check for cluster average variables
+#     elif 'ca_' in var_key:
+#         # Take out the first 3 characters of the string to leave the original variable name
+#         var_str = var_key[3:]
+#         return 'Cluster average of '+ var_attr_dicts[0][var_str]['label']
+#     # Check for cluster span variables
+#     elif 'cs_' in var_key:
+#         # Take out the first 3 characters of the string to leave the original variable name
+#         var_str = var_key[3:]
+#         return 'Cluster span of '+ var_attr_dicts[0][var_str]['label']
+#     # Check for cluster min/max variables
+#     elif 'cmm_' in var_key:
+#         # Take out the first 3 characters of the string to leave the original variable name
+#         var_str = var_key[4:]
+#         return 'Cluster min/max of '+ var_attr_dicts[0][var_str]['label']
+#     # Check for normalized inter-cluster range variables
+#     elif 'nir_' in var_key:
+#         # Take out the first 3 characters of the string to leave the original variable name
+#         var_str = var_key[4:]
+#         return r'Normalized inter-cluster range $IR_{S_P}$'
+#         # return r'Normalized inter-cluster range $IR$ of '+ var_attr_dicts[0][var_str]['label']
+#     # Build dictionary of axis labels
+#     ax_labels = {
+#                  'hist':r'Occurrences',
+#                  'aiT':r'$\alpha T$',
+#                  'aCT':r'$\alpha \Theta$',
+#                  'aPT':r'$\alpha \theta$',
+#                  'BSP':r'$\beta S_P$',
+#                  'BSt':r'$\beta_{PT} S_P$',
+#                  'BSA':r'$\beta S_A$',
+#                 #  'distance':r'Along-path distance (km)',
+#                  'm_pts':r'Minimum density threshold $m_{pts}$',
+#                  'DBCV':'Relative validity measure (DBCV)',
+#                  'n_clusters':'Number of clusters',
+#                  'cRL':r'Lateral density ratio $R_L$',
+#                  'cRl':r'Lateral density ratio $R_L$ with $\theta$'
+#                 }
+#     if var_key in ax_labels.keys():
+#         return ax_labels[var_key]
+#     else:
+#         return 'None'
 
 ################################################################################
 # Admin summary functions ######################################################
 ################################################################################
+# def txt_summary(groups_to_summarize, filename=None):
+#     print("called 10")
+#     """
+#     Takes in a list of Analysis_Group objects. Analyzes and outputs summary info
+#     for each one.
 
-def txt_summary(groups_to_summarize, filename=None):
-    """
-    Takes in a list of Analysis_Group objects. Analyzes and outputs summary info
-    for each one.
-
-    groups_to_plot      A list of Analysis_Group objects
-    filename            The file to write the output to. If none, it will print
-                            the output to the console
-    """
-    # Loop over all Analysis_Group objects
-    i = 0
-    for a_group in groups_to_summarize:
-        i += 1
-        # Concatonate all the pandas data frames together
-        df = pd.concat(a_group.data_frames)
-        # Find the total number of profiles
-        n_profs = len(np.unique(np.array(df['prof_no'], dtype=type(''))))
-        # Put all of the lines together
-        lines = ["Group "+str(i)+":",
-                 # "\t"+add_std_title(a_group),
-                 print_global_variables(a_group.data_set),
-                 "\t\tVariables to keep:",
-                 "\t\t"+str(a_group.vars_to_keep),
-                 "\t\tNumber of profiles: ",
-                 "\t\t\t"+str(n_profs),
-                 "\t\tNumber of data points: ",
-                 "\t\t\t"+str(len(df))
-                 ]
-        # Find the ranges of the variables available
-        print('working on ranges')
-        var_attr_dict = a_group.data_set.var_attr_dicts[0]
-        for var in a_group.vars_to_keep:
-            if var in var_attr_dict.keys():
-                lines.append(report_range(df, var, var_attr_dict[var]))
-            #
-        #
-        # Check for SDA variables
-        if 'SDA_n_ml_dc' in a_group.vars_to_keep and 'SDA_n_ml_sf' in a_group.vars_to_keep and 'SDA_n_gl_dc' in a_group.vars_to_keep and 'SDA_n_gl_sf' in a_group.vars_to_keep:# and 'SDA_ml_press' in a_group.vars_to_keep and 'SDA_gl_h' in a_group.vars_to_keep:
-            print('working on SDA part')
-            lines.append("\n\t\t-- SDA output summary --")
-            lines.append(summarize_SDA_output(df, n_profs))
-        lines.append("\n")
-    #
-    if filename != None:
-        print('Writing summary file to',filename)
-        with open(filename, 'w') as f:
-            f.write('\n'.join(lines))
-    else:
-        for line in lines:
-            print(line)
-
-################################################################################
-
-def print_profile_filters(pfs):
-    """
-    Returns a human readable string of all the profile filters in the given object
-
-    pfs         A Profile_Filters object
-    """
-    return_string = ''
-    if not isinstance(pfs.p_range, type(None)): 
-        return_string += ('Pressure range: ['+str(pfs.p_range[0])+', '+str(pfs.p_range[1])+'] ')
-    if not isinstance(pfs.d_range, type(None)): 
-        return_string += ('Depth range: ['+str(pfs.d_range[0])+', '+str(pfs.d_range[1])+'] ')
-    if not isinstance(pfs.iT_range, type(None)): 
-        return_string += ('iT range: ['+str(pfs.iT_range[0])+', '+str(pfs.iT_range[1])+'] ')
-    if not isinstance(pfs.CT_range, type(None)): 
-        return_string += ('CT range: ['+str(pfs.CT_range[0])+', '+str(pfs.CT_range[1])+'] ')
-    if not isinstance(pfs.PT_range, type(None)): 
-        return_string += ('PT range: ['+str(pfs.PT_range[0])+', '+str(pfs.PT_range[1])+'] ')
-    if not isinstance(pfs.SP_range, type(None)): 
-        return_string += ('SP range: ['+str(pfs.SP_range[0])+', '+str(pfs.SP_range[1])+'] ')
-    if not isinstance(pfs.SA_range, type(None)): 
-        return_string += ('SA range: ['+str(pfs.SA_range[0])+', '+str(pfs.SA_range[1])+'] ')
-    # if not isinstance(pfs.lon_range, type(None)): 
-    #     return_string += ('Longitude range: ['+str(pfs.lon_range[0])+', '+str(pfs.lon_range[1])+'] ')
-    # if not isinstance(pfs.lat_range, type(None)): 
-    #     return_string += ('Latitude range: ['+str(pfs.lat_range[0])+', '+str(pfs.lat_range[1])+'] ')
-    # if pfs.lt_pCT_max: 
-    #     return_string += ('Pressures less than p(CT_max) ')
-    if pfs.subsample: 
-        return_string += ('Subsampled ')
-    if not isinstance(pfs.regrid_TS, type(None)): 
-        return_string += ('Regrid: d'+str(pfs.regrid_TS[0])+'='+str(pfs.regrid_TS[1])+', d'+str(pfs.regrid_TS[2])+'='+str(pfs.regrid_TS[3])+' ')
-    if not isinstance(pfs.m_avg_win, type(None)): 
-        return_string += ('Moving average window: ['+str(pfs.m_avg_win)+' ')
-    return return_string
+#     groups_to_plot      A list of Analysis_Group objects
+#     filename            The file to write the output to. If none, it will print
+#                             the output to the console
+#     """
+#     # Loop over all Analysis_Group objects
+#     i = 0
+#     for a_group in groups_to_summarize:
+#         i += 1
+#         # Concatonate all the pandas data frames together
+#         df = pd.concat(a_group.data_frames)
+#         # Find the total number of profiles
+#         n_profs = len(np.unique(np.array(df['prof_no'], dtype=type(''))))
+#         # Put all of the lines together
+#         lines = ["Group "+str(i)+":",
+#                  # "\t"+add_std_title(a_group),
+#                  print_global_variables(a_group.data_set),
+#                  "\t\tVariables to keep:",
+#                  "\t\t"+str(a_group.vars_to_keep),
+#                  "\t\tNumber of profiles: ",
+#                  "\t\t\t"+str(n_profs),
+#                  "\t\tNumber of data points: ",
+#                  "\t\t\t"+str(len(df))
+#                  ]
+#         # Find the ranges of the variables available
+#         print('working on ranges')
+#         var_attr_dict = a_group.data_set.var_attr_dicts[0]
+#         for var in a_group.vars_to_keep:
+#             if var in var_attr_dict.keys():
+#                 lines.append(report_range(df, var, var_attr_dict[var]))
+#             #
+#         #
+#         # Check for SDA variables
+#         if 'SDA_n_ml_dc' in a_group.vars_to_keep and 'SDA_n_ml_sf' in a_group.vars_to_keep and 'SDA_n_gl_dc' in a_group.vars_to_keep and 'SDA_n_gl_sf' in a_group.vars_to_keep:# and 'SDA_ml_press' in a_group.vars_to_keep and 'SDA_gl_h' in a_group.vars_to_keep:
+#             print('working on SDA part')
+#             lines.append("\n\t\t-- SDA output summary --")
+#             lines.append(summarize_SDA_output(df, n_profs))
+#         lines.append("\n")
+#     #
+#     if filename != None:
+#         print('Writing summary file to',filename)
+#         with open(filename, 'w') as f:
+#             f.write('\n'.join(lines))
+#     else:
+#         for line in lines:
+#             print(line)
 
 ################################################################################
+# def print_profile_filters(pfs):
+#     print("called 11")
+#     """
+#     Returns a human readable string of all the profile filters in the given object
 
-def report_range(df, key, name_and_units):
-    """
-    Reports the range of the key value given for the given dataframe
-
-    df          A pandas data frame
-    key         A string of the column to search in the data frame
-    name_and_units      A dictionary containing:
-        name_str    A string of the long version of the column data type
-        units       A string of the units of the data type
-    """
-    name_str  = name_and_units['long_name']
-    try:
-        units = name_and_units['units']
-    except:
-        # The above will fail if no units are given, which currently happens for
-        #   the time variables in the GDS netcdfs because I needed to sort them
-        print('Missing units for:',key)
-        units = 'YYYY-MM-DD HH:MM:SS'
-    # Find this range, making sure to skip null (nan) values
-    this_arr = df[df[key].notnull()][key]
-    if len(this_arr) > 1:
-        this_min = min(this_arr)
-        this_max = max(this_arr)
-        if key != 'dt_start' and key != 'dt_end':
-            # This line formats all the numbers to have just 2 digits after the decimal point
-            return "\t\t"+key+': '+name_str+" \n\t\t\trange: %.2f"%(this_max-this_min)+" "+units+"\n\t\t\t%.2f"%this_min+" to %.2f"%this_max+" "+units
-            # This line outputs the numbers with all available digits after the decimal point
-            # return "\t\t"+name_str+" range: "+str(this_max-this_min)+" "+units+"\n\t\t\t"+str(this_min)+" to "+str(this_max)+" "+units
-        else:
-            return "\t\t"+key+': '+name_str+" \n\t\t\trange: \n\t\t\t"+str(this_min)+" to "+str(this_max)+" "+units
-    else:
-        return "\t\t"+key+': '+name_str+" \n\t\t\trange: N/A \n\t\t\tN/A"
-
-################################################################################
-
-def print_global_variables(Dataset):
-    """
-    Prints out the global variables of the data sources in a Data_Set object
-
-    Dataset         A custom Data_Set object
-    """
-    lines = ''
-    for ds in Dataset.arr_of_ds:
-        for attr in ds.attrs:
-            print('\t'+str(attr)+': '+str(ds.attrs[attr]))
-            lines = lines+'\t'+str(attr)+': '+str(ds.attrs[attr])+'\n'
-            # if attr in ['Creation date', 'Last modified', 'Last modification', 'Sub-sample scheme']:
-            #     print('\t'+attr+': '+ds.attrs[attr])
-            # else:
-            #     lines = lines+'\t'+attr+': '+ds.attrs[attr]+'\n'
-    return lines
+#     pfs         A Profile_Filters object
+#     """
+#     return_string = ''
+#     if not isinstance(pfs.p_range, type(None)): 
+#         return_string += ('Pressure range: ['+str(pfs.p_range[0])+', '+str(pfs.p_range[1])+'] ')
+#     if not isinstance(pfs.d_range, type(None)): 
+#         return_string += ('Depth range: ['+str(pfs.d_range[0])+', '+str(pfs.d_range[1])+'] ')
+#     if not isinstance(pfs.iT_range, type(None)): 
+#         return_string += ('iT range: ['+str(pfs.iT_range[0])+', '+str(pfs.iT_range[1])+'] ')
+#     if not isinstance(pfs.CT_range, type(None)): 
+#         return_string += ('CT range: ['+str(pfs.CT_range[0])+', '+str(pfs.CT_range[1])+'] ')
+#     if not isinstance(pfs.PT_range, type(None)): 
+#         return_string += ('PT range: ['+str(pfs.PT_range[0])+', '+str(pfs.PT_range[1])+'] ')
+#     if not isinstance(pfs.SP_range, type(None)): 
+#         return_string += ('SP range: ['+str(pfs.SP_range[0])+', '+str(pfs.SP_range[1])+'] ')
+#     if not isinstance(pfs.SA_range, type(None)): 
+#         return_string += ('SA range: ['+str(pfs.SA_range[0])+', '+str(pfs.SA_range[1])+'] ')
+#     # if not isinstance(pfs.lon_range, type(None)): 
+#     #     return_string += ('Longitude range: ['+str(pfs.lon_range[0])+', '+str(pfs.lon_range[1])+'] ')
+#     # if not isinstance(pfs.lat_range, type(None)): 
+#     #     return_string += ('Latitude range: ['+str(pfs.lat_range[0])+', '+str(pfs.lat_range[1])+'] ')
+#     # if pfs.lt_pCT_max: 
+#     #     return_string += ('Pressures less than p(CT_max) ')
+#     if pfs.subsample: 
+#         return_string += ('Subsampled ')
+#     if not isinstance(pfs.regrid_TS, type(None)): 
+#         return_string += ('Regrid: d'+str(pfs.regrid_TS[0])+'='+str(pfs.regrid_TS[1])+', d'+str(pfs.regrid_TS[2])+'='+str(pfs.regrid_TS[3])+' ')
+#     if not isinstance(pfs.m_avg_win, type(None)): 
+#         return_string += ('Moving average window: ['+str(pfs.m_avg_win)+' ')
+#     return return_string
 
 ################################################################################
+# def report_range(df, key, name_and_units):
+#     print("called 12")
+#     """
+#     Reports the range of the key value given for the given dataframe
 
-def find_max_distance(groups_to_analyze):
-    """
-    Reports the maximum distance between any two profiles in the given dataframe
+#     df          A pandas data frame
+#     key         A string of the column to search in the data frame
+#     name_and_units      A dictionary containing:
+#         name_str    A string of the long version of the column data type
+#         units       A string of the units of the data type
+#     """
+#     name_str  = name_and_units['long_name']
+#     try:
+#         units = name_and_units['units']
+#     except:
+#         # The above will fail if no units are given, which currently happens for
+#         #   the time variables in the GDS netcdfs because I needed to sort them
+#         print('Missing units for:',key)
+#         units = 'YYYY-MM-DD HH:MM:SS'
+#     # Find this range, making sure to skip null (nan) values
+#     this_arr = df[df[key].notnull()][key]
+#     if len(this_arr) > 1:
+#         this_min = min(this_arr)
+#         this_max = max(this_arr)
+#         if key != 'dt_start' and key != 'dt_end':
+#             # This line formats all the numbers to have just 2 digits after the decimal point
+#             return "\t\t"+key+': '+name_str+" \n\t\t\trange: %.2f"%(this_max-this_min)+" "+units+"\n\t\t\t%.2f"%this_min+" to %.2f"%this_max+" "+units
+#             # This line outputs the numbers with all available digits after the decimal point
+#             # return "\t\t"+name_str+" range: "+str(this_max-this_min)+" "+units+"\n\t\t\t"+str(this_min)+" to "+str(this_max)+" "+units
+#         else:
+#             return "\t\t"+key+': '+name_str+" \n\t\t\trange: \n\t\t\t"+str(this_min)+" to "+str(this_max)+" "+units
+#     else:
+#         return "\t\t"+key+': '+name_str+" \n\t\t\trange: N/A \n\t\t\tN/A"
 
-    groups_to_analyze   A list of Analysis_Group objects
-                        Each Analysis_Group contains a list of dataframes
-    """
-    for ag in groups_to_analyze:
-        for df in ag.data_frames:
-            # Drop duplicates in lat/lon to have just one row per profile
-            df.drop_duplicates(subset=['lon','lat'], keep='first', inplace=True)
-            # Get source and instrument for this df
-            this_source = df['source'].values[0]
-            this_instrmt = df['instrmt'].values[0]
-            # Get arrays of values
-            prof_nos = df['prof_no'].values
-            lon_vals = df['lon'].values
-            lat_vals = df['lat'].values
-            # Find the number of profiles
-            n_pfs = len(prof_nos)
-            # Placeholders to store the largest span between any two profiles
-            max_span = 0
-            ms_i = None
-            ms_i_latlon = None
-            ms_j = None
-            ms_j_latlon = None
-            # Nested loop over the profiles, only the upper triangle
-            #   Don't need to double-count, comparing profiles twice
-            for i in range(n_pfs):
-                for j in range(i+1,n_pfs):
-                    i_lat_lon = (lat_vals[i], lon_vals[i])
-                    j_lat_lon = (lat_vals[j], lon_vals[j])
-                    this_span = geodesic(i_lat_lon, j_lat_lon).km
-                    if this_span > max_span:
-                        max_span = this_span
-                        ms_i = prof_nos[i] 
-                        ms_i_latlon = i_lat_lon
-                        ms_j = prof_nos[j]
-                        ms_j_latlon = j_lat_lon
-                    # print('i:',i,'j:',j,'i_pf:',prof_nos[i],'j_pf:',prof_nos[j],'this_span:',this_span,'max_span:',max_span)
-                #
-            #
-            print('For',this_source,this_instrmt,'max_span:',max_span,'km between profiles',ms_i,'at',ms_i_latlon,'and',ms_j,'at',ms_j_latlon)
+################################################################################
+# def print_global_variables(Dataset):
+#     print("called 13")
+#     """
+#     Prints out the global variables of the data sources in a Data_Set object
+
+#     Dataset         A custom Data_Set object
+#     """
+#     lines = ''
+#     for ds in Dataset.arr_of_ds:
+#         for attr in ds.attrs:
+#             print('\t'+str(attr)+': '+str(ds.attrs[attr]))
+#             lines = lines+'\t'+str(attr)+': '+str(ds.attrs[attr])+'\n'
+#             # if attr in ['Creation date', 'Last modified', 'Last modification', 'Sub-sample scheme']:
+#             #     print('\t'+attr+': '+ds.attrs[attr])
+#             # else:
+#             #     lines = lines+'\t'+attr+': '+ds.attrs[attr]+'\n'
+#     return lines
+
+################################################################################
+# def find_max_distance(groups_to_analyze):
+#     print("called 14")
+#     """
+#     Reports the maximum distance between any two profiles in the given dataframe
+
+#     groups_to_analyze   A list of Analysis_Group objects
+#                         Each Analysis_Group contains a list of dataframes
+#     """
+#     for ag in groups_to_analyze:
+#         for df in ag.data_frames:
+#             # Drop duplicates in lat/lon to have just one row per profile
+#             df.drop_duplicates(subset=['lon','lat'], keep='first', inplace=True)
+#             # Get source and instrument for this df
+#             this_source = df['source'].values[0]
+#             this_instrmt = df['instrmt'].values[0]
+#             # Get arrays of values
+#             prof_nos = df['prof_no'].values
+#             lon_vals = df['lon'].values
+#             lat_vals = df['lat'].values
+#             # Find the number of profiles
+#             n_pfs = len(prof_nos)
+#             # Placeholders to store the largest span between any two profiles
+#             max_span = 0
+#             ms_i = None
+#             ms_i_latlon = None
+#             ms_j = None
+#             ms_j_latlon = None
+#             # Nested loop over the profiles, only the upper triangle
+#             #   Don't need to double-count, comparing profiles twice
+#             for i in range(n_pfs):
+#                 for j in range(i+1,n_pfs):
+#                     i_lat_lon = (lat_vals[i], lon_vals[i])
+#                     j_lat_lon = (lat_vals[j], lon_vals[j])
+#                     this_span = geodesic(i_lat_lon, j_lat_lon).km
+#                     if this_span > max_span:
+#                         max_span = this_span
+#                         ms_i = prof_nos[i] 
+#                         ms_i_latlon = i_lat_lon
+#                         ms_j = prof_nos[j]
+#                         ms_j_latlon = j_lat_lon
+#                     # print('i:',i,'j:',j,'i_pf:',prof_nos[i],'j_pf:',prof_nos[j],'this_span:',this_span,'max_span:',max_span)
+#                 #
+#             #
+#             print('For',this_source,this_instrmt,'max_span:',max_span,'km between profiles',ms_i,'at',ms_i_latlon,'and',ms_j,'at',ms_j_latlon)
 
 ################################################################################
 # Admin plotting functions #####################################################
 ################################################################################
-
 def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_axis=None, row_col_list=None):
+    print("called 15")
     """
     Takes in a list of Analysis_Group objects, one for each subplot. Determines
     the needed arrangement of subplots, then passes one Analysis_Group object to
@@ -1566,6 +1574,7 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
         exit(0)
     #
     plt.tight_layout(pad=0.4, h_pad=tight_layout_h_pad, w_pad=tight_layout_w_pad)
+    plt.show()
     #
     if filename != None:
         print('- Saving figure to outputs/'+filename)
@@ -1582,8 +1591,8 @@ def make_figure(groups_to_plot, filename=None, use_same_x_axis=None, use_same_y_
 ################################################################################
 # Formatting plotting functions ################################################
 ################################################################################
-
 def set_fig_axes(heights, widths, fig_ratio=0.5, fig_size=1, share_x_axis=None, share_y_axis=None, prjctn=None):
+    print("called 16")
     """
     Creates fig and axes objects based on desired heights and widths of subplots
     Ex: if widths=[1,5], there will be 2 columns, the 1st 1/5 the width of the 2nd
@@ -1639,8 +1648,8 @@ def set_fig_axes(heights, widths, fig_ratio=0.5, fig_size=1, share_x_axis=None, 
     return fig, axes
 
 ################################################################################
-
 def add_std_title(a_group):
+    print("called 17")
     """
     Adds in standard information to this subplot's title, as appropriate
 
@@ -1674,28 +1683,28 @@ def add_std_title(a_group):
     return plt_title
 
 ################################################################################
+# def add_std_legend(ax, data, x_key):
+#     print("called 18")
+#     """
+#     Adds in standard information to this subplot's legend, as appropriate
 
-def add_std_legend(ax, data, x_key):
-    """
-    Adds in standard information to this subplot's legend, as appropriate
-
-    ax          The axis on which to add the legend
-    data        A pandas data frame which is plotted on this axis
-    x_key       The string of the column name for the x data from the dataframe
-    """
-    # Add legend to report the total number of points and notes on the data
-    n_pts_patch  = mpl.patches.Patch(color='none', label=str(len(data[x_key]))+' points')
-    notes_string = ''.join(data.notes.unique())
-    # Only add the notes_string if it contains something
-    if len(notes_string) > 1:
-        notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-        ax.legend(handles=[n_pts_patch, notes_patch])
-    else:
-        ax.legend(handles=[n_pts_patch])
+#     ax          The axis on which to add the legend
+#     data        A pandas data frame which is plotted on this axis
+#     x_key       The string of the column name for the x data from the dataframe
+#     """
+#     # Add legend to report the total number of points and notes on the data
+#     n_pts_patch  = mpl.patches.Patch(color='none', label=str(len(data[x_key]))+' points')
+#     notes_string = ''.join(data.notes.unique())
+#     # Only add the notes_string if it contains something
+#     if len(notes_string) > 1:
+#         notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
+#         ax.legend(handles=[n_pts_patch, notes_patch])
+#     else:
+#         ax.legend(handles=[n_pts_patch])
 
 ################################################################################
-
 def get_var_color(var):
+    print("called 19")
     """
     Takes in the variable name and for the variable to colormap
 
@@ -1733,88 +1742,88 @@ def get_var_color(var):
         return None
 
 ################################################################################
+# def get_color_map(cmap_var):
+#     print("called 20")
+#     """
+#     Takes in the variable name and for the variable to colormap
 
-def get_color_map(cmap_var):
-    """
-    Takes in the variable name and for the variable to colormap
-
-    cmap_var    A string of the variable name for the colormap
-    """
-    # Build dictionary of axis labels
-    cmaps = {'entry':'plasma',
-             'prof_no':'plasma',
-             'dt_start':'viridis',
-             'dt_end':'viridis',
-             'lon':'YlOrRd',
-             'lat':'PuBuGn',
-             'R_rho':'ocean',
-             'density_hist':'inferno'
-             }
-    if cmap_var in ['press', 'depth']:
-        return 'cividis'
-    elif cmap_var in ['iT', 'CT', 'PT', 'alpha', 'aiT', 'aCT', 'aPT', 'ma_iT', 'ma_CT', 'ma_PT', 'la_iT', 'la_CT', 'la_PT']:
-        return 'Reds'
-    elif cmap_var in ['SP', 'SA', 'beta', 'BSP', 'BSt', 'BSA', 'ma_SP', 'ma_SA', 'la_SP', 'la_SA']:
-        return 'Blues'
-    elif cmap_var in ['sigma', 'ma_sigma', 'la_sigma']:
-        return 'Purples'
-    elif cmap_var in ['BL_yn', 'up_cast', 'ss_mask']:
-        cmap = mpl.colors.ListedColormap(['green'])
-        cmap.set_bad(color='red')
-        return cmap
-    if cmap_var in cmaps.keys():
-        return cmaps[cmap_var]
-    else:
-        return None
-
-################################################################################
-
-def format_datetime_axes(x_key, y_key, ax, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
-    """
-    Formats any datetime axes to show actual dates, as appropriate
-
-    x_key       The string of the name for the x data on the main axis
-    y_key       The string of the name for the y data on the main axis
-    ax          The main axis on which to format
-    tw_x_key    The string of the name for the x data on the twin axis
-    tw_ax_y     The twin y axis on which to format
-    tw_y_key    The string of the name for the y data on the twin axis
-    tw_ax_x     The twin x axis on which to format
-    """
-    loc = mpl.dates.AutoDateLocator()
-    if x_key in ['dt_start', 'dt_end']:
-        ax.xaxis.set_major_locator(loc)
-        ax.xaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
-    if y_key in ['dt_start', 'dt_end']:
-        ax.yaxis.set_major_locator(loc)
-        ax.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
-    if tw_x_key in ['dt_start', 'dt_end']:
-        tw_ax_y.xaxis.set_major_locator(loc)
-        tw_ax_y.xaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
-    if tw_y_key in ['dt_start', 'dt_end']:
-        tw_ax_x.yaxis.set_major_locator(loc)
-        tw_ax_x.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+#     cmap_var    A string of the variable name for the colormap
+#     """
+#     # Build dictionary of axis labels
+#     cmaps = {'entry':'plasma',
+#              'prof_no':'plasma',
+#              'dt_start':'viridis',
+#              'dt_end':'viridis',
+#              'lon':'YlOrRd',
+#              'lat':'PuBuGn',
+#              'R_rho':'ocean',
+#              'density_hist':'inferno'
+#              }
+#     if cmap_var in ['press', 'depth']:
+#         return 'cividis'
+#     elif cmap_var in ['iT', 'CT', 'PT', 'alpha', 'aiT', 'aCT', 'aPT', 'ma_iT', 'ma_CT', 'ma_PT', 'la_iT', 'la_CT', 'la_PT']:
+#         return 'Reds'
+#     elif cmap_var in ['SP', 'SA', 'beta', 'BSP', 'BSt', 'BSA', 'ma_SP', 'ma_SA', 'la_SP', 'la_SA']:
+#         return 'Blues'
+#     elif cmap_var in ['sigma', 'ma_sigma', 'la_sigma']:
+#         return 'Purples'
+#     elif cmap_var in ['BL_yn', 'up_cast', 'ss_mask']:
+#         cmap = mpl.colors.ListedColormap(['green'])
+#         cmap.set_bad(color='red')
+#         return cmap
+#     if cmap_var in cmaps.keys():
+#         return cmaps[cmap_var]
+#     else:
+#         return None
 
 ################################################################################
+# def format_datetime_axes(x_key, y_key, ax, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
+#     print("called 21")
+#     """
+#     Formats any datetime axes to show actual dates, as appropriate
 
-def format_sci_notation(x, ndp=2):
-    """
-    Formats a number into scientific notation
-
-    x       The number to format
-    ndp     The number of decimal places
-    """
-    s = '{x:0.{ndp:d}e}'.format(x=x, ndp=ndp)
-    m, e = s.split('e')
-    # Check to see whether it's outside the scientific notation exponent limits
-    if int(e) < min(sci_lims) or int(e) > max(sci_lims):
-        return r'{m:s}\times 10^{{{e:d}}}'.format(m=m, e=int(e))
-    else:
-        return r'{x:0.{ndp:d}f}'.format(x=x, ndp=ndp)
+#     x_key       The string of the name for the x data on the main axis
+#     y_key       The string of the name for the y data on the main axis
+#     ax          The main axis on which to format
+#     tw_x_key    The string of the name for the x data on the twin axis
+#     tw_ax_y     The twin y axis on which to format
+#     tw_y_key    The string of the name for the y data on the twin axis
+#     tw_ax_x     The twin x axis on which to format
+#     """
+#     loc = mpl.dates.AutoDateLocator()
+#     if x_key in ['dt_start', 'dt_end']:
+#         ax.xaxis.set_major_locator(loc)
+#         ax.xaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+#     if y_key in ['dt_start', 'dt_end']:
+#         ax.yaxis.set_major_locator(loc)
+#         ax.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+#     if tw_x_key in ['dt_start', 'dt_end']:
+#         tw_ax_y.xaxis.set_major_locator(loc)
+#         tw_ax_y.xaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
+#     if tw_y_key in ['dt_start', 'dt_end']:
+#         tw_ax_x.yaxis.set_major_locator(loc)
+#         tw_ax_x.yaxis.set_major_formatter(mpl.dates.ConciseDateFormatter(loc))
 
 ################################################################################
+# def format_sci_notation(x, ndp=2):
+#     print("called 22")
+#     """
+#     Formats a number into scientific notation
 
+#     x       The number to format
+#     ndp     The number of decimal places
+#     """
+#     s = '{x:0.{ndp:d}e}'.format(x=x, ndp=ndp)
+#     m, e = s.split('e')
+#     # Check to see whether it's outside the scientific notation exponent limits
+#     if int(e) < min(sci_lims) or int(e) > max(sci_lims):
+#         return r'{m:s}\times 10^{{{e:d}}}'.format(m=m, e=int(e))
+#     else:
+#         return r'{x:0.{ndp:d}f}'.format(x=x, ndp=ndp)
+
+################################################################################
 def add_h_scale_bar(ax, ax_lims, unit="", tw_clr=False):
+    print("called 23")
     """
     Adds a horizontal scale bar to a plot
 
@@ -1868,8 +1877,8 @@ def add_h_scale_bar(ax, ax_lims, unit="", tw_clr=False):
 ################################################################################
 # Main plotting function #######################################################
 ################################################################################
-
 def make_subplot(ax, a_group, fig, ax_pos):
+    print("called 24")
     """
     Takes in an Analysis_Group object which has the data and plotting parameters
     to produce a subplot. Returns the x and y labels and the subplot title
@@ -2537,443 +2546,443 @@ def make_subplot(ax, a_group, fig, ax_pos):
 ################################################################################
 # Auxiliary plotting functions #################################################
 ################################################################################
+# def add_isopycnals(ax, df, x_key, y_key, p_ref=None, place_isos=False, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
+#     print("called 25")
+#     """
+#     Adds lines of constant density anomaly, if applicable
 
-def add_isopycnals(ax, df, x_key, y_key, p_ref=None, place_isos=False, tw_x_key=None, tw_ax_y=None, tw_y_key=None, tw_ax_x=None):
-    """
-    Adds lines of constant density anomaly, if applicable
-
-    ax          The main axis on which to format
-    df          Pandas dataframe of the data these isopycnals will be plotted under
-    x_key       The string of the name for the x data on the main axis
-    y_key       The string of the name for the y data on the main axis
-    p_ref       Value of pressure to reference the isopycnals to. Default is surface (0 dbar)
-    place_isos  How to place the isopycnals, either 'auto' or 'manual'
-    tw_x_key    The string of the name for the x data on the twin axis
-    tw_ax_y     The twin y axis on which to format
-    tw_y_key    The string of the name for the y data on the twin axis
-    tw_ax_x     The twin x axis on which to format
-    """
-    # Check whether to make isopycnals or not
-    intersect_arr = set([x_key, y_key, tw_x_key, tw_y_key]).intersection(['iT', 'CT', 'PT', 'SP', 'SA'])
-    if len(intersect_arr) < 2:
-        intersect_arr = set([x_key, y_key, tw_x_key, tw_y_key]).intersection(['aiT','aCT','aPT','BSP','BSt','BSA'])
-        if len(intersect_arr) < 2:
-            return
-        else:
-            ## Plot lines of slope -1 all across the domain
-            # Get bounds of axes
-            x_bnds = ax.get_xbound()
-            y_bnds = ax.get_ybound()
-            # print('x_bnds:',x_bnds)
-            # print('y_bnds:',y_bnds)
-            x_arr = np.linspace(x_bnds[0], x_bnds[1], 50)
-            y_arr = [(y_bnds[1]-y_bnds[0])/2]*len(x_arr)
-            # Plot the least-squares fit line for this cluster through the centroid
-            for i in range(len(x_arr)):
-                ax.axline((x_arr[i], y_arr[i]), slope=1, color=std_clr, alpha=0.25, linestyle='--', zorder=1)
-            # Set offset on axis, incredibly specific for making a nice plot for the paper
-            ax.ticklabel_format(axis='x', style='sci', scilimits=sci_lims, useMathText=True, useOffset=0.0268)
-            return
-    # Zoom in on data so there's no border space
-    x_var_s = df.loc[:,x_key]
-    x_var_min = x_var_s.min()
-    x_var_max = x_var_s.max()
-    ax.set_xlim([x_var_min, x_var_max])
-    y_var_s = df.loc[:,y_key]
-    y_var_min = y_var_s.min()
-    y_var_max = y_var_s.max()
-    ax.set_ylim([y_var_min, y_var_max])
-    # Get bounds of axes
-    x_bnds = ax.get_xbound()
-    y_bnds = ax.get_ybound()
-    # print('x_bnds:',x_bnds)
-    # print('y_bnds:',y_bnds)
-    # Figure out which orientation to make the grid
-    if x_key in ['iT','CT','PT']:
-        iso_x_key = 'iT'
-    elif x_key in ['SP','SA']:
-        iso_x_key = 'SA'
-    if y_key in ['iT','CT','PT']:
-        iso_y_key = 'iT'
-    elif y_key in ['SP','SA']:
-        iso_y_key = 'SA'
-    # If no reference pressure is given, take p_ref to be the median pressure
-    if p_ref==True:
-        press_s = df.loc[:, 'press']
-        p_ref = press_s.median()
-    print('\t- Adding isopycnals referenced to:',p_ref,'dbar')
-    # Get bounds of iso keys that fit within axes bounds
-    iso_x_min = df[(df[x_key] == x_var_min)].loc[:,iso_x_key].min()
-    iso_x_max = df[(df[x_key] == x_var_max)].loc[:,iso_x_key].max()
-    iso_y_min = df[(df[y_key] == y_var_min)].loc[:,iso_y_key].min()
-    iso_y_max = df[(df[y_key] == y_var_max)].loc[:,iso_y_key].max()
-    # Number of points for the mesh grid in both directions
-    n_grid_pts = 100
-    # Make meshgrid for calculating
-    iso_x_arr = np.arange(iso_x_min, iso_x_max, abs(iso_x_max-iso_x_min)/n_grid_pts)
-    iso_y_arr = np.arange(iso_y_min, iso_y_max, abs(iso_y_max-iso_y_min)/n_grid_pts)
-    iso_X, iso_Y = np.meshgrid(iso_x_arr, iso_y_arr)
-    # Make grid of pressure values
-    P = iso_X*0+p_ref
-    # Calculate potential density referenced to p_ref
-    if iso_x_key == 'SA' and iso_y_key == 'iT':
-        Z = gsw.pot_rho_t_exact(iso_X, iso_Y, P, p_ref)-1000
-    # Make meshgrid for plotting
-    x_arr = np.arange(x_var_min, x_var_max, abs(x_var_max-x_var_min)/n_grid_pts)
-    y_arr = np.arange(y_var_min, y_var_max, abs(y_var_max-y_var_min)/n_grid_pts)
-    X, Y = np.meshgrid(x_arr, y_arr)
-    # Plot the contours
-    CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.4, zorder=1, linestyles='dashed')
-    # Place contour inline labels
-    if place_isos == 'manual':
-        # Place contour labels manualy, interactively
-        ax.clabel(CS, manual=True, fontsize=10, fmt='%.1f')
-    else:
-        # Place contour labels automatically
-        ax.clabel(CS, inline=True, fontsize=10, fmt='%.1f')
-
-################################################################################
-
-def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None, txk=None, tay=None, tyk=None, tax=None):
-    """
-    Takes in an Analysis_Group object which has the data and plotting parameters
-    to produce a subplot of individual profiles. Returns the x and y labels and
-    the subplot title
-
-    x_key       The string of the name for the x data on the main axis
-    y_key       The string of the name for the y data on the main axis
-    ax          The axis on which to make the plot
-    a_group     A Analysis_Group object containing the info to create this subplot
-    pp          The Plot_Parameters object for a_group
-    clr_map     A string to determine what color map to use in the plot
-    legend      True/False whether to add a legend
-    df          A pandas dataframe
-    txk         Twin x variable key
-    tay         Twin y axis
-    tyk         Twin y variable key
-    tax         Twin x axis
-    """
-    # Find the histogram parameters, if given
-    if not isinstance(pp.extra_args, type(None)):
-        try:
-            n_h_bins = pp.extra_args['n_h_bins']
-        except:
-            n_h_bins = None
-        try:
-            plt_hist_lines = pp.extra_args['plt_hist_lines']
-        except:
-            plt_hist_lines = False
-        try:
-            plt_noise = pp.extra_args['plt_noise']
-        except:
-            plt_noise = True
-    else:
-        n_h_bins = None
-        plt_hist_lines = False
-        plt_noise = True
-    # Load in variables
-    if x_key == 'hist':
-        var_key = y_key
-        orientation = 'horizontal'
-        x_label = 'Number of points'
-        y_label = pp.ylabels[0]
-        tw_var_key = tyk
-        tw_ax = tax
-        tw_label = pp.ylabels[1]
-    elif y_key == 'hist':
-        var_key = x_key
-        orientation = 'vertical'
-        x_label = pp.xlabels[0]
-        y_label = 'Number of points'
-        tw_var_key = txk
-        tw_ax = tay
-        tw_label = pp.xlabels[1]
-    # Histograms don't work with datetime data
-    if var_key in ['dt_start', 'dt_end']:
-        print('Cannot make histogram with',var_key,'data')
-        exit(0)
-    # Set variable as to whether to invert the y axis
-    invert_y_axis = False
-    # Determine the color mapping to be used
-    if clr_map == 'clr_all_same':
-        # Get histogram parameters
-        h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
-        # Plot the histogram
-        ax.hist(h_var, bins=res_bins, color=std_clr, orientation=orientation)
-        # Invert y-axis if specified
-        if y_key in y_invert_vars:
-            invert_y_axis = True
-        # Check whether to plot lines for mean and standard deviation
-        if plt_hist_lines:
-            if orientation == 'vertical':
-                ax.axvline(mean, color='r')
-                ax.axvline(mean-2*std_dev, color='r', linestyle='--')
-                ax.axvline(mean+2*std_dev, color='r', linestyle='--')
-            elif orientation == 'horizontal':
-                ax.axhline(mean, color='r')
-                ax.axhline(mean-2*std_dev, color='r', linestyle='--')
-                ax.axhline(mean+2*std_dev, color='r', linestyle='--')
-        # Add legend to report overall statistics
-        n_pts_patch   = mpl.patches.Patch(color=std_clr, label=str(len(h_var))+' points')
-        median_patch  = mpl.patches.Patch(color=std_clr, label='Median:  '+'%.4f'%median)
-        mean_patch    = mpl.patches.Patch(color=std_clr, label='Mean:    ' + '%.4f'%mean)
-        std_dev_patch = mpl.patches.Patch(color=std_clr, label='Std dev: '+'%.4f'%std_dev)
-        hndls = [n_pts_patch, median_patch, mean_patch, std_dev_patch]
-        notes_string = ''.join(df.notes.unique())
-        # Plot twin axis if specified
-        if not isinstance(tw_var_key, type(None)):
-            tw_clr = get_var_color(tw_var_key)
-            if tw_clr == std_clr:
-                tw_clr = alt_std_clr
-            # Get histogram parameters
-            h_var, res_bins, median, mean, std_dev = get_hist_params(df, tw_var_key)
-            # Plot the histogram
-            tw_ax.hist(h_var, bins=res_bins, color=tw_clr, alpha=mrk_alpha, orientation=orientation)
-            if orientation == 'vertical':
-                tw_ax.set_xlabel(tw_label)
-                tw_ax.tick_params(axis='x', colors=tw_clr)
-            elif orientation == 'horizontal':
-                tw_ax.set_ylabel(tw_label)
-                tw_ax.tick_params(axis='y', colors=tw_clr)
-            # Check whether to plot lines for mean and standard deviation
-            if plt_hist_lines:
-                if orientation == 'vertical':
-                    tw_ax.axvline(mean, color='r', alpha=0.5)
-                    tw_ax.axvline(mean-2*std_dev, color='r', linestyle='--', alpha=0.5)
-                    tw_ax.axvline(mean+2*std_dev, color='r', linestyle='--', alpha=0.5)
-                elif orientation == 'horizontal':
-                    tw_ax.axhline(mean, color='r', alpha=0.5)
-                    tw_ax.axhline(mean-2*std_dev, color='r', linestyle='--', alpha=0.5)
-                    tw_ax.axhline(mean+2*std_dev, color='r', linestyle='--', alpha=0.5)
-            # Add legend to report overall statistics
-            n_pts_patch   = mpl.patches.Patch(color=tw_clr, label=str(len(h_var))+' points', alpha=mrk_alpha)
-            median_patch  = mpl.patches.Patch(color=tw_clr, label='Median:  '+'%.4f'%median, alpha=mrk_alpha)
-            mean_patch    = mpl.patches.Patch(color=tw_clr, label='Mean:    ' + '%.4f'%mean, alpha=mrk_alpha)
-            std_dev_patch = mpl.patches.Patch(color=tw_clr, label='Std dev: '+'%.4f'%std_dev, alpha=mrk_alpha)
-            tw_notes_string = ''.join(df.notes.unique())
-            # Only add the notes_string if it contains something
-            if len(tw_notes_string) > 1:
-                tw_notes_patch  = mpl.patches.Patch(color='none', label=notes_string, alpha=mrk_alpha)
-                tw_hndls=[n_pts_patch, median_patch, mean_patch, std_dev_patch, tw_notes_patch]
-            else:
-                tw_hndls=[n_pts_patch, median_patch, mean_patch, std_dev_patch]
-        else:
-            tw_hndls = []
-        # Only add the notes_string if it contains something
-        if len(notes_string) > 1:
-            notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-            ax.legend(handles=hndls+notes_patch+tw_hndls)
-        else:
-            ax.legend(handles=hndls+tw_hndls)
-        # Add a standard title
-        plt_title = add_std_title(a_group)
-        return x_label, y_label, plt_title, ax, invert_y_axis
-    elif clr_map == 'clr_by_source':
-        # Can't make this type of plot for certain variables yet
-        if var_key in clstr_vars:
-            print('Cannot yet make a histogram plot of',var_key)
-        # Find the list of sources
-        sources_list = []
-        for df in a_group.data_frames:
-            # Get unique sources
-            these_sources = np.unique(df['source'])
-            for s in these_sources:
-                sources_list.append(s)
-        # The pandas version of 'unique()' preserves the original order
-        sources_list = pd.unique(pd.Series(sources_list))
-        i = 0
-        lgnd_hndls = []
-        for source in sources_list:
-            # Decide on the color, don't go off the end of the array
-            my_clr = distinct_clrs[i%len(distinct_clrs)]
-            these_dfs = []
-            for df in a_group.data_frames:
-                these_dfs.append(df[df['source'] == source])
-            this_df = pd.concat(these_dfs)
-            # Get histogram parameters
-            h_var, res_bins, median, mean, std_dev = get_hist_params(this_df, var_key, n_h_bins)
-            # Plot the histogram
-            ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation)
-            # Check whether to plot lines for mean and standard deviation
-            if plt_hist_lines:
-                if orientation == 'vertical':
-                    ax.axvline(mean, color='r')
-                    ax.axvline(mean-2*std_dev, color='r', linestyle='--')
-                    ax.axvline(mean+2*std_dev, color='r', linestyle='--')
-                elif orientation == 'horizontal':
-                    ax.axhline(mean, color='r')
-                    ax.axhline(mean-2*std_dev, color='r', linestyle='--')
-                    ax.axhline(mean+2*std_dev, color='r', linestyle='--')
-            i += 1
-            # Add legend handle to report the total number of points for this source
-            lgnd_label = source+': '+str(len(this_df[var_key]))+' points, Median:'+'%.4f'%median
-            lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
-            # Add legend handle to report overall statistics
-            lgnd_label = 'Mean:'+ '%.4f'%mean+', Std dev:'+'%.4f'%std_dev
-            lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
-            notes_string = ''.join(this_df.notes.unique())
-        # Only add the notes_string if it contains something
-        if len(notes_string) > 1:
-            notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-            lgnd_hndls.append(notes_patch)
-        # Add legend with custom handles
-        lgnd = ax.legend(handles=lgnd_hndls)
-        # Invert y-axis if specified
-        if y_key in y_invert_vars:
-            invert_y_axis = True
-        # Add a standard title
-        plt_title = add_std_title(a_group)
-        return x_label, y_label, plt_title, ax, invert_y_axis
-    elif clr_map == 'clr_by_instrmt':
-        # Can't make this type of plot for certain variables yet
-        if var_key in clstr_vars:
-            print('Cannot yet make a histogram plot of',var_key)
-        i = 0
-        lgnd_hndls = []
-        # Loop through each data frame, the same as looping through instrmts
-        for df in a_group.data_frames:
-            df['source-instrmt'] = df['source']+' '+df['instrmt']
-            # Get instrument name
-            s_instrmt = np.unique(df['source-instrmt'])[0]
-            # Decide on the color, don't go off the end of the array
-            my_clr = distinct_clrs[i%len(distinct_clrs)]
-            # Get histogram parameters
-            h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
-            # Plot the histogram
-            ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation)
-            # Check whether to plot lines for mean and standard deviation
-            if plt_hist_lines:
-                if orientation == 'vertical':
-                    ax.axvline(mean, color='r')
-                    ax.axvline(mean-2*std_dev, color='r', linestyle='--')
-                    ax.axvline(mean+2*std_dev, color='r', linestyle='--')
-                elif orientation == 'horizontal':
-                    ax.axhline(mean, color='r')
-                    ax.axhline(mean-2*std_dev, color='r', linestyle='--')
-                    ax.axhline(mean+2*std_dev, color='r', linestyle='--')
-            i += 1
-            # Add legend to report the total number of points for this instrmt
-            lgnd_label = s_instrmt+': '+str(len(df[var_key]))+' points'
-            lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
-            # Add legend handle to report overall statistics
-            lgnd_label = 'Mean:'+ '%.4f'%mean+', Std dev:'+'%.4f'%std_dev
-            lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
-            notes_string = ''.join(df.notes.unique())
-        # Only add the notes_string if it contains something
-        if len(notes_string) > 1:
-            notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
-            lgnd_hndls.append(notes_patch)
-        # Add legend with custom handles
-        lgnd = ax.legend(handles=lgnd_hndls)
-        # Invert y-axis if specified
-        if y_key in y_invert_vars:
-            invert_y_axis = True
-        # Add a standard title
-        plt_title = add_std_title(a_group)
-        return x_label, y_label, plt_title, ax, invert_y_axis
-    elif clr_map == 'cluster':
-        # Run clustering algorithm
-        m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
-        df, rel_val = HDBSCAN_(a_group, df, cl_x_var, cl_y_var, m_pts, min_samp=min_s, extra_cl_vars=[x_key,y_key])
-        # Remove rows where the plot variables are null
-        df = df[df[var_key].notnull()]
-        # Clusters are labeled starting from 0, so total number of clusters is
-        #   the largest label plus 1
-        n_clusters  = int(df['cluster'].max()+1)
-        # Make blank lists to record values
-        pts_per_cluster = []
-        clstr_means = []
-        clstr_stdvs = []
-        # Loop through each cluster
-        for i in range(n_clusters):
-            # Decide on the color and symbol, don't go off the end of the arrays
-            my_clr = distinct_clrs[i%len(distinct_clrs)]
-            my_mkr = mpl_mrks[i%len(mpl_mrks)]
-            # Get relevant data
-            this_clstr_df = df[df.cluster == i]
-            h_data = this_clstr_df[var_key]
-            h_mean = np.mean(h_data)
-            # Get histogram parameters
-            h_var, res_bins, median, mean, std_dev = get_hist_params(this_clstr_df, var_key, n_h_bins)
-            # Plot the histogram
-            n, bins, patches = ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation, zorder=5)
-            # Find the maximum value for this histogram
-            h_max = n.max()
-            # Find where that max value occured
-            bin_h_max = bins[np.where(n == h_max)][0]
-            # Plot a symbol to indicate which cluster is which histogram
-            if orientation == 'vertical':
-                ax.scatter(bin_h_max, h_max, color=my_clr, s=cent_mrk_size, marker=my_mkr, zorder=1)
-            elif orientation == 'horizontal':
-                ax.scatter(h_max, bin_h_max, color=my_clr, s=cent_mrk_size, marker=my_mkr, zorder=1)
-                # ax.scatter(h_max, bin_h_max, color=my_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
-            #
-        # Noise points are labeled as -1
-        # Plot noise points
-        df_noise = df[df.cluster==-1]
-        if plt_noise:
-            # Get histogram parameters
-            h_var, res_bins, median, mean, std_dev = get_hist_params(df_noise, var_key, n_h_bins)
-            # Plot the noise histogram on a twin axis
-            if orientation == 'vertical':
-                tw_ax = ax.twinx()
-                tw_ax.set_ylabel('Number of noise points')
-            elif orientation == 'horizontal':
-                tw_ax = ax.twiny()
-                tw_ax.set_xlabel('Number of noise points')
-            n, bins, patches = tw_ax.hist(h_var, bins=res_bins, color=std_clr, alpha=noise_alpha, orientation=orientation, zorder=1)
-        n_noise_pts = len(df_noise)
-        # Add legend to report the total number of points and notes on the data
-        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[var_key]))+' points')
-        m_pts_patch = mpl.patches.Patch(color='none', label=r'$m_{pts}$: '+str(m_pts))
-        n_clstr_patch = mpl.lines.Line2D([],[],color=cnt_clr, label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
-        n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
-        rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
-        if legend:
-            ax.legend(handles=[n_pts_patch, m_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
-        # Invert y-axis if specified
-        if y_key in y_invert_vars:
-            invert_y_axis = True
-        # Add a standard title
-        plt_title = add_std_title(a_group)
-        return x_label, y_label, plt_title, ax, invert_y_axis
-    else:
-        # Did not provide a valid clr_map
-        print('Colormap',clr_map,'not valid')
-        exit(0)
+#     ax          The main axis on which to format
+#     df          Pandas dataframe of the data these isopycnals will be plotted under
+#     x_key       The string of the name for the x data on the main axis
+#     y_key       The string of the name for the y data on the main axis
+#     p_ref       Value of pressure to reference the isopycnals to. Default is surface (0 dbar)
+#     place_isos  How to place the isopycnals, either 'auto' or 'manual'
+#     tw_x_key    The string of the name for the x data on the twin axis
+#     tw_ax_y     The twin y axis on which to format
+#     tw_y_key    The string of the name for the y data on the twin axis
+#     tw_ax_x     The twin x axis on which to format
+#     """
+#     # Check whether to make isopycnals or not
+#     intersect_arr = set([x_key, y_key, tw_x_key, tw_y_key]).intersection(['iT', 'CT', 'PT', 'SP', 'SA'])
+#     if len(intersect_arr) < 2:
+#         intersect_arr = set([x_key, y_key, tw_x_key, tw_y_key]).intersection(['aiT','aCT','aPT','BSP','BSt','BSA'])
+#         if len(intersect_arr) < 2:
+#             return
+#         else:
+#             ## Plot lines of slope -1 all across the domain
+#             # Get bounds of axes
+#             x_bnds = ax.get_xbound()
+#             y_bnds = ax.get_ybound()
+#             # print('x_bnds:',x_bnds)
+#             # print('y_bnds:',y_bnds)
+#             x_arr = np.linspace(x_bnds[0], x_bnds[1], 50)
+#             y_arr = [(y_bnds[1]-y_bnds[0])/2]*len(x_arr)
+#             # Plot the least-squares fit line for this cluster through the centroid
+#             for i in range(len(x_arr)):
+#                 ax.axline((x_arr[i], y_arr[i]), slope=1, color=std_clr, alpha=0.25, linestyle='--', zorder=1)
+#             # Set offset on axis, incredibly specific for making a nice plot for the paper
+#             ax.ticklabel_format(axis='x', style='sci', scilimits=sci_lims, useMathText=True, useOffset=0.0268)
+#             return
+#     # Zoom in on data so there's no border space
+#     x_var_s = df.loc[:,x_key]
+#     x_var_min = x_var_s.min()
+#     x_var_max = x_var_s.max()
+#     ax.set_xlim([x_var_min, x_var_max])
+#     y_var_s = df.loc[:,y_key]
+#     y_var_min = y_var_s.min()
+#     y_var_max = y_var_s.max()
+#     ax.set_ylim([y_var_min, y_var_max])
+#     # Get bounds of axes
+#     x_bnds = ax.get_xbound()
+#     y_bnds = ax.get_ybound()
+#     # print('x_bnds:',x_bnds)
+#     # print('y_bnds:',y_bnds)
+#     # Figure out which orientation to make the grid
+#     if x_key in ['iT','CT','PT']:
+#         iso_x_key = 'iT'
+#     elif x_key in ['SP','SA']:
+#         iso_x_key = 'SA'
+#     if y_key in ['iT','CT','PT']:
+#         iso_y_key = 'iT'
+#     elif y_key in ['SP','SA']:
+#         iso_y_key = 'SA'
+#     # If no reference pressure is given, take p_ref to be the median pressure
+#     if p_ref==True:
+#         press_s = df.loc[:, 'press']
+#         p_ref = press_s.median()
+#     print('\t- Adding isopycnals referenced to:',p_ref,'dbar')
+#     # Get bounds of iso keys that fit within axes bounds
+#     iso_x_min = df[(df[x_key] == x_var_min)].loc[:,iso_x_key].min()
+#     iso_x_max = df[(df[x_key] == x_var_max)].loc[:,iso_x_key].max()
+#     iso_y_min = df[(df[y_key] == y_var_min)].loc[:,iso_y_key].min()
+#     iso_y_max = df[(df[y_key] == y_var_max)].loc[:,iso_y_key].max()
+#     # Number of points for the mesh grid in both directions
+#     n_grid_pts = 100
+#     # Make meshgrid for calculating
+#     iso_x_arr = np.arange(iso_x_min, iso_x_max, abs(iso_x_max-iso_x_min)/n_grid_pts)
+#     iso_y_arr = np.arange(iso_y_min, iso_y_max, abs(iso_y_max-iso_y_min)/n_grid_pts)
+#     iso_X, iso_Y = np.meshgrid(iso_x_arr, iso_y_arr)
+#     # Make grid of pressure values
+#     P = iso_X*0+p_ref
+#     # Calculate potential density referenced to p_ref
+#     if iso_x_key == 'SA' and iso_y_key == 'iT':
+#         Z = gsw.pot_rho_t_exact(iso_X, iso_Y, P, p_ref)-1000
+#     # Make meshgrid for plotting
+#     x_arr = np.arange(x_var_min, x_var_max, abs(x_var_max-x_var_min)/n_grid_pts)
+#     y_arr = np.arange(y_var_min, y_var_max, abs(y_var_max-y_var_min)/n_grid_pts)
+#     X, Y = np.meshgrid(x_arr, y_arr)
+#     # Plot the contours
+#     CS = ax.contour(X, Y, Z, colors=std_clr, alpha=0.4, zorder=1, linestyles='dashed')
+#     # Place contour inline labels
+#     if place_isos == 'manual':
+#         # Place contour labels manualy, interactively
+#         ax.clabel(CS, manual=True, fontsize=10, fmt='%.1f')
+#     else:
+#         # Place contour labels automatically
+#         ax.clabel(CS, inline=True, fontsize=10, fmt='%.1f')
 
 ################################################################################
+# def plot_histogram(x_key, y_key, ax, a_group, pp, clr_map, legend=True, df=None, txk=None, tay=None, tyk=None, tax=None):
+#     print("called 26")
+#     """
+#     Takes in an Analysis_Group object which has the data and plotting parameters
+#     to produce a subplot of individual profiles. Returns the x and y labels and
+#     the subplot title
 
-def get_hist_params(df, h_key, n_h_bins=25):
-    """
-    Returns the needed information to make a histogram
-
-    df          A pandas data frame of the data to plot
-    h_key       A string of the column header to plot
-    n_h_bins    The number of histogram bins to use
-    """
-    if isinstance(n_h_bins, type(None)):
-        n_h_bins = 25
-    # Pull out the variable to plot, removing null values
-    try:
-        h_var = np.array(df[df[h_key].notnull()][h_key])
-    except:
-        print('Cannot find',h_key,'in the dataframe. Aborting script')
-        exit(0)
-    # Find overall statistics
-    median  = np.median(h_var)
-    mean    = np.mean(h_var)
-    std_dev = np.std(h_var)
-    # Define the bins to use in the histogram, np.arange(start, stop, step)
-    start = mean - 3*std_dev
-    stop  = mean + 3*std_dev
-    step  = std_dev / n_h_bins
-    res_bins = np.arange(start, stop, step)
-    return h_var, res_bins, median, mean, std_dev
+#     x_key       The string of the name for the x data on the main axis
+#     y_key       The string of the name for the y data on the main axis
+#     ax          The axis on which to make the plot
+#     a_group     A Analysis_Group object containing the info to create this subplot
+#     pp          The Plot_Parameters object for a_group
+#     clr_map     A string to determine what color map to use in the plot
+#     legend      True/False whether to add a legend
+#     df          A pandas dataframe
+#     txk         Twin x variable key
+#     tay         Twin y axis
+#     tyk         Twin y variable key
+#     tax         Twin x axis
+#     """
+#     # Find the histogram parameters, if given
+#     if not isinstance(pp.extra_args, type(None)):
+#         try:
+#             n_h_bins = pp.extra_args['n_h_bins']
+#         except:
+#             n_h_bins = None
+#         try:
+#             plt_hist_lines = pp.extra_args['plt_hist_lines']
+#         except:
+#             plt_hist_lines = False
+#         try:
+#             plt_noise = pp.extra_args['plt_noise']
+#         except:
+#             plt_noise = True
+#     else:
+#         n_h_bins = None
+#         plt_hist_lines = False
+#         plt_noise = True
+#     # Load in variables
+#     if x_key == 'hist':
+#         var_key = y_key
+#         orientation = 'horizontal'
+#         x_label = 'Number of points'
+#         y_label = pp.ylabels[0]
+#         tw_var_key = tyk
+#         tw_ax = tax
+#         tw_label = pp.ylabels[1]
+#     elif y_key == 'hist':
+#         var_key = x_key
+#         orientation = 'vertical'
+#         x_label = pp.xlabels[0]
+#         y_label = 'Number of points'
+#         tw_var_key = txk
+#         tw_ax = tay
+#         tw_label = pp.xlabels[1]
+#     # Histograms don't work with datetime data
+#     if var_key in ['dt_start', 'dt_end']:
+#         print('Cannot make histogram with',var_key,'data')
+#         exit(0)
+#     # Set variable as to whether to invert the y axis
+#     invert_y_axis = False
+#     # Determine the color mapping to be used
+#     if clr_map == 'clr_all_same':
+#         # Get histogram parameters
+#         h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
+#         # Plot the histogram
+#         ax.hist(h_var, bins=res_bins, color=std_clr, orientation=orientation)
+#         # Invert y-axis if specified
+#         if y_key in y_invert_vars:
+#             invert_y_axis = True
+#         # Check whether to plot lines for mean and standard deviation
+#         if plt_hist_lines:
+#             if orientation == 'vertical':
+#                 ax.axvline(mean, color='r')
+#                 ax.axvline(mean-2*std_dev, color='r', linestyle='--')
+#                 ax.axvline(mean+2*std_dev, color='r', linestyle='--')
+#             elif orientation == 'horizontal':
+#                 ax.axhline(mean, color='r')
+#                 ax.axhline(mean-2*std_dev, color='r', linestyle='--')
+#                 ax.axhline(mean+2*std_dev, color='r', linestyle='--')
+#         # Add legend to report overall statistics
+#         n_pts_patch   = mpl.patches.Patch(color=std_clr, label=str(len(h_var))+' points')
+#         median_patch  = mpl.patches.Patch(color=std_clr, label='Median:  '+'%.4f'%median)
+#         mean_patch    = mpl.patches.Patch(color=std_clr, label='Mean:    ' + '%.4f'%mean)
+#         std_dev_patch = mpl.patches.Patch(color=std_clr, label='Std dev: '+'%.4f'%std_dev)
+#         hndls = [n_pts_patch, median_patch, mean_patch, std_dev_patch]
+#         notes_string = ''.join(df.notes.unique())
+#         # Plot twin axis if specified
+#         if not isinstance(tw_var_key, type(None)):
+#             tw_clr = get_var_color(tw_var_key)
+#             if tw_clr == std_clr:
+#                 tw_clr = alt_std_clr
+#             # Get histogram parameters
+#             h_var, res_bins, median, mean, std_dev = get_hist_params(df, tw_var_key)
+#             # Plot the histogram
+#             tw_ax.hist(h_var, bins=res_bins, color=tw_clr, alpha=mrk_alpha, orientation=orientation)
+#             if orientation == 'vertical':
+#                 tw_ax.set_xlabel(tw_label)
+#                 tw_ax.tick_params(axis='x', colors=tw_clr)
+#             elif orientation == 'horizontal':
+#                 tw_ax.set_ylabel(tw_label)
+#                 tw_ax.tick_params(axis='y', colors=tw_clr)
+#             # Check whether to plot lines for mean and standard deviation
+#             if plt_hist_lines:
+#                 if orientation == 'vertical':
+#                     tw_ax.axvline(mean, color='r', alpha=0.5)
+#                     tw_ax.axvline(mean-2*std_dev, color='r', linestyle='--', alpha=0.5)
+#                     tw_ax.axvline(mean+2*std_dev, color='r', linestyle='--', alpha=0.5)
+#                 elif orientation == 'horizontal':
+#                     tw_ax.axhline(mean, color='r', alpha=0.5)
+#                     tw_ax.axhline(mean-2*std_dev, color='r', linestyle='--', alpha=0.5)
+#                     tw_ax.axhline(mean+2*std_dev, color='r', linestyle='--', alpha=0.5)
+#             # Add legend to report overall statistics
+#             n_pts_patch   = mpl.patches.Patch(color=tw_clr, label=str(len(h_var))+' points', alpha=mrk_alpha)
+#             median_patch  = mpl.patches.Patch(color=tw_clr, label='Median:  '+'%.4f'%median, alpha=mrk_alpha)
+#             mean_patch    = mpl.patches.Patch(color=tw_clr, label='Mean:    ' + '%.4f'%mean, alpha=mrk_alpha)
+#             std_dev_patch = mpl.patches.Patch(color=tw_clr, label='Std dev: '+'%.4f'%std_dev, alpha=mrk_alpha)
+#             tw_notes_string = ''.join(df.notes.unique())
+#             # Only add the notes_string if it contains something
+#             if len(tw_notes_string) > 1:
+#                 tw_notes_patch  = mpl.patches.Patch(color='none', label=notes_string, alpha=mrk_alpha)
+#                 tw_hndls=[n_pts_patch, median_patch, mean_patch, std_dev_patch, tw_notes_patch]
+#             else:
+#                 tw_hndls=[n_pts_patch, median_patch, mean_patch, std_dev_patch]
+#         else:
+#             tw_hndls = []
+#         # Only add the notes_string if it contains something
+#         if len(notes_string) > 1:
+#             notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
+#             ax.legend(handles=hndls+notes_patch+tw_hndls)
+#         else:
+#             ax.legend(handles=hndls+tw_hndls)
+#         # Add a standard title
+#         plt_title = add_std_title(a_group)
+#         return x_label, y_label, plt_title, ax, invert_y_axis
+#     elif clr_map == 'clr_by_source':
+#         # Can't make this type of plot for certain variables yet
+#         if var_key in clstr_vars:
+#             print('Cannot yet make a histogram plot of',var_key)
+#         # Find the list of sources
+#         sources_list = []
+#         for df in a_group.data_frames:
+#             # Get unique sources
+#             these_sources = np.unique(df['source'])
+#             for s in these_sources:
+#                 sources_list.append(s)
+#         # The pandas version of 'unique()' preserves the original order
+#         sources_list = pd.unique(pd.Series(sources_list))
+#         i = 0
+#         lgnd_hndls = []
+#         for source in sources_list:
+#             # Decide on the color, don't go off the end of the array
+#             my_clr = distinct_clrs[i%len(distinct_clrs)]
+#             these_dfs = []
+#             for df in a_group.data_frames:
+#                 these_dfs.append(df[df['source'] == source])
+#             this_df = pd.concat(these_dfs)
+#             # Get histogram parameters
+#             h_var, res_bins, median, mean, std_dev = get_hist_params(this_df, var_key, n_h_bins)
+#             # Plot the histogram
+#             ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation)
+#             # Check whether to plot lines for mean and standard deviation
+#             if plt_hist_lines:
+#                 if orientation == 'vertical':
+#                     ax.axvline(mean, color='r')
+#                     ax.axvline(mean-2*std_dev, color='r', linestyle='--')
+#                     ax.axvline(mean+2*std_dev, color='r', linestyle='--')
+#                 elif orientation == 'horizontal':
+#                     ax.axhline(mean, color='r')
+#                     ax.axhline(mean-2*std_dev, color='r', linestyle='--')
+#                     ax.axhline(mean+2*std_dev, color='r', linestyle='--')
+#             i += 1
+#             # Add legend handle to report the total number of points for this source
+#             lgnd_label = source+': '+str(len(this_df[var_key]))+' points, Median:'+'%.4f'%median
+#             lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
+#             # Add legend handle to report overall statistics
+#             lgnd_label = 'Mean:'+ '%.4f'%mean+', Std dev:'+'%.4f'%std_dev
+#             lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
+#             notes_string = ''.join(this_df.notes.unique())
+#         # Only add the notes_string if it contains something
+#         if len(notes_string) > 1:
+#             notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
+#             lgnd_hndls.append(notes_patch)
+#         # Add legend with custom handles
+#         lgnd = ax.legend(handles=lgnd_hndls)
+#         # Invert y-axis if specified
+#         if y_key in y_invert_vars:
+#             invert_y_axis = True
+#         # Add a standard title
+#         plt_title = add_std_title(a_group)
+#         return x_label, y_label, plt_title, ax, invert_y_axis
+#     elif clr_map == 'clr_by_instrmt':
+#         # Can't make this type of plot for certain variables yet
+#         if var_key in clstr_vars:
+#             print('Cannot yet make a histogram plot of',var_key)
+#         i = 0
+#         lgnd_hndls = []
+#         # Loop through each data frame, the same as looping through instrmts
+#         for df in a_group.data_frames:
+#             df['source-instrmt'] = df['source']+' '+df['instrmt']
+#             # Get instrument name
+#             s_instrmt = np.unique(df['source-instrmt'])[0]
+#             # Decide on the color, don't go off the end of the array
+#             my_clr = distinct_clrs[i%len(distinct_clrs)]
+#             # Get histogram parameters
+#             h_var, res_bins, median, mean, std_dev = get_hist_params(df, var_key, n_h_bins)
+#             # Plot the histogram
+#             ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation)
+#             # Check whether to plot lines for mean and standard deviation
+#             if plt_hist_lines:
+#                 if orientation == 'vertical':
+#                     ax.axvline(mean, color='r')
+#                     ax.axvline(mean-2*std_dev, color='r', linestyle='--')
+#                     ax.axvline(mean+2*std_dev, color='r', linestyle='--')
+#                 elif orientation == 'horizontal':
+#                     ax.axhline(mean, color='r')
+#                     ax.axhline(mean-2*std_dev, color='r', linestyle='--')
+#                     ax.axhline(mean+2*std_dev, color='r', linestyle='--')
+#             i += 1
+#             # Add legend to report the total number of points for this instrmt
+#             lgnd_label = s_instrmt+': '+str(len(df[var_key]))+' points'
+#             lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
+#             # Add legend handle to report overall statistics
+#             lgnd_label = 'Mean:'+ '%.4f'%mean+', Std dev:'+'%.4f'%std_dev
+#             lgnd_hndls.append(mpl.patches.Patch(color=my_clr, label=lgnd_label, alpha=mrk_alpha))
+#             notes_string = ''.join(df.notes.unique())
+#         # Only add the notes_string if it contains something
+#         if len(notes_string) > 1:
+#             notes_patch  = mpl.patches.Patch(color='none', label=notes_string)
+#             lgnd_hndls.append(notes_patch)
+#         # Add legend with custom handles
+#         lgnd = ax.legend(handles=lgnd_hndls)
+#         # Invert y-axis if specified
+#         if y_key in y_invert_vars:
+#             invert_y_axis = True
+#         # Add a standard title
+#         plt_title = add_std_title(a_group)
+#         return x_label, y_label, plt_title, ax, invert_y_axis
+#     elif clr_map == 'cluster':
+#         # Run clustering algorithm
+#         m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
+#         df, rel_val = HDBSCAN_(a_group, df, cl_x_var, cl_y_var, m_pts, min_samp=min_s, extra_cl_vars=[x_key,y_key])
+#         # Remove rows where the plot variables are null
+#         df = df[df[var_key].notnull()]
+#         # Clusters are labeled starting from 0, so total number of clusters is
+#         #   the largest label plus 1
+#         n_clusters  = int(df['cluster'].max()+1)
+#         # Make blank lists to record values
+#         pts_per_cluster = []
+#         clstr_means = []
+#         clstr_stdvs = []
+#         # Loop through each cluster
+#         for i in range(n_clusters):
+#             # Decide on the color and symbol, don't go off the end of the arrays
+#             my_clr = distinct_clrs[i%len(distinct_clrs)]
+#             my_mkr = mpl_mrks[i%len(mpl_mrks)]
+#             # Get relevant data
+#             this_clstr_df = df[df.cluster == i]
+#             h_data = this_clstr_df[var_key]
+#             h_mean = np.mean(h_data)
+#             # Get histogram parameters
+#             h_var, res_bins, median, mean, std_dev = get_hist_params(this_clstr_df, var_key, n_h_bins)
+#             # Plot the histogram
+#             n, bins, patches = ax.hist(h_var, bins=res_bins, color=my_clr, alpha=mrk_alpha, orientation=orientation, zorder=5)
+#             # Find the maximum value for this histogram
+#             h_max = n.max()
+#             # Find where that max value occured
+#             bin_h_max = bins[np.where(n == h_max)][0]
+#             # Plot a symbol to indicate which cluster is which histogram
+#             if orientation == 'vertical':
+#                 ax.scatter(bin_h_max, h_max, color=my_clr, s=cent_mrk_size, marker=my_mkr, zorder=1)
+#             elif orientation == 'horizontal':
+#                 ax.scatter(h_max, bin_h_max, color=my_clr, s=cent_mrk_size, marker=my_mkr, zorder=1)
+#                 # ax.scatter(h_max, bin_h_max, color=my_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
+#             #
+#         # Noise points are labeled as -1
+#         # Plot noise points
+#         df_noise = df[df.cluster==-1]
+#         if plt_noise:
+#             # Get histogram parameters
+#             h_var, res_bins, median, mean, std_dev = get_hist_params(df_noise, var_key, n_h_bins)
+#             # Plot the noise histogram on a twin axis
+#             if orientation == 'vertical':
+#                 tw_ax = ax.twinx()
+#                 tw_ax.set_ylabel('Number of noise points')
+#             elif orientation == 'horizontal':
+#                 tw_ax = ax.twiny()
+#                 tw_ax.set_xlabel('Number of noise points')
+#             n, bins, patches = tw_ax.hist(h_var, bins=res_bins, color=std_clr, alpha=noise_alpha, orientation=orientation, zorder=1)
+#         n_noise_pts = len(df_noise)
+#         # Add legend to report the total number of points and notes on the data
+#         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[var_key]))+' points')
+#         m_pts_patch = mpl.patches.Patch(color='none', label=r'$m_{pts}$: '+str(m_pts))
+#         n_clstr_patch = mpl.lines.Line2D([],[],color=cnt_clr, label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
+#         n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
+#         rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
+#         if legend:
+#             ax.legend(handles=[n_pts_patch, m_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
+#         # Invert y-axis if specified
+#         if y_key in y_invert_vars:
+#             invert_y_axis = True
+#         # Add a standard title
+#         plt_title = add_std_title(a_group)
+#         return x_label, y_label, plt_title, ax, invert_y_axis
+#     else:
+#         # Did not provide a valid clr_map
+#         print('Colormap',clr_map,'not valid')
+#         exit(0)
 
 ################################################################################
+# def get_hist_params(df, h_key, n_h_bins=25):
+#     print("called 27")
+#     """
+#     Returns the needed information to make a histogram
 
+#     df          A pandas data frame of the data to plot
+#     h_key       A string of the column header to plot
+#     n_h_bins    The number of histogram bins to use
+#     """
+#     if isinstance(n_h_bins, type(None)):
+#         n_h_bins = 25
+#     # Pull out the variable to plot, removing null values
+#     try:
+#         h_var = np.array(df[df[h_key].notnull()][h_key])
+#     except:
+#         print('Cannot find',h_key,'in the dataframe. Aborting script')
+#         exit(0)
+#     # Find overall statistics
+#     median  = np.median(h_var)
+#     mean    = np.mean(h_var)
+#     std_dev = np.std(h_var)
+#     # Define the bins to use in the histogram, np.arange(start, stop, step)
+#     start = mean - 3*std_dev
+#     stop  = mean + 3*std_dev
+#     step  = std_dev / n_h_bins
+#     res_bins = np.arange(start, stop, step)
+#     return h_var, res_bins, median, mean, std_dev
+
+################################################################################
 def plot_profiles(ax, a_group, pp, clr_map=None):
+    print("called 28")
     """
     Takes in an Analysis_Group object which has the data and plotting parameters
     to produce a subplot of individual profiles. Returns the x and y labels and
@@ -3053,10 +3062,11 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     # a_group.dataframe is not DF
     # print(f"test 1: a_group.dataframe:{isinstance(a_group.data_frames, pd.DataFrame)}")
     df = pd.concat(a_group.data_frames)
-    print(f'df size{len(df)}')
-    print(f'df type is: {type(df)}')
-    print(f'df columns: {df.columns}')
-    print(f'print depth? {df["depth"]}')
+    # print(f'df size{len(df)}')
+    # print(f'df type is: {type(df)}')
+    # print(f'df columns: {df.columns}')
+    print(f'print depth; {df['depth'].values[0]}')
+    print(f'print depth? {type(df["depth"])}')
     # Check whether to run the clustering algorithm
     #   Need to run the clustering algorithm BEFORE filtering to specified range
     cluster_this = False
@@ -3333,8 +3343,8 @@ def plot_profiles(ax, a_group, pp, clr_map=None):
     return pp.xlabels[0], pp.ylabels[0], plt_title, ax, invert_y_axis
 
 ################################################################################
-
 def get_cluster_args(pp):
+    print("called 29")
     """
     Finds cluster-realted variables in the extra_args dictionary
 
@@ -3375,8 +3385,8 @@ def get_cluster_args(pp):
     return m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt
 
 ################################################################################
-
 def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[None]):
+    print("called 30")
     """
     Runs the HDBSCAN algorithm on the set of data specified. Returns a pandas
     dataframe with columns for x_key, y_key, 'cluster', and 'clst_prob' and a
@@ -3471,759 +3481,760 @@ def HDBSCAN_(run_group, df, x_key, y_key, m_pts, min_samp=None, extra_cl_vars=[N
 
 ################################################################################
 
-def calc_extra_cl_vars(df, new_cl_vars):
-    """
-    Takes in an already-clustered pandas data frame and a list of variables and,
-    if there are extra variables to calculate, it will add those to the data frame
+# def calc_extra_cl_vars(df, new_cl_vars):
+#     print("called 31")
+#     """
+#     Takes in an already-clustered pandas data frame and a list of variables and,
+#     if there are extra variables to calculate, it will add those to the data frame
 
-    df                  A pandas data frame of the data to plot
-    new_cl_vars         A list of clustering-related variables to calculate
-    """
-    # Find the number of clusters
-    n_clusters = int(max(df['cluster']+1))
-    # Check for variables to calculate
-    for this_var in new_cl_vars:
-        # Split the prefix from the original variable (assumes an underscore split)
-        split_var = this_var.split('_', 1)
-        prefix = split_var[0]
-        try:
-            var = split_var[1]
-        except:
-            var = None
-        # print('prefix:',prefix,'- var:',var)
-        # Make a new blank column in the data frame for this variable
-        df[this_var] = None
-        # Calculate the new values based on the prefix
-        if prefix == 'pca':
-            # Calculate the per profile cluster average version of the variable
-            #   Reduces the number of points to just one per cluster per profile
-            # Loop over each profile
-            n_pfs = int(max(df['entry'].values))
-            for pf in range(n_pfs+1):
-                # Find the data from just this profile
-                df_this_pf = df[df['entry']==pf]
-                # Get a list of clusters in this profile
-                clstr_ids = np.unique(np.array(df_this_pf['cluster'].values))
-                # Remove the noise points
-                clstr_ids = clstr_ids[clstr_ids != -1]
-                # Loop over every cluster in this profile
-                for i in clstr_ids:
-                    # Find the data from this cluster
-                    df_this_pf_this_cluster = df_this_pf[df_this_pf['cluster']==i]
-                    # Find the mean of this var for this cluster for this profile
-                    pf_clstr_mean = np.mean(df_this_pf_this_cluster[var].values)
-                    # Put that value back into the original dataframe
-                    #   Need to make a mask first for some reason
-                    this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
-                    df.loc[this_pf_this_cluster, this_var] = pf_clstr_mean
-        elif prefix == 'pcs':
-            # Calculate the per profile cluster span version of the variable
-            #   Reduces the number of points to just one per cluster per profile
-            # Loop over each profile
-            n_pfs = int(max(df['entry'].values))
-            for pf in range(n_pfs+1):
-                # Find the data from just this profile
-                df_this_pf = df[df['entry']==pf]
-                # Get a list of clusters in this profile
-                clstr_ids = np.unique(np.array(df_this_pf['cluster'].values))
-                # Remove the noise points
-                clstr_ids = clstr_ids[clstr_ids != -1]
-                # Loop over every cluster in this profile
-                for i in clstr_ids:
-                    # Find the data from this cluster
-                    df_this_pf_this_cluster = df_this_pf[df_this_pf['cluster']==i]
-                    # Find the span of this var for this cluster for this profile
-                    pf_clstr_span = max(df_this_pf_this_cluster[var].values) - min(df_this_pf_this_cluster[var].values)
-                    # Replace any values of zero with `None`
-                    if pf_clstr_span == 0:
-                        pf_clstr_span = None
-                    # Put that value back into the original dataframe
-                    #   Need to make a mask first for some reason
-                    this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
-                    df.loc[this_pf_this_cluster, this_var] = pf_clstr_span
-        elif prefix == 'cmc':
-            # Calculate the cluster mean-centered version of the variable
-            #   Should not change the number of points to display
-            # Loop over each cluster
-            for i in range(n_clusters):
-                # Find the data from this cluster
-                df_this_cluster = df[df['cluster']==i].copy()
-                # Find the mean of this var for this cluster
-                clstr_mean = np.mean(df_this_cluster[var].values)
-                # Calculate normalized values
-                df_this_cluster[this_var] = df_this_cluster[var] - clstr_mean
-                # Put those values back into the original dataframe
-                df.loc[df['cluster']==i, this_var] = df_this_cluster[this_var]
-        elif prefix == 'ca':
-            # Calculate the cluster average version of the variable
-            #   Reduces the number of points to just one per cluster
-            # Loop over each cluster
-            # print('cluster,'+var)
-            for i in range(n_clusters):
-                # Find the data from this cluster
-                df_this_cluster = df[df['cluster']==i].copy()
-                # Find the mean of this var for this cluster
-                clstr_mean = np.mean(df_this_cluster[var].values)
-                # Put those values back into the original dataframe
-                df.loc[df['cluster']==i, this_var] = clstr_mean
-                # print(str(i)+','+str(clstr_mean))
-        elif prefix == 'cs':
-            # Calculate the cluster span version of the variable
-            #   Reduces the number of points to just one per cluster
-            # Loop over each cluster
-            for i in range(n_clusters):
-                # Find the data from this cluster
-                df_this_cluster = df[df['cluster']==i].copy()
-                # Find the mean of this var for this cluster
-                clstr_span = max(df_this_cluster[var].values) - min(df_this_cluster[var].values)
-                # Put those values back into the original dataframe
-                df.loc[df['cluster']==i, this_var] = clstr_span
-        elif prefix == 'cmm':
-            # Find the min/max of each cluster for the variable
-            #   Reduces the number of points to just one per cluster
-            # Loop over each cluster
-            for i in range(n_clusters):
-                # Find the data from this cluster
-                df_this_cluster = df[df['cluster']==i].copy()
-                # Find the min/max of this var for this cluster
-                clstr_min = min(df_this_cluster[var].values)
-                clstr_max = max(df_this_cluster[var].values)
-                # Put those values back into the original dataframe
-                #   Won't actually use the data in `this_var` so I'll make it obvious it's to be ignored
-                df.loc[df['cluster']==i, this_var] = -999
-                df.loc[df['cluster']==i, 'cmin_'+var] = clstr_min
-                df.loc[df['cluster']==i, 'cmax_'+var] = clstr_max
-            #
-        elif prefix == 'nir':
-            # Find the normalized inter-cluster range for the variable
-            #   Reduces the number of points to just one per cluster, minus one
-            #   because it depends on the difference between adjacent clusters
-            # Create dataframe to store means and standard deviations of each cluster
-            clstr_df = pd.DataFrame(data=np.arange(n_clusters), columns=['cluster'])
-            clstr_df['clstr_mean'] = None
-            clstr_df['clstr_rnge'] = None
-            print('cluster,std_'+var)
-            # Loop over each cluster
-            for i in range(n_clusters):
-                # Find the data from this cluster
-                df_this_cluster = df[df['cluster']==i].copy()
-                # Find the mean and standard deviation of this var for this cluster
-                clstr_mean = np.mean(df_this_cluster[var].values)
-                clstr_min = min(df_this_cluster[var].values)
-                clstr_max = max(df_this_cluster[var].values)
-                clstr_std = np.std(df_this_cluster[var].values)
-                # print(i,',',clstr_std)
-                clstr_rnge = abs(clstr_max - clstr_min)
-                # Put those values into the cluster dataframe
-                clstr_df.loc[clstr_df['cluster']==i, 'clstr_mean'] = clstr_mean
-                clstr_df.loc[clstr_df['cluster']==i, 'clstr_rnge'] = clstr_rnge
-            # Sort the cluster dataframe by the mean values
-            sorted_clstr_df = clstr_df.sort_values(by='clstr_mean')
-            # Find normalized inter-cluster range for the first cluster in sorted order
-            clstr_id_here  = sorted_clstr_df['cluster'].values[0]
-            clstr_id_below = sorted_clstr_df['cluster'].values[1]
-            clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
-            clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
-            this_diff = abs(clstr_mean_below - clstr_mean_here)
-            this_rnge = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_rnge'].values[0]
-            this_nir = this_rnge / this_diff
-            # print('cluster,rnge,diff,nir,diff_below')
-            # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir,',',this_diff)
-            # Put that value back into the original dataframe
-            df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
-            # Loop over each middle cluster, finding the normalized inter-cluster ranges
-            for i in range(1,n_clusters-1):
-                # Get cluster id's of this cluster, plus those above and below
-                clstr_id_above = sorted_clstr_df['cluster'].values[i-1]
-                clstr_id_here  = sorted_clstr_df['cluster'].values[i]
-                clstr_id_below = sorted_clstr_df['cluster'].values[i+1]
-                # Get the mean value for each of the three clusters for this variable
-                clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
-                clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
-                clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
-                # Find the distances from this cluster to the clusters above and below
-                diff_above = abs(clstr_mean_above - clstr_mean_here)
-                diff_below = abs(clstr_mean_below - clstr_mean_here)
-                # Find minimum of the distances above and below
-                this_diff = min(diff_above, diff_below)
-                # this_diff = np.mean([diff_above, diff_below])
-                # Calculate the normalized inter-cluster range for this cluster
-                this_rnge = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_rnge'].values[0]
-                this_nir = this_rnge / this_diff
-                # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir,',',diff_below)
-                # Put that value back into the original dataframe
-                df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
-            # Find normalized inter-cluster range for the last cluster
-            clstr_id_above  = sorted_clstr_df['cluster'].values[-2]
-            clstr_id_here = sorted_clstr_df['cluster'].values[-1]
-            clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
-            clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
-            this_diff = abs(clstr_mean_above - clstr_mean_here)
-            this_nir = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_rnge'].values[0] / this_diff
-            # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir)
-            # Put that value back into the original dataframe
-            df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
-            #
-        if this_var == 'cRL':
-            # Find the lateral density ratio R_L for each cluster
-            #   Reduces the number of points to just one per cluster
-            # Loop over each cluster
-            for i in range(n_clusters):
-                # Find the data from this cluster
-                df_this_cluster = df[df['cluster']==i].copy()
-                # Find the variables needed
-                alphas = df_this_cluster['alpha'].values
-                temps  = df_this_cluster['CT'].values
-                betas  = df_this_cluster['beta'].values
-                salts  = df_this_cluster['SP'].values
-                # Calculate variables needed
-                aTs = alphas * temps
-                BSs = betas * salts
-                # Find the slope of this cluster in aT-BS space
-                # m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
-                # Find the slope of the total least-squares of the points for this cluster
-                m, c, sd_m, sd_c = orthoregress(BSs, aTs)
-                # The lateral density ratio is the inverse of the slope
-                this_cRL = 1/m
-                # print('cluster:',i,'cRL:',this_cRL)
-                # Put those values back into the original dataframe
-                df.loc[df['cluster']==i, this_var] = this_cRL
-            #
-        #
-    #
-    # Remove rows where the plot variables are null
-    for this_var in new_cl_vars:
-        if 'nir_' not in this_var:
-            df = df[df[this_var].notnull()]
-    return df
-
-################################################################################
-
-def find_outliers(df, var_keys, threshold=2):
-    """
-    Finds any outliers in the dataframe with respect to the x and y keys
-
-    df              A pandas data frame
-    var_keys        A list of strings of the names of the columns on which to 
-                        find outliers
-    threshold       The threshold zscore for which to consider an outlier
-    """
-    for v_key in var_keys:
-        # Get the values of the variable for this key
-        v_values = np.array(df[v_key].values, dtype=np.float64)
-        # print(v_key,v_values)
-        # Find the zscores 
-        v_zscores = stats.zscore(v_values)
-        # Put those values back into the dataframe
-        df['zs_'+ v_key] = v_zscores
-        # Make a column of True/False whether that row is an outlier
-        df['out_'+v_key] = (df['zs_'+v_key] > threshold) | (df['zs_'+v_key] < -threshold)
-    # print(df)
-    # exit(0)
-    return df
+#     df                  A pandas data frame of the data to plot
+#     new_cl_vars         A list of clustering-related variables to calculate
+#     """
+#     # Find the number of clusters
+#     n_clusters = int(max(df['cluster']+1))
+#     # Check for variables to calculate
+#     for this_var in new_cl_vars:
+#         # Split the prefix from the original variable (assumes an underscore split)
+#         split_var = this_var.split('_', 1)
+#         prefix = split_var[0]
+#         try:
+#             var = split_var[1]
+#         except:
+#             var = None
+#         # print('prefix:',prefix,'- var:',var)
+#         # Make a new blank column in the data frame for this variable
+#         df[this_var] = None
+#         # Calculate the new values based on the prefix
+#         if prefix == 'pca':
+#             # Calculate the per profile cluster average version of the variable
+#             #   Reduces the number of points to just one per cluster per profile
+#             # Loop over each profile
+#             n_pfs = int(max(df['entry'].values))
+#             for pf in range(n_pfs+1):
+#                 # Find the data from just this profile
+#                 df_this_pf = df[df['entry']==pf]
+#                 # Get a list of clusters in this profile
+#                 clstr_ids = np.unique(np.array(df_this_pf['cluster'].values))
+#                 # Remove the noise points
+#                 clstr_ids = clstr_ids[clstr_ids != -1]
+#                 # Loop over every cluster in this profile
+#                 for i in clstr_ids:
+#                     # Find the data from this cluster
+#                     df_this_pf_this_cluster = df_this_pf[df_this_pf['cluster']==i]
+#                     # Find the mean of this var for this cluster for this profile
+#                     pf_clstr_mean = np.mean(df_this_pf_this_cluster[var].values)
+#                     # Put that value back into the original dataframe
+#                     #   Need to make a mask first for some reason
+#                     this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
+#                     df.loc[this_pf_this_cluster, this_var] = pf_clstr_mean
+#         elif prefix == 'pcs':
+#             # Calculate the per profile cluster span version of the variable
+#             #   Reduces the number of points to just one per cluster per profile
+#             # Loop over each profile
+#             n_pfs = int(max(df['entry'].values))
+#             for pf in range(n_pfs+1):
+#                 # Find the data from just this profile
+#                 df_this_pf = df[df['entry']==pf]
+#                 # Get a list of clusters in this profile
+#                 clstr_ids = np.unique(np.array(df_this_pf['cluster'].values))
+#                 # Remove the noise points
+#                 clstr_ids = clstr_ids[clstr_ids != -1]
+#                 # Loop over every cluster in this profile
+#                 for i in clstr_ids:
+#                     # Find the data from this cluster
+#                     df_this_pf_this_cluster = df_this_pf[df_this_pf['cluster']==i]
+#                     # Find the span of this var for this cluster for this profile
+#                     pf_clstr_span = max(df_this_pf_this_cluster[var].values) - min(df_this_pf_this_cluster[var].values)
+#                     # Replace any values of zero with `None`
+#                     if pf_clstr_span == 0:
+#                         pf_clstr_span = None
+#                     # Put that value back into the original dataframe
+#                     #   Need to make a mask first for some reason
+#                     this_pf_this_cluster = (df['entry']==pf) & (df['cluster']==i)
+#                     df.loc[this_pf_this_cluster, this_var] = pf_clstr_span
+#         elif prefix == 'cmc':
+#             # Calculate the cluster mean-centered version of the variable
+#             #   Should not change the number of points to display
+#             # Loop over each cluster
+#             for i in range(n_clusters):
+#                 # Find the data from this cluster
+#                 df_this_cluster = df[df['cluster']==i].copy()
+#                 # Find the mean of this var for this cluster
+#                 clstr_mean = np.mean(df_this_cluster[var].values)
+#                 # Calculate normalized values
+#                 df_this_cluster[this_var] = df_this_cluster[var] - clstr_mean
+#                 # Put those values back into the original dataframe
+#                 df.loc[df['cluster']==i, this_var] = df_this_cluster[this_var]
+#         elif prefix == 'ca':
+#             # Calculate the cluster average version of the variable
+#             #   Reduces the number of points to just one per cluster
+#             # Loop over each cluster
+#             # print('cluster,'+var)
+#             for i in range(n_clusters):
+#                 # Find the data from this cluster
+#                 df_this_cluster = df[df['cluster']==i].copy()
+#                 # Find the mean of this var for this cluster
+#                 clstr_mean = np.mean(df_this_cluster[var].values)
+#                 # Put those values back into the original dataframe
+#                 df.loc[df['cluster']==i, this_var] = clstr_mean
+#                 # print(str(i)+','+str(clstr_mean))
+#         elif prefix == 'cs':
+#             # Calculate the cluster span version of the variable
+#             #   Reduces the number of points to just one per cluster
+#             # Loop over each cluster
+#             for i in range(n_clusters):
+#                 # Find the data from this cluster
+#                 df_this_cluster = df[df['cluster']==i].copy()
+#                 # Find the mean of this var for this cluster
+#                 clstr_span = max(df_this_cluster[var].values) - min(df_this_cluster[var].values)
+#                 # Put those values back into the original dataframe
+#                 df.loc[df['cluster']==i, this_var] = clstr_span
+#         elif prefix == 'cmm':
+#             # Find the min/max of each cluster for the variable
+#             #   Reduces the number of points to just one per cluster
+#             # Loop over each cluster
+#             for i in range(n_clusters):
+#                 # Find the data from this cluster
+#                 df_this_cluster = df[df['cluster']==i].copy()
+#                 # Find the min/max of this var for this cluster
+#                 clstr_min = min(df_this_cluster[var].values)
+#                 clstr_max = max(df_this_cluster[var].values)
+#                 # Put those values back into the original dataframe
+#                 #   Won't actually use the data in `this_var` so I'll make it obvious it's to be ignored
+#                 df.loc[df['cluster']==i, this_var] = -999
+#                 df.loc[df['cluster']==i, 'cmin_'+var] = clstr_min
+#                 df.loc[df['cluster']==i, 'cmax_'+var] = clstr_max
+#             #
+#         elif prefix == 'nir':
+#             # Find the normalized inter-cluster range for the variable
+#             #   Reduces the number of points to just one per cluster, minus one
+#             #   because it depends on the difference between adjacent clusters
+#             # Create dataframe to store means and standard deviations of each cluster
+#             clstr_df = pd.DataFrame(data=np.arange(n_clusters), columns=['cluster'])
+#             clstr_df['clstr_mean'] = None
+#             clstr_df['clstr_rnge'] = None
+#             print('cluster,std_'+var)
+#             # Loop over each cluster
+#             for i in range(n_clusters):
+#                 # Find the data from this cluster
+#                 df_this_cluster = df[df['cluster']==i].copy()
+#                 # Find the mean and standard deviation of this var for this cluster
+#                 clstr_mean = np.mean(df_this_cluster[var].values)
+#                 clstr_min = min(df_this_cluster[var].values)
+#                 clstr_max = max(df_this_cluster[var].values)
+#                 clstr_std = np.std(df_this_cluster[var].values)
+#                 # print(i,',',clstr_std)
+#                 clstr_rnge = abs(clstr_max - clstr_min)
+#                 # Put those values into the cluster dataframe
+#                 clstr_df.loc[clstr_df['cluster']==i, 'clstr_mean'] = clstr_mean
+#                 clstr_df.loc[clstr_df['cluster']==i, 'clstr_rnge'] = clstr_rnge
+#             # Sort the cluster dataframe by the mean values
+#             sorted_clstr_df = clstr_df.sort_values(by='clstr_mean')
+#             # Find normalized inter-cluster range for the first cluster in sorted order
+#             clstr_id_here  = sorted_clstr_df['cluster'].values[0]
+#             clstr_id_below = sorted_clstr_df['cluster'].values[1]
+#             clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+#             clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
+#             this_diff = abs(clstr_mean_below - clstr_mean_here)
+#             this_rnge = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_rnge'].values[0]
+#             this_nir = this_rnge / this_diff
+#             # print('cluster,rnge,diff,nir,diff_below')
+#             # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir,',',this_diff)
+#             # Put that value back into the original dataframe
+#             df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
+#             # Loop over each middle cluster, finding the normalized inter-cluster ranges
+#             for i in range(1,n_clusters-1):
+#                 # Get cluster id's of this cluster, plus those above and below
+#                 clstr_id_above = sorted_clstr_df['cluster'].values[i-1]
+#                 clstr_id_here  = sorted_clstr_df['cluster'].values[i]
+#                 clstr_id_below = sorted_clstr_df['cluster'].values[i+1]
+#                 # Get the mean value for each of the three clusters for this variable
+#                 clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
+#                 clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+#                 clstr_mean_below = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_below, 'clstr_mean'].values[0]
+#                 # Find the distances from this cluster to the clusters above and below
+#                 diff_above = abs(clstr_mean_above - clstr_mean_here)
+#                 diff_below = abs(clstr_mean_below - clstr_mean_here)
+#                 # Find minimum of the distances above and below
+#                 this_diff = min(diff_above, diff_below)
+#                 # this_diff = np.mean([diff_above, diff_below])
+#                 # Calculate the normalized inter-cluster range for this cluster
+#                 this_rnge = sorted_clstr_df.loc[sorted_clstr_df['cluster']==i, 'clstr_rnge'].values[0]
+#                 this_nir = this_rnge / this_diff
+#                 # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir,',',diff_below)
+#                 # Put that value back into the original dataframe
+#                 df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
+#             # Find normalized inter-cluster range for the last cluster
+#             clstr_id_above  = sorted_clstr_df['cluster'].values[-2]
+#             clstr_id_here = sorted_clstr_df['cluster'].values[-1]
+#             clstr_mean_here = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_mean'].values[0]
+#             clstr_mean_above = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_above, 'clstr_mean'].values[0]
+#             this_diff = abs(clstr_mean_above - clstr_mean_here)
+#             this_nir = sorted_clstr_df.loc[sorted_clstr_df['cluster']==clstr_id_here, 'clstr_rnge'].values[0] / this_diff
+#             # print(clstr_id_here,',',this_rnge,',',this_diff,',',this_nir)
+#             # Put that value back into the original dataframe
+#             df.loc[df['cluster']==clstr_id_here, this_var] = this_nir
+#             #
+#         if this_var == 'cRL':
+#             # Find the lateral density ratio R_L for each cluster
+#             #   Reduces the number of points to just one per cluster
+#             # Loop over each cluster
+#             for i in range(n_clusters):
+#                 # Find the data from this cluster
+#                 df_this_cluster = df[df['cluster']==i].copy()
+#                 # Find the variables needed
+#                 alphas = df_this_cluster['alpha'].values
+#                 temps  = df_this_cluster['CT'].values
+#                 betas  = df_this_cluster['beta'].values
+#                 salts  = df_this_cluster['SP'].values
+#                 # Calculate variables needed
+#                 aTs = alphas * temps
+#                 BSs = betas * salts
+#                 # Find the slope of this cluster in aT-BS space
+#                 # m, c = np.linalg.lstsq(np.array([BSs, np.ones(len(BSs))]).T, aTs, rcond=None)[0]
+#                 # Find the slope of the total least-squares of the points for this cluster
+#                 m, c, sd_m, sd_c = orthoregress(BSs, aTs)
+#                 # The lateral density ratio is the inverse of the slope
+#                 this_cRL = 1/m
+#                 # print('cluster:',i,'cRL:',this_cRL)
+#                 # Put those values back into the original dataframe
+#                 df.loc[df['cluster']==i, this_var] = this_cRL
+#             #
+#         #
+#     #
+#     # Remove rows where the plot variables are null
+#     for this_var in new_cl_vars:
+#         if 'nir_' not in this_var:
+#             df = df[df[this_var].notnull()]
+#     return df
 
 ################################################################################
+# def find_outliers(df, var_keys, threshold=2):
+#     print("called 32")
+#     """
+#     Finds any outliers in the dataframe with respect to the x and y keys
 
-def mark_outliers(ax, df, x_key, y_key, find_all=False, threshold=2, mrk_clr='r', mk_size=mrk_size):
-    """
-    Finds and marks outliers in the dataframe with respect to the x and y keys
-    on the provided axis
-
-    ax              The axis on which to plot the outlier markers
-    df              A pandas data frame
-    x_key           A string of the variable from df to use on the x axis
-    y_key           A string of the variable from df to use on the y axis
-    find_all        True/False as whether to find outliers in both cRL and nir_SP
-    threshold       The threshold zscore for which to consider an outlier
-    mrk_clr         The color in which to mark the outliers
-    mk_size         The size of the marker to use to mark the outliers
-    """
-    print('\t- Marking outliers')
-    # Find outliers
-    df = find_outliers(df, [x_key, y_key], threshold)
-    # If finding outliers in nir or R_L, find outliers in the other as well
-    if x_key == 'cRL' and find_all == True:
-        df = find_outliers(df, ['nir_SP', y_key], threshold)
-        df.loc[df['out_nir_SP']==True, 'out_'+x_key] = True
-    #
-    # for i in range(len(df)):
-    #     this_row = df.loc[df['cluster']==i]
-    #     print(this_row['cluster'].values[0], this_row[x_key].values[0], this_row['out_'+x_key].values[0], this_row[y_key].values[0], this_row['out_'+y_key].values[0])#.sort_values('cluster'))
-    # Get data with outliers
-    x_data = np.array(df[df['out_'+x_key]==True][x_key].values, dtype=np.float64)
-    y_data = np.array(df[df['out_'+x_key]==True][y_key].values, dtype=np.float64)
-    print('found outliers:')
-    print(x_data)
-    print(y_data)
-    # Mark outliers
-    ax.scatter(x_data, y_data, edgecolors=mrk_clr, s=mk_size*5, marker='o', facecolors='none', zorder=2)
-    # Run it again
-    if mrk_clr == 'r':
-        mark_outliers(ax, df.loc[df['out_'+x_key]==False], x_key, y_key, find_all, threshold, mrk_clr='b', mk_size=mk_size)
+#     df              A pandas data frame
+#     var_keys        A list of strings of the names of the columns on which to 
+#                         find outliers
+#     threshold       The threshold zscore for which to consider an outlier
+#     """
+#     for v_key in var_keys:
+#         # Get the values of the variable for this key
+#         v_values = np.array(df[v_key].values, dtype=np.float64)
+#         # print(v_key,v_values)
+#         # Find the zscores 
+#         v_zscores = stats.zscore(v_values)
+#         # Put those values back into the dataframe
+#         df['zs_'+ v_key] = v_zscores
+#         # Make a column of True/False whether that row is an outlier
+#         df['out_'+v_key] = (df['zs_'+v_key] > threshold) | (df['zs_'+v_key] < -threshold)
+#     # print(df)
+#     # exit(0)
+#     return df
 
 ################################################################################
+# def mark_outliers(ax, df, x_key, y_key, find_all=False, threshold=2, mrk_clr='r', mk_size=mrk_size):
+#     print("called 33")
+#     """
+#     Finds and marks outliers in the dataframe with respect to the x and y keys
+#     on the provided axis
 
-def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, min_samp=None, box_and_whisker=True, plot_slopes=False):
-    """
-    Plots the clusters found by HDBSCAN on the x-y plane
-
-    ax              The axis on which to plot
-    pp
-    df              A pandas data frame output from HDBSCAN_
-    x_key           String of the name of the column to use on the x-axis
-    y_key           String of the name of the column to use on the y-axis
-    cl_x_var        String of the name of the column used on x-axis of clustering
-    cl_y_var        String of the name of the column used on y-axis of clustering
-    clr_map         String of the name of the colormap to use (ex: 'clusters')
-    m_pts          An integer, the minimum number of points for a cluster
-    min_samp        An integer, number of points in neighborhood for a core point
-    box_and_whisker True/False whether to include the box and whisker plot
-    plot_slopes     True/False whether to plot lines of least-squares slopes for
-                        each cluster
-    """
-    # Needed to make changes to a copy of the global variable
-    global mrk_size
-    m_size = mrk_size
-    # Find extra arguments, if given
-    legend = pp.legend
-    if not isinstance(pp.extra_args, type(None)):
-        try:
-            plt_noise = pp.extra_args['plt_noise']
-        except:
-            plt_noise = True
-    else:
-        plt_noise = True
-    # Decide whether to plot the centroid or not
-    if x_key in pf_vars or y_key in pf_vars:
-        plot_centroid = False
-    elif y_key == 'CT':
-        plot_centroid = False
-    else:
-        plot_centroid = True
-    # Run the HDBSCAN algorithm on the provided dataframe
-    df, rel_val = HDBSCAN_(a_group, df, cl_x_var, cl_y_var, m_pts, min_samp=min_samp, extra_cl_vars=[x_key,y_key])
-    # Clusters are labeled starting from 0, so total number of clusters is
-    #   the largest label plus 1
-    n_clusters = int(df['cluster'].max()+1)
-    # Remove rows where the plot variables are null
-    for var in [x_key, y_key]:
-        df = df[df[var].notnull()]
-    # Noise points are labeled as -1
-    # Plot noise points first
-    df_noise = df[df.cluster==-1]
-    if plt_noise:
-        ax.scatter(df_noise[x_key], df_noise[y_key], color=std_clr, s=m_size, marker=std_marker, alpha=noise_alpha, zorder=1)
-    n_noise_pts = len(df_noise)
-    # Check whether to just plot one point per cluster
-    if x_key in ca_vars:
-        # Drop duplicates to have just one row per cluster
-        df.drop_duplicates(subset=[x_key], keep='first', inplace=True)
-        plot_centroid = False
-        mrk_size = cent_mrk_size
-        plot_slopes = False
-    if y_key in ca_vars:
-        # Drop duplicates to have just one row per cluster
-        df.drop_duplicates(subset=[y_key], keep='first', inplace=True)
-        plot_centroid = False
-        m_size = cent_mrk_size
-        plot_slopes = False
-    if 'cRL' in [x_key, y_key]:
-        # Drop duplicates to have just one row per cluster
-        df.drop_duplicates(subset=['cRL'], keep='first', inplace=True)
-        plot_centroid = False
-        m_size = cent_mrk_size
-        plot_slopes = False
-    if 'cRl' in [x_key, y_key]:
-        # Drop duplicates to have just one row per cluster
-        df.drop_duplicates(subset=['cRl'], keep='first', inplace=True)
-        plot_centroid = False
-        m_size = cent_mrk_size
-        plot_slopes = False
-    if x_key in cmm_vars:
-        # Split the prefix from the original variable (assumes an underscore split)
-        split_var = x_key.split('_', 1)
-        var = split_var[1]
-        # Drop duplicates to have just one row per cluster
-        df.drop_duplicates(subset=['cmin_'+var,'cmax_'+var], keep='first', inplace=True)
-        # Calculate
-        df['cmm_mid'] = (df['cmax_'+var] + df['cmin_'+var]) / 2
-        df['bar_len'] = (df['cmax_'+var] - df['cmin_'+var]) / 2
-        x_key = 'cmm_mid'
-        plot_centroid = False
-        plot_slopes = False
-    if y_key in cmm_vars:
-        # Split the prefix from the original variable (assumes an underscore split)
-        split_var = y_key.split('_', 1)
-        var = split_var[1]
-        # Drop duplicates to have just one row per cluster
-        df.drop_duplicates(subset=['cmin_'+var,'cmax_'+var], keep='first', inplace=True)
-        # Calculate
-        df['cmm_mid'] = (df['cmax_'+var] + df['cmin_'+var]) / 2
-        df['bar_len'] = (df['cmax_'+var] - df['cmin_'+var]) / 2
-        y_key = 'cmm_mid'
-        plot_centroid = False
-        plot_slopes = False
-    # Look for outliers
-    if 'nir' in x_key or 'cRL' in x_key or 'ca' in x_key:
-        mrk_outliers = True
-    else:
-        mrk_outliers = False
-    # Set variable as to whether to invert the y axis
-    invert_y_axis = False
-    # Which colormap?
-    if clr_map == 'cluster':
-        # Make blank lists to record values
-        pts_per_cluster = []
-        clstr_means = []
-        clstr_stdvs = []
-        # Loop through each cluster
-        for i in range(n_clusters):
-            # Decide on the color and symbol, don't go off the end of the arrays
-            my_clr = distinct_clrs[i%len(distinct_clrs)]
-            my_mkr = mpl_mrks[i%len(mpl_mrks)]
-            # Find the data from this cluster
-            df_this_cluster = df[df['cluster']==i]
-            # print(df_this_cluster)
-            # Get relevant data
-            x_data = df_this_cluster[x_key] 
-            x_mean = np.mean(x_data)
-            x_stdv = np.std(x_data)
-            y_data = df_this_cluster[y_key] 
-            y_mean = np.mean(y_data)
-            y_stdv = np.std(y_data)
-            alphas = df_this_cluster['clst_prob'] #df[df.cluster == i]['clst_prob']
-            # Plot the points for this cluster with the specified color, marker, and alpha value
-            #   Having an issue with actually using the alphas from above without a TypeError
-            if x_key == 'cmm_mid':
-                xerrs = df[df.cluster == i]['bar_len']
-                ax.errorbar(x_data, y_data, xerr=xerrs, color=my_clr, capsize=l_cap_size)
-            elif y_key == 'cmm_mid':
-                yerrs = df[df.cluster == i]['bar_len']
-                ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
-            elif 'nir' in x_key or 'cRL' in x_key or 'cRl' in x_key:
-                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=1, zorder=5)
-            else:
-                ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=mrk_alpha, zorder=5)
-            # Plot the centroid of this cluster
-            if plot_centroid:
-                # This will plot a marker at the centroid
-                ax.scatter(x_mean, y_mean, color=std_clr, s=cent_mrk_size*1.1, marker='o', zorder=9)
-                ax.scatter(x_mean, y_mean, color=cnt_clr, s=cent_mrk_size, marker=my_mkr, zorder=10)
-                # This will plot the cluster number at the centroid
-                # ax.scatter(x_mean, y_mean, color=cnt_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
-            if plot_slopes:
-                # Find the slope of the ordinary least-squares of the points for this cluster
-                # m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
-                # Find the slope of the total least-squares of the points for this cluster
-                m, c, sd_m, sd_c = orthoregress(x_data, y_data)
-                # Plot the least-squares fit line for this cluster through the centroid
-                ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
-                # Add annotation to say what the slope is
-                ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/10), xycoords='data', color=std_clr, weight='bold', zorder=12)
-            #
-            # Record the number of points in this cluster
-            pts_per_cluster.append(len(x_data))
-            # Record mean and standard deviation to calculate normalized inter-cluster range
-            clstr_means.append(y_mean)
-            clstr_stdvs.append(y_stdv)
-        # Mark outliers, if specified
-        if mrk_outliers:
-            mark_outliers(ax, df, x_key, y_key, mk_size=m_size, mrk_clr='red')
-        if 'nir_' in x_key:
-            # Get bounds of axes
-            x_bnds = ax.get_xbound()
-            y_bnds = ax.get_ybound()
-            x_span = abs(x_bnds[1] - x_bnds[0])
-            y_span = abs(y_bnds[1] - y_bnds[0])
-            # Add line at R_L = -1
-            ax.axvline(1, color=std_clr, alpha=0.5, linestyle='-')
-            ax.annotate(r'$IR_{S_P}=1$', xy=(1+x_span/15,y_bnds[0]+y_span/5), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
-        # Add some lines if plotting cRL
-        if 'cRL' in [x_key, y_key]:
-            # Get bounds of axes
-            x_bnds = ax.get_xbound()
-            y_bnds = ax.get_ybound()
-            x_span = abs(x_bnds[1] - x_bnds[0])
-            y_span = abs(y_bnds[1] - y_bnds[0])
-            if x_key == 'cRL':
-                # Plot polynomial fit line
-                if True:
-                    # Get the data without the outliers
-                    x_data = df[df['out_'+x_key] == False][x_key].astype('float')
-                    y_data = df[df['out_'+x_key] == False][y_key].astype('float')
-                    # Use polyfit 
-                    deg = 2
-                    z = np.polyfit(y_data, x_data, deg)
-                    x_fit = np.poly1d(z)
-                    # Get the means and standard deviations
-                    x_mean = np.mean(x_data)
-                    x_stdv = np.std(x_data)
-                    y_mean = np.mean(y_data)
-                    y_stdv = np.std(y_data)
-                    # Find R^2 (coefficient of determination) value which is 1 
-                    #   minus the ratio of the sum of squares of residuals over 
-                    #   the total sum of squares
-                    x_fit_data = x_fit(y_data)
-                    ss_res = ((x_data-x_fit_data)**2).sum()
-                    ss_tot = ((x_data-x_mean)**2).sum()
-                    R2 = 1 - ss_res/ss_tot
-                    print('\t- Sum of square residuals:',ss_res)
-                    print('\t- Total sum of squares:',ss_tot)
-                    print('\t- R^2:',R2)
-                    print('\t- Median cRL:',np.median(x_data))
-                    print('\t- Mean cRL:',np.mean(x_data))
-                    print('\t- Standard deviation of cRL:',np.std(x_data))
-                    # Make an array of values to plot log fit line 
-                    y_arr = np.linspace(y_bnds[0], y_bnds[1], 50)
-                    # Plot the fit
-                    ax.plot(x_fit(y_arr), y_arr, color=alt_std_clr)
-                    # Add annotation to say what the line is
-                    line_label = "$R_L = " + format_sci_notation(z[0]) + " p^2 + " + format_sci_notation(z[1])+ "p " + format_sci_notation(z[2])+"$"
-                    # Find a good place for the annotation
-                    if x_bnds[1] < 0:
-                        ann_x_placement = x_span/10+min(x_bnds)
-                    else:
-                        ann_x_placement = x_mean+0.5*x_stdv
-                    ax.annotate(line_label, xy=(ann_x_placement,y_span/2.7+min(y_bnds)), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
-                    # For Figure 5, add the line of the opposite ITP
-                    print('format_sci_notation(z[2]):',format_sci_notation(z[2]))
-                    if format_sci_notation(z[2]) == "-39.85":
-                        print('\t- Adding additional curve for ITP3')
-                        ax.plot(-3.38e-4*(y_arr)**2 + 0.24*y_arr - 43.29, y_arr, color=std_clr, alpha=0.5, linestyle='--', zorder=1)
-                    elif format_sci_notation(z[2]) == "-43.29":
-                        print('\t- Adding additional curve for ITP2')
-                        ax.plot(-3.81e-4*(y_arr)**2 + 0.24*y_arr - 39.85, y_arr, color=std_clr, alpha=0.5, linestyle='--', zorder=1)
-                    # Limit the y axis
-                    ax.set_ylim((y_bnds[1],y_bnds[0]))
-                # Plot exponential fit line
-                if False:
-                    # Get the data without the outliers
-                    x_data = df[df['out_'+x_key] == False][x_key].astype('float')
-                    y_data = df[df['out_'+x_key] == False][y_key].astype('float')
-                    # Get the means and standard deviations
-                    x_mean = np.mean(x_data)
-                    x_stdv = np.std(x_data)
-                    y_mean = np.mean(y_data)
-                    y_stdv = np.std(y_data)
-                    # Make an array of values to plot log fit line (needs to be all negative values)
-                    x_arr = np.linspace(x_bnds[0], 0, 25)
-                    # Find the slope of the total least-squares of the points in semilogx
-                    m, c, sd_m, sd_c = orthoregress(np.log(-1*x_data), y_data)
-                    print('sd_m:',sd_m,'sd_c:',sd_c)
-                    # Plot the semilogx least-squares fit on the non-semilogx axes
-                    ax.plot(x_arr, m*np.log(-1*x_arr)+c, color=alt_std_clr)
-                    # Add annotation to say what the line is
-                    # line_label = "$%.2f\\ln(-R_L)+%.2f $"%(m,c)
-                    line_label = "$R_L = -\exp( %.2f - p/ %.2f )$"%(c/abs(m),abs(m))
-                    ax.annotate(line_label, xy=(x_mean+2*x_stdv,y_mean+y_stdv), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
-                    # Limit the y axis
-                    ax.set_ylim((y_bnds[1],y_bnds[0]))
-                #
-            #
-        # Add legend to report the total number of points and notes on the data
-        n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
-        m_pts_patch = mpl.patches.Patch(color='none', label=r'$m_{pts}$: '+str(m_pts))
-        n_clstr_patch = mpl.lines.Line2D([],[],color=cnt_clr, label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
-        n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
-        rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
-        if legend:
-            ax.legend(handles=[n_pts_patch, m_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
-        # Add inset axis for box-and-whisker plot
-        if box_and_whisker:
-            inset_ax = inset_axes(ax, width="30%", height="10%", loc=4)
-            inset_ax.boxplot(pts_per_cluster, vert=0, sym='X')
-            #   Adjust the look of the inset axis
-            inset_ax.xaxis.set_ticks_position('top')
-            inset_ax.set_xticks([int(min(pts_per_cluster)),int(np.median(pts_per_cluster)),int(max(pts_per_cluster))])
-            inset_ax.spines['left'].set_visible(False)
-            inset_ax.get_yaxis().set_visible(False)
-            inset_ax.spines['right'].set_visible(False)
-            inset_ax.spines['bottom'].set_visible(False)
-            inset_ax.set_xlabel('Points per cluster')
-            inset_ax.xaxis.set_label_position('top')
-        #
-        # Invert y-axis if specified
-        if y_key in y_invert_vars:
-            invert_y_axis = True
-    #
-    return invert_y_axis
+#     ax              The axis on which to plot the outlier markers
+#     df              A pandas data frame
+#     x_key           A string of the variable from df to use on the x axis
+#     y_key           A string of the variable from df to use on the y axis
+#     find_all        True/False as whether to find outliers in both cRL and nir_SP
+#     threshold       The threshold zscore for which to consider an outlier
+#     mrk_clr         The color in which to mark the outliers
+#     mk_size         The size of the marker to use to mark the outliers
+#     """
+#     print('\t- Marking outliers')
+#     # Find outliers
+#     df = find_outliers(df, [x_key, y_key], threshold)
+#     # If finding outliers in nir or R_L, find outliers in the other as well
+#     if x_key == 'cRL' and find_all == True:
+#         df = find_outliers(df, ['nir_SP', y_key], threshold)
+#         df.loc[df['out_nir_SP']==True, 'out_'+x_key] = True
+#     #
+#     # for i in range(len(df)):
+#     #     this_row = df.loc[df['cluster']==i]
+#     #     print(this_row['cluster'].values[0], this_row[x_key].values[0], this_row['out_'+x_key].values[0], this_row[y_key].values[0], this_row['out_'+y_key].values[0])#.sort_values('cluster'))
+#     # Get data with outliers
+#     x_data = np.array(df[df['out_'+x_key]==True][x_key].values, dtype=np.float64)
+#     y_data = np.array(df[df['out_'+x_key]==True][y_key].values, dtype=np.float64)
+#     print('found outliers:')
+#     print(x_data)
+#     print(y_data)
+#     # Mark outliers
+#     ax.scatter(x_data, y_data, edgecolors=mrk_clr, s=mk_size*5, marker='o', facecolors='none', zorder=2)
+#     # Run it again
+#     if mrk_clr == 'r':
+#         mark_outliers(ax, df.loc[df['out_'+x_key]==False], x_key, y_key, find_all, threshold, mrk_clr='b', mk_size=mk_size)
 
 ################################################################################
+# def plot_clusters(a_group, ax, pp, df, x_key, y_key, cl_x_var, cl_y_var, clr_map, m_pts, min_samp=None, box_and_whisker=True, plot_slopes=False):
+#     print("called 34")
+#     """
+#     Plots the clusters found by HDBSCAN on the x-y plane
 
-def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
-    """
-    Plots the number of clusters found by HDBSCAN vs. the number of profiles
-    included in the data set
+#     ax              The axis on which to plot
+#     pp
+#     df              A pandas data frame output from HDBSCAN_
+#     x_key           String of the name of the column to use on the x-axis
+#     y_key           String of the name of the column to use on the y-axis
+#     cl_x_var        String of the name of the column used on x-axis of clustering
+#     cl_y_var        String of the name of the column used on y-axis of clustering
+#     clr_map         String of the name of the colormap to use (ex: 'clusters')
+#     m_pts          An integer, the minimum number of points for a cluster
+#     min_samp        An integer, number of points in neighborhood for a core point
+#     box_and_whisker True/False whether to include the box and whisker plot
+#     plot_slopes     True/False whether to plot lines of least-squares slopes for
+#                         each cluster
+#     """
+#     # Needed to make changes to a copy of the global variable
+#     global mrk_size
+#     m_size = mrk_size
+#     # Find extra arguments, if given
+#     legend = pp.legend
+#     if not isinstance(pp.extra_args, type(None)):
+#         try:
+#             plt_noise = pp.extra_args['plt_noise']
+#         except:
+#             plt_noise = True
+#     else:
+#         plt_noise = True
+#     # Decide whether to plot the centroid or not
+#     if x_key in pf_vars or y_key in pf_vars:
+#         plot_centroid = False
+#     elif y_key == 'CT':
+#         plot_centroid = False
+#     else:
+#         plot_centroid = True
+#     # Run the HDBSCAN algorithm on the provided dataframe
+#     df, rel_val = HDBSCAN_(a_group, df, cl_x_var, cl_y_var, m_pts, min_samp=min_samp, extra_cl_vars=[x_key,y_key])
+#     # Clusters are labeled starting from 0, so total number of clusters is
+#     #   the largest label plus 1
+#     n_clusters = int(df['cluster'].max()+1)
+#     # Remove rows where the plot variables are null
+#     for var in [x_key, y_key]:
+#         df = df[df[var].notnull()]
+#     # Noise points are labeled as -1
+#     # Plot noise points first
+#     df_noise = df[df.cluster==-1]
+#     if plt_noise:
+#         ax.scatter(df_noise[x_key], df_noise[y_key], color=std_clr, s=m_size, marker=std_marker, alpha=noise_alpha, zorder=1)
+#     n_noise_pts = len(df_noise)
+#     # Check whether to just plot one point per cluster
+#     if x_key in ca_vars:
+#         # Drop duplicates to have just one row per cluster
+#         df.drop_duplicates(subset=[x_key], keep='first', inplace=True)
+#         plot_centroid = False
+#         mrk_size = cent_mrk_size
+#         plot_slopes = False
+#     if y_key in ca_vars:
+#         # Drop duplicates to have just one row per cluster
+#         df.drop_duplicates(subset=[y_key], keep='first', inplace=True)
+#         plot_centroid = False
+#         m_size = cent_mrk_size
+#         plot_slopes = False
+#     if 'cRL' in [x_key, y_key]:
+#         # Drop duplicates to have just one row per cluster
+#         df.drop_duplicates(subset=['cRL'], keep='first', inplace=True)
+#         plot_centroid = False
+#         m_size = cent_mrk_size
+#         plot_slopes = False
+#     if 'cRl' in [x_key, y_key]:
+#         # Drop duplicates to have just one row per cluster
+#         df.drop_duplicates(subset=['cRl'], keep='first', inplace=True)
+#         plot_centroid = False
+#         m_size = cent_mrk_size
+#         plot_slopes = False
+#     if x_key in cmm_vars:
+#         # Split the prefix from the original variable (assumes an underscore split)
+#         split_var = x_key.split('_', 1)
+#         var = split_var[1]
+#         # Drop duplicates to have just one row per cluster
+#         df.drop_duplicates(subset=['cmin_'+var,'cmax_'+var], keep='first', inplace=True)
+#         # Calculate
+#         df['cmm_mid'] = (df['cmax_'+var] + df['cmin_'+var]) / 2
+#         df['bar_len'] = (df['cmax_'+var] - df['cmin_'+var]) / 2
+#         x_key = 'cmm_mid'
+#         plot_centroid = False
+#         plot_slopes = False
+#     if y_key in cmm_vars:
+#         # Split the prefix from the original variable (assumes an underscore split)
+#         split_var = y_key.split('_', 1)
+#         var = split_var[1]
+#         # Drop duplicates to have just one row per cluster
+#         df.drop_duplicates(subset=['cmin_'+var,'cmax_'+var], keep='first', inplace=True)
+#         # Calculate
+#         df['cmm_mid'] = (df['cmax_'+var] + df['cmin_'+var]) / 2
+#         df['bar_len'] = (df['cmax_'+var] - df['cmin_'+var]) / 2
+#         y_key = 'cmm_mid'
+#         plot_centroid = False
+#         plot_slopes = False
+#     # Look for outliers
+#     if 'nir' in x_key or 'cRL' in x_key or 'ca' in x_key:
+#         mrk_outliers = True
+#     else:
+#         mrk_outliers = False
+#     # Set variable as to whether to invert the y axis
+#     invert_y_axis = False
+#     # Which colormap?
+#     if clr_map == 'cluster':
+#         # Make blank lists to record values
+#         pts_per_cluster = []
+#         clstr_means = []
+#         clstr_stdvs = []
+#         # Loop through each cluster
+#         for i in range(n_clusters):
+#             # Decide on the color and symbol, don't go off the end of the arrays
+#             my_clr = distinct_clrs[i%len(distinct_clrs)]
+#             my_mkr = mpl_mrks[i%len(mpl_mrks)]
+#             # Find the data from this cluster
+#             df_this_cluster = df[df['cluster']==i]
+#             # print(df_this_cluster)
+#             # Get relevant data
+#             x_data = df_this_cluster[x_key] 
+#             x_mean = np.mean(x_data)
+#             x_stdv = np.std(x_data)
+#             y_data = df_this_cluster[y_key] 
+#             y_mean = np.mean(y_data)
+#             y_stdv = np.std(y_data)
+#             alphas = df_this_cluster['clst_prob'] #df[df.cluster == i]['clst_prob']
+#             # Plot the points for this cluster with the specified color, marker, and alpha value
+#             #   Having an issue with actually using the alphas from above without a TypeError
+#             if x_key == 'cmm_mid':
+#                 xerrs = df[df.cluster == i]['bar_len']
+#                 ax.errorbar(x_data, y_data, xerr=xerrs, color=my_clr, capsize=l_cap_size)
+#             elif y_key == 'cmm_mid':
+#                 yerrs = df[df.cluster == i]['bar_len']
+#                 ax.errorbar(x_data, y_data, yerr=yerrs, color=my_clr, capsize=l_cap_size)
+#             elif 'nir' in x_key or 'cRL' in x_key or 'cRl' in x_key:
+#                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=1, zorder=5)
+#             else:
+#                 ax.scatter(x_data, y_data, color=my_clr, s=m_size, marker=my_mkr, alpha=mrk_alpha, zorder=5)
+#             # Plot the centroid of this cluster
+#             if plot_centroid:
+#                 # This will plot a marker at the centroid
+#                 ax.scatter(x_mean, y_mean, color=std_clr, s=cent_mrk_size*1.1, marker='o', zorder=9)
+#                 ax.scatter(x_mean, y_mean, color=cnt_clr, s=cent_mrk_size, marker=my_mkr, zorder=10)
+#                 # This will plot the cluster number at the centroid
+#                 # ax.scatter(x_mean, y_mean, color=cnt_clr, s=cent_mrk_size, marker=r"${}$".format(str(i)), zorder=10)
+#             if plot_slopes:
+#                 # Find the slope of the ordinary least-squares of the points for this cluster
+#                 # m, c = np.linalg.lstsq(np.array([x_data, np.ones(len(x_data))]).T, y_data, rcond=None)[0]
+#                 # Find the slope of the total least-squares of the points for this cluster
+#                 m, c, sd_m, sd_c = orthoregress(x_data, y_data)
+#                 # Plot the least-squares fit line for this cluster through the centroid
+#                 ax.axline((x_mean, y_mean), slope=m, color=my_clr, zorder=3)
+#                 # Add annotation to say what the slope is
+#                 ax.annotate('%.2f'%(1/m), xy=(x_mean+x_stdv/4,y_mean+y_stdv/10), xycoords='data', color=std_clr, weight='bold', zorder=12)
+#             #
+#             # Record the number of points in this cluster
+#             pts_per_cluster.append(len(x_data))
+#             # Record mean and standard deviation to calculate normalized inter-cluster range
+#             clstr_means.append(y_mean)
+#             clstr_stdvs.append(y_stdv)
+#         # Mark outliers, if specified
+#         if mrk_outliers:
+#             mark_outliers(ax, df, x_key, y_key, mk_size=m_size, mrk_clr='red')
+#         if 'nir_' in x_key:
+#             # Get bounds of axes
+#             x_bnds = ax.get_xbound()
+#             y_bnds = ax.get_ybound()
+#             x_span = abs(x_bnds[1] - x_bnds[0])
+#             y_span = abs(y_bnds[1] - y_bnds[0])
+#             # Add line at R_L = -1
+#             ax.axvline(1, color=std_clr, alpha=0.5, linestyle='-')
+#             ax.annotate(r'$IR_{S_P}=1$', xy=(1+x_span/15,y_bnds[0]+y_span/5), xycoords='data', color=std_clr, weight='bold', alpha=0.5, zorder=12)
+#         # Add some lines if plotting cRL
+#         if 'cRL' in [x_key, y_key]:
+#             # Get bounds of axes
+#             x_bnds = ax.get_xbound()
+#             y_bnds = ax.get_ybound()
+#             x_span = abs(x_bnds[1] - x_bnds[0])
+#             y_span = abs(y_bnds[1] - y_bnds[0])
+#             if x_key == 'cRL':
+#                 # Plot polynomial fit line
+#                 if True:
+#                     # Get the data without the outliers
+#                     x_data = df[df['out_'+x_key] == False][x_key].astype('float')
+#                     y_data = df[df['out_'+x_key] == False][y_key].astype('float')
+#                     # Use polyfit 
+#                     deg = 2
+#                     z = np.polyfit(y_data, x_data, deg)
+#                     x_fit = np.poly1d(z)
+#                     # Get the means and standard deviations
+#                     x_mean = np.mean(x_data)
+#                     x_stdv = np.std(x_data)
+#                     y_mean = np.mean(y_data)
+#                     y_stdv = np.std(y_data)
+#                     # Find R^2 (coefficient of determination) value which is 1 
+#                     #   minus the ratio of the sum of squares of residuals over 
+#                     #   the total sum of squares
+#                     x_fit_data = x_fit(y_data)
+#                     ss_res = ((x_data-x_fit_data)**2).sum()
+#                     ss_tot = ((x_data-x_mean)**2).sum()
+#                     R2 = 1 - ss_res/ss_tot
+#                     print('\t- Sum of square residuals:',ss_res)
+#                     print('\t- Total sum of squares:',ss_tot)
+#                     print('\t- R^2:',R2)
+#                     print('\t- Median cRL:',np.median(x_data))
+#                     print('\t- Mean cRL:',np.mean(x_data))
+#                     print('\t- Standard deviation of cRL:',np.std(x_data))
+#                     # Make an array of values to plot log fit line 
+#                     y_arr = np.linspace(y_bnds[0], y_bnds[1], 50)
+#                     # Plot the fit
+#                     ax.plot(x_fit(y_arr), y_arr, color=alt_std_clr)
+#                     # Add annotation to say what the line is
+#                     line_label = "$R_L = " + format_sci_notation(z[0]) + " p^2 + " + format_sci_notation(z[1])+ "p " + format_sci_notation(z[2])+"$"
+#                     # Find a good place for the annotation
+#                     if x_bnds[1] < 0:
+#                         ann_x_placement = x_span/10+min(x_bnds)
+#                     else:
+#                         ann_x_placement = x_mean+0.5*x_stdv
+#                     ax.annotate(line_label, xy=(ann_x_placement,y_span/2.7+min(y_bnds)), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
+#                     # For Figure 5, add the line of the opposite ITP
+#                     print('format_sci_notation(z[2]):',format_sci_notation(z[2]))
+#                     if format_sci_notation(z[2]) == "-39.85":
+#                         print('\t- Adding additional curve for ITP3')
+#                         ax.plot(-3.38e-4*(y_arr)**2 + 0.24*y_arr - 43.29, y_arr, color=std_clr, alpha=0.5, linestyle='--', zorder=1)
+#                     elif format_sci_notation(z[2]) == "-43.29":
+#                         print('\t- Adding additional curve for ITP2')
+#                         ax.plot(-3.81e-4*(y_arr)**2 + 0.24*y_arr - 39.85, y_arr, color=std_clr, alpha=0.5, linestyle='--', zorder=1)
+#                     # Limit the y axis
+#                     ax.set_ylim((y_bnds[1],y_bnds[0]))
+#                 # Plot exponential fit line
+#                 if False:
+#                     # Get the data without the outliers
+#                     x_data = df[df['out_'+x_key] == False][x_key].astype('float')
+#                     y_data = df[df['out_'+x_key] == False][y_key].astype('float')
+#                     # Get the means and standard deviations
+#                     x_mean = np.mean(x_data)
+#                     x_stdv = np.std(x_data)
+#                     y_mean = np.mean(y_data)
+#                     y_stdv = np.std(y_data)
+#                     # Make an array of values to plot log fit line (needs to be all negative values)
+#                     x_arr = np.linspace(x_bnds[0], 0, 25)
+#                     # Find the slope of the total least-squares of the points in semilogx
+#                     m, c, sd_m, sd_c = orthoregress(np.log(-1*x_data), y_data)
+#                     print('sd_m:',sd_m,'sd_c:',sd_c)
+#                     # Plot the semilogx least-squares fit on the non-semilogx axes
+#                     ax.plot(x_arr, m*np.log(-1*x_arr)+c, color=alt_std_clr)
+#                     # Add annotation to say what the line is
+#                     # line_label = "$%.2f\\ln(-R_L)+%.2f $"%(m,c)
+#                     line_label = "$R_L = -\exp( %.2f - p/ %.2f )$"%(c/abs(m),abs(m))
+#                     ax.annotate(line_label, xy=(x_mean+2*x_stdv,y_mean+y_stdv), xycoords='data', color=alt_std_clr, weight='bold', zorder=12)
+#                     # Limit the y axis
+#                     ax.set_ylim((y_bnds[1],y_bnds[0]))
+#                 #
+#             #
+#         # Add legend to report the total number of points and notes on the data
+#         n_pts_patch   = mpl.patches.Patch(color='none', label=str(len(df[x_key]))+' points')
+#         m_pts_patch = mpl.patches.Patch(color='none', label=r'$m_{pts}$: '+str(m_pts))
+#         n_clstr_patch = mpl.lines.Line2D([],[],color=cnt_clr, label=r'$n_{clusters}$: '+str(n_clusters), marker='*', linewidth=0)
+#         n_noise_patch = mpl.patches.Patch(color=std_clr, label=r'$n_{noise pts}$: '+str(n_noise_pts), alpha=noise_alpha, edgecolor=None)
+#         rel_val_patch = mpl.patches.Patch(color='none', label='DBCV: %.4f'%(rel_val))
+#         if legend:
+#             ax.legend(handles=[n_pts_patch, m_pts_patch, n_clstr_patch, n_noise_patch, rel_val_patch])
+#         # Add inset axis for box-and-whisker plot
+#         if box_and_whisker:
+#             inset_ax = inset_axes(ax, width="30%", height="10%", loc=4)
+#             inset_ax.boxplot(pts_per_cluster, vert=0, sym='X')
+#             #   Adjust the look of the inset axis
+#             inset_ax.xaxis.set_ticks_position('top')
+#             inset_ax.set_xticks([int(min(pts_per_cluster)),int(np.median(pts_per_cluster)),int(max(pts_per_cluster))])
+#             inset_ax.spines['left'].set_visible(False)
+#             inset_ax.get_yaxis().set_visible(False)
+#             inset_ax.spines['right'].set_visible(False)
+#             inset_ax.spines['bottom'].set_visible(False)
+#             inset_ax.set_xlabel('Points per cluster')
+#             inset_ax.xaxis.set_label_position('top')
+#         #
+#         # Invert y-axis if specified
+#         if y_key in y_invert_vars:
+#             invert_y_axis = True
+#     #
+#     return invert_y_axis
 
-    ax              The axis on which to plot
-    tw_ax_x         The twin x axis on which to plot
-    a_group         An Analysis_Group object containing the info to create this subplot
-    plt_title       A string to use as the title of this subplot
-    """
-    ## Get relevant parameters for the plot
-    pp = a_group.plt_params
-    # Concatonate all the pandas data frames together
-    df = pd.concat(a_group.data_frames)
-    # Get the dictionary stored in extra_args
-    cluster_plt_dict = pp.extra_args
-    # Set the main x and y data keys
-    x_key = pp.x_vars[0]
-    y_key = pp.y_vars[0]
-    # Check for twin axis data key
-    try:
-        tw_y_key = pp.y_vars[1]
-    except:
-        tw_y_key = None
-    # Get cluster arguments
-    m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
-    # Get the parameter sweep tuple, expect the form [start,stop,step]
-    try:
-        cl_ps_tuple = cluster_plt_dict['cl_ps_tuple']
-    except:
-        print('Cannot find `cl_ps_tuple` in `extra_args`, aborting script')
-        exit(0)
-    # Build the array for the x_var axis
-    x_var_array = np.arange(cl_ps_tuple[0], cl_ps_tuple[1], cl_ps_tuple[2])
-    # Check for a z variable
-    try:
-        z_key = cluster_plt_dict['z_var']
-        z_list = cluster_plt_dict['z_list']
-    except:
-        z_key = None
-        z_list = [0]
-    # Open a text file to record values from the parameter sweep
-    sweep_txt_file = 'outputs/ps_x_'+x_key+'_z_'+str(z_key)+'.txt'
-    f = open(sweep_txt_file,'w')
-    f.write('Parameter Sweep for '+plt_title+'\n')
-    f.write(datetime.now().strftime("%I:%M%p on %B %d, %Y"))
-    f.close()
-    # If limiting the number of pfs, find total number of pfs in the given df
-    #   In the multi-index of df, level 0 is 'Time'
-    if x_key == 'n_pfs':
-        pf_nos = np.unique(np.array(df['prof_no'].values))
-        number_of_pfs = len(pf_nos)
-        print('\tNumber of profiles:',number_of_pfs)
-        x_var_array = x_var_array[x_var_array <= number_of_pfs]
-    if z_key == 'n_pfs':
-        pf_nos = np.unique(np.array(df['prof_no'].values))
-        number_of_pfs = len(pf_nos)
-        print('\tNumber of profiles:',number_of_pfs)
-        z_list = np.array(z_list)
-        z_list = z_list[z_list <= number_of_pfs]
-    #
-    print('\tPlotting these x values of',x_key,':',x_var_array)
-    f = open(sweep_txt_file,'a')
-    f.write('\nPlotting these x values of '+x_key+':\n')
-    f.write(str(x_var_array))
-    f.close()
-    if z_key:
-        print('\tPlotting these z values of',z_key,':',z_list)
-        f = open(sweep_txt_file,'a')
-        f.write('\nPlotting these z values of '+z_key+':\n')
-        f.write(str(z_list))
-        f.close()
-    for i in range(len(z_list)):
-        y_var_array = []
-        tw_y_var_array = []
-        for x in x_var_array:
-            # Set initial values for some variables
-            zlabel = None
-            this_df = df.copy()
-            # Set parameters based on variables selected
-            #   NOTE: need to run `ell_size` BEFORE `n_pfs`
-            if x_key == 'ell_size':
-                # Need to apply moving average window to original data, before
-                #   the data filters were applied, so make a new Analysis_Group
-                a_group.profile_filters.m_avg_win = x
-                new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
-                this_df = pd.concat(new_a_group.data_frames)
-                xlabel = r'$\ell$ (dbar)'
-            if z_key == 'ell_size':
-                # Need to apply moving average window to original data, before
-                #   the data filters were applied, so make a new Analysis_Group
-                a_group.profile_filters.m_avg_win = z_list[i]
-                new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
-                this_df = pd.concat(new_a_group.data_frames)
-                zlabel = r'$\ell=$'+str(z_list[i])+' dbar'
-            if x_key == 'n_pfs':
-                this_df = this_df[this_df['prof_no'] <= pf_nos[x-1]].copy()
-                xlabel = 'Number of profiles included'
-            if z_key == 'n_pfs':
-                this_df = this_df[this_df['prof_no'] <= pf_nos[z_list[i]-1]].copy()
-                zlabel = r'$n_{profiles}=$'+str(z_list[i])
-            if x_key == 'm_pts':
-                # min cluster size must be an integer
-                m_pts = int(x)
-                xlabel = r'$m_{pts}$'
-            elif x_key == 'min_samps':
-                # min samples must be an integer, or None
-                if not isinstance(x, type(None)):
-                    min_s = int(x)
-                else:
-                    min_s = x
-                xlabel = 'Minimum samples'
-            if z_key == 'm_pts':
-                # min cluster size must be an integer
-                m_pts = int(z_list[i])
-                zlabel = r'$m_{pts}=$: '+str(m_pts)
-            elif z_key == 'min_samps':
-                # min samps must be an integer, or None
-                if not isinstance(z_list[i], type(None)):
-                    min_s = int(z_list[i])
-                else:
-                    min_s = z_list[i]
-                zlabel = 'Minimum samples: '+str(min_s)
-            # Run the HDBSCAN algorithm on the provided dataframe
-            new_df, rel_val = HDBSCAN_(None, this_df, cl_x_var, cl_y_var, m_pts, min_samp=min_s)
-            # Record outputs to plot
-            if y_key == 'DBCV':
-                # relative_validity_ is a rough measure of DBCV
-                y_var_array.append(rel_val)
-                ylabel = 'DBCV'
-            elif y_key == 'n_clusters':
-                # Clusters are labeled starting from 0, so total number of clusters is
-                #   the largest label plus 1
-                y_var_array.append(new_df['cluster'].max()+1)
-                ylabel = 'Number of clusters'
-            if tw_y_key:
-                if tw_y_key == 'DBCV':
-                    # relative_validity_ is a rough measure of DBCV
-                    tw_y_var_array.append(rel_val)
-                    tw_ylabel = 'DBCV'
-                elif tw_y_key == 'n_clusters':
-                    # Clusters are labeled starting from 0, so total number of clusters is
-                    #   the largest label plus 1
-                    tw_y_var_array.append(new_df['cluster'].max()+1)
-                    tw_ylabel = 'Number of clusters'
-                #
-            #
-            f = open(sweep_txt_file,'a')
-            if z_key:
-                f.write('\n m_pts: '+str(m_pts)+' '+str(x_key)+': '+str(x)+' '+str(z_key)+': '+str(z_list[i])+' n_clstrs: '+str(new_df['cluster'].max()+1)+' DBCV: '+str(rel_val))
-            else:
-                f.write('\n m_pts: '+str(m_pts)+' '+str(x_key)+': '+str(x)+' n_clstrs: '+str(new_df['cluster'].max()+1)+' DBCV: '+str(rel_val))
-            f.close()
-        ax.plot(x_var_array, y_var_array, color=std_clr, linestyle=l_styles[i], label=zlabel)
-        # Add gridlines
-        ax.grid(color=std_clr, linestyle='--', alpha=grid_alpha)
-        if tw_y_key:
-            if z_key:
-                tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
-            else: # If not plotting multiple z values, make the twin axis line a different linestyle
-                tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i+1])
-            tw_ax_x.set_ylabel(tw_ylabel)
-            # Change color of the axis label on the twin axis
-            tw_ax_x.yaxis.label.set_color(alt_std_clr)
-            # Change color of the ticks on the twin axis
-            tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
-            # Add gridlines
-            # tw_ax_x.grid(color=alt_std_clr, linestyle='--', alpha=grid_alpha+0.3, axis='y')
-        f = open(sweep_txt_file,'a')
-        f.write('\n')
-        f.close()
-    if z_key:
-        ax.legend()
-    return xlabel, ylabel
+################################################################################
+# def plot_clstr_param_sweep(ax, tw_ax_x, a_group, plt_title=None):
+#     print("called 35")
+#     """
+#     Plots the number of clusters found by HDBSCAN vs. the number of profiles
+#     included in the data set
+
+#     ax              The axis on which to plot
+#     tw_ax_x         The twin x axis on which to plot
+#     a_group         An Analysis_Group object containing the info to create this subplot
+#     plt_title       A string to use as the title of this subplot
+#     """
+#     ## Get relevant parameters for the plot
+#     pp = a_group.plt_params
+#     # Concatonate all the pandas data frames together
+#     df = pd.concat(a_group.data_frames)
+#     # Get the dictionary stored in extra_args
+#     cluster_plt_dict = pp.extra_args
+#     # Set the main x and y data keys
+#     x_key = pp.x_vars[0]
+#     y_key = pp.y_vars[0]
+#     # Check for twin axis data key
+#     try:
+#         tw_y_key = pp.y_vars[1]
+#     except:
+#         tw_y_key = None
+#     # Get cluster arguments
+#     m_pts, min_s, cl_x_var, cl_y_var, plot_slopes, b_a_w_plt = get_cluster_args(pp)
+#     # Get the parameter sweep tuple, expect the form [start,stop,step]
+#     try:
+#         cl_ps_tuple = cluster_plt_dict['cl_ps_tuple']
+#     except:
+#         print('Cannot find `cl_ps_tuple` in `extra_args`, aborting script')
+#         exit(0)
+#     # Build the array for the x_var axis
+#     x_var_array = np.arange(cl_ps_tuple[0], cl_ps_tuple[1], cl_ps_tuple[2])
+#     # Check for a z variable
+#     try:
+#         z_key = cluster_plt_dict['z_var']
+#         z_list = cluster_plt_dict['z_list']
+#     except:
+#         z_key = None
+#         z_list = [0]
+#     # Open a text file to record values from the parameter sweep
+#     sweep_txt_file = 'outputs/ps_x_'+x_key+'_z_'+str(z_key)+'.txt'
+#     f = open(sweep_txt_file,'w')
+#     f.write('Parameter Sweep for '+plt_title+'\n')
+#     f.write(datetime.now().strftime("%I:%M%p on %B %d, %Y"))
+#     f.close()
+#     # If limiting the number of pfs, find total number of pfs in the given df
+#     #   In the multi-index of df, level 0 is 'Time'
+#     if x_key == 'n_pfs':
+#         pf_nos = np.unique(np.array(df['prof_no'].values))
+#         number_of_pfs = len(pf_nos)
+#         print('\tNumber of profiles:',number_of_pfs)
+#         x_var_array = x_var_array[x_var_array <= number_of_pfs]
+#     if z_key == 'n_pfs':
+#         pf_nos = np.unique(np.array(df['prof_no'].values))
+#         number_of_pfs = len(pf_nos)
+#         print('\tNumber of profiles:',number_of_pfs)
+#         z_list = np.array(z_list)
+#         z_list = z_list[z_list <= number_of_pfs]
+#     #
+#     print('\tPlotting these x values of',x_key,':',x_var_array)
+#     f = open(sweep_txt_file,'a')
+#     f.write('\nPlotting these x values of '+x_key+':\n')
+#     f.write(str(x_var_array))
+#     f.close()
+#     if z_key:
+#         print('\tPlotting these z values of',z_key,':',z_list)
+#         f = open(sweep_txt_file,'a')
+#         f.write('\nPlotting these z values of '+z_key+':\n')
+#         f.write(str(z_list))
+#         f.close()
+#     for i in range(len(z_list)):
+#         y_var_array = []
+#         tw_y_var_array = []
+#         for x in x_var_array:
+#             # Set initial values for some variables
+#             zlabel = None
+#             this_df = df.copy()
+#             # Set parameters based on variables selected
+#             #   NOTE: need to run `ell_size` BEFORE `n_pfs`
+#             if x_key == 'ell_size':
+#                 # Need to apply moving average window to original data, before
+#                 #   the data filters were applied, so make a new Analysis_Group
+#                 a_group.profile_filters.m_avg_win = x
+#                 new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
+#                 this_df = pd.concat(new_a_group.data_frames)
+#                 xlabel = r'$\ell$ (dbar)'
+#             if z_key == 'ell_size':
+#                 # Need to apply moving average window to original data, before
+#                 #   the data filters were applied, so make a new Analysis_Group
+#                 a_group.profile_filters.m_avg_win = z_list[i]
+#                 new_a_group = Analysis_Group(a_group.data_set, a_group.profile_filters, a_group.plt_params)
+#                 this_df = pd.concat(new_a_group.data_frames)
+#                 zlabel = r'$\ell=$'+str(z_list[i])+' dbar'
+#             if x_key == 'n_pfs':
+#                 this_df = this_df[this_df['prof_no'] <= pf_nos[x-1]].copy()
+#                 xlabel = 'Number of profiles included'
+#             if z_key == 'n_pfs':
+#                 this_df = this_df[this_df['prof_no'] <= pf_nos[z_list[i]-1]].copy()
+#                 zlabel = r'$n_{profiles}=$'+str(z_list[i])
+#             if x_key == 'm_pts':
+#                 # min cluster size must be an integer
+#                 m_pts = int(x)
+#                 xlabel = r'$m_{pts}$'
+#             elif x_key == 'min_samps':
+#                 # min samples must be an integer, or None
+#                 if not isinstance(x, type(None)):
+#                     min_s = int(x)
+#                 else:
+#                     min_s = x
+#                 xlabel = 'Minimum samples'
+#             if z_key == 'm_pts':
+#                 # min cluster size must be an integer
+#                 m_pts = int(z_list[i])
+#                 zlabel = r'$m_{pts}=$: '+str(m_pts)
+#             elif z_key == 'min_samps':
+#                 # min samps must be an integer, or None
+#                 if not isinstance(z_list[i], type(None)):
+#                     min_s = int(z_list[i])
+#                 else:
+#                     min_s = z_list[i]
+#                 zlabel = 'Minimum samples: '+str(min_s)
+#             # Run the HDBSCAN algorithm on the provided dataframe
+#             new_df, rel_val = HDBSCAN_(None, this_df, cl_x_var, cl_y_var, m_pts, min_samp=min_s)
+#             # Record outputs to plot
+#             if y_key == 'DBCV':
+#                 # relative_validity_ is a rough measure of DBCV
+#                 y_var_array.append(rel_val)
+#                 ylabel = 'DBCV'
+#             elif y_key == 'n_clusters':
+#                 # Clusters are labeled starting from 0, so total number of clusters is
+#                 #   the largest label plus 1
+#                 y_var_array.append(new_df['cluster'].max()+1)
+#                 ylabel = 'Number of clusters'
+#             if tw_y_key:
+#                 if tw_y_key == 'DBCV':
+#                     # relative_validity_ is a rough measure of DBCV
+#                     tw_y_var_array.append(rel_val)
+#                     tw_ylabel = 'DBCV'
+#                 elif tw_y_key == 'n_clusters':
+#                     # Clusters are labeled starting from 0, so total number of clusters is
+#                     #   the largest label plus 1
+#                     tw_y_var_array.append(new_df['cluster'].max()+1)
+#                     tw_ylabel = 'Number of clusters'
+#                 #
+#             #
+#             f = open(sweep_txt_file,'a')
+#             if z_key:
+#                 f.write('\n m_pts: '+str(m_pts)+' '+str(x_key)+': '+str(x)+' '+str(z_key)+': '+str(z_list[i])+' n_clstrs: '+str(new_df['cluster'].max()+1)+' DBCV: '+str(rel_val))
+#             else:
+#                 f.write('\n m_pts: '+str(m_pts)+' '+str(x_key)+': '+str(x)+' n_clstrs: '+str(new_df['cluster'].max()+1)+' DBCV: '+str(rel_val))
+#             f.close()
+#         ax.plot(x_var_array, y_var_array, color=std_clr, linestyle=l_styles[i], label=zlabel)
+#         # Add gridlines
+#         ax.grid(color=std_clr, linestyle='--', alpha=grid_alpha)
+#         if tw_y_key:
+#             if z_key:
+#                 tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i])
+#             else: # If not plotting multiple z values, make the twin axis line a different linestyle
+#                 tw_ax_x.plot(x_var_array, tw_y_var_array, color=alt_std_clr, linestyle=l_styles[i+1])
+#             tw_ax_x.set_ylabel(tw_ylabel)
+#             # Change color of the axis label on the twin axis
+#             tw_ax_x.yaxis.label.set_color(alt_std_clr)
+#             # Change color of the ticks on the twin axis
+#             tw_ax_x.tick_params(axis='y', colors=alt_std_clr)
+#             # Add gridlines
+#             # tw_ax_x.grid(color=alt_std_clr, linestyle='--', alpha=grid_alpha+0.3, axis='y')
+#         f = open(sweep_txt_file,'a')
+#         f.write('\n')
+#         f.close()
+#     if z_key:
+#         ax.legend()
+#     return xlabel, ylabel
 
 ################################################################################
 
